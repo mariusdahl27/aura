@@ -1,0 +1,477 @@
+AVRA Version 1.0 Instruction Encoding Charts
+
+Document Version: 2020-07-31
+
+
+
+
+This document is intended to supplement the tabular instruction encoding in Part
+III of The AVRA Computer Architecture Version 1.0 (DRAFT 2020-07-18). The latest
+versions of both documents can be found at:
+
+https://github.com/mariusdahl27/aura
+
+
+Conventions:
+
+• The operation code fields contain two numbers separated by a colon. The number
+  on the right is the order in which the operation code field is decoded, and
+  one on the right is the value in the field. In some cases, the field is not
+  large enough to accommodate the decode order number. It should be possible to
+  infer the decode order number from those in the other fields.
+• Values in operation code fields are given as decimal numbers.
+• The register field that a destination or source field references is specified
+  as a suffix consisting of a colon and the abbreviated name of the register
+  set.
+• Fields that are filled with hyphens indicate a must-be-zero field.
+
+
+
+
+
+
+
+
+───────────────────
+30-bit Instructions
+───────────────────
+
+
+┌─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┐
+│2│2│2│2│2│2│2│2│2│2│1│1│1│1│1│1│1│1│1│1│ │ │ │ │ │ │ │ │ │ │
+│9│8│7│6│5│4│3│2│1│0│9│8│7│6│5│4│3│2│1│0│9│8│7│6│5│4│3│2│1│0│
+├─┴─┴─┴─┴─┴─┼─┴─┴─┴─┴─┴─┴─┴─┼─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┼─┴─┴─┴─┤
+│    4:0    │      2:0      │          3:0          │  1:0  │ NULL 30
+├───────────┼───────────────┼───┬───────┬───────────┼───────┤
+│    5:0    │      2:1      │6:0│  3:0  │    4:0    │  1:0  │ IMPRECISE EXCEPTION BARRIER
+│    5:0    │      2:1      │6:2│  3:0  │    4:0    │  1:0  │ CALL
+│    5:0    │      2:1      │6:3│  3:0  │    4:0    │  1:0  │ BREAK
+├───────────┼───────────────┼───┼───────┼───────────┼───────┤
+│   DA:GPR  │      2:1      │5:0│  3:0  │    4:2    │  1:0  │ ARCHITECTURE VERSION
+│   DA:GPR  │      2:1      │5:0│  3:0  │    4:3    │  1:0  │ COPY 0 TO CR
+│   DA:GPR  │      2:1      │5:1│  3:0  │    4:3    │  1:0  │ COPY 1 TO CR
+│   DA:GPR  │      2:1      │5:2│  3:0  │    4:3    │  1:0  │ PACK CR TO GPR
+├───────────┼───────────────┼───┼───────┼───────────┼───────┤
+│    4:0    │      2:1      │5:0│  3:1  │   SA:GPR  │  1:0  │ UNPACK GPR TO CR
+│    4:3    │      2:1      │5:0│  3:1  │   SA:GPR  │  1:0  │ JUMP INDIRECT
+│    4:3    │      2:1      │5:1│  3:1  │   SA:GPR  │  1:0  │ JUMP INDIRECT POP
+├───────────┼───────────────┼───┼───────┼───────────┼───────┤
+│   DA:GPR  │      2:1      │4:0│  3:10 │   SA:GPR  │  1:0  │ COPY GPR TO GPR
+│   DA:GPR  │      2:1      │4:2│  3:10 │   SA:GPR  │  1:0  │ COPY GPR TO CR
+│   DA:GPR  │      2:1      │4:3│  3:10 │   SA:GPR  │  1:0  │ COPY CR TO GPR
+│   DA:GPR  │      2:1      │4:0│  3:11 │   SA:GPR  │  1:0  │ JUMP INDIRECT AND LINK
+│   DA:GPR  │      2:1      │4:1│  3:11 │   SA:GPR  │  1:0  │ JUMP INDIRECT AND LINK WITH POP
+│   DA:GPR  │      2:1      │4:2│  3:11 │   SA:GPR  │  1:0  │ JUMP INDIRECT AND LINK WITH PUSH
+│   DA:GPR  │      2:1      │4:3│  3:11 │   SA:GPR  │  1:0  │ JUMP INDIRECT AND LINK WITH POP AND PUSH
+│   DA:GPR  │      2:1      │4:0│  3:12 │   SA:GPR  │  1:0  │ ABSOLUTE VALUE
+│   DA:GPR  │      2:1      │4:1│  3:12 │   SA:GPR  │  1:0  │ NEGATE
+│   DA:GPR  │      2:1      │4:2│  3:12 │   SA:GPR  │  1:0  │ COUNT ZEROS
+│   DA:GPR  │      2:1      │4:3│  3:12 │   SA:GPR  │  1:0  │ COUNT ONES
+│   DA:GPR  │      2:1      │4:0│  3:13 │   SA:GPR  │  1:0  │ COUNT TRAILING ZEROS
+│   DA:GPR  │      2:1      │4:1│  3:13 │   SA:GPR  │  1:0  │ COUNT TRAILING ONES
+│   DA:GPR  │      2:1      │4:2│  3:13 │   SA:GPR  │  1:0  │ COUNT LEADING ZEROS
+│   DA:GPR  │      2:1      │4:3│  3:13 │   SA:GPR  │  1:0  │ COUNT LEADING ONES
+│   DA:GPR  │      2:3      │4:0│  3:0  │   SA:GPR  │  1:0  │ CONVERT VECTOR GPR 128 TO V64 LOW
+│   DA:GPR  │      2:3      │4:1│  3:0  │   SA:GPR  │  1:0  │ CONVERT VECTOR GPR 128 TO V64 HIGH
+│   DA:GPR  │      2:3      │4:2│  3:0  │   SA:GPR  │  1:0  │ CONVERT VECTOR GPR V64 TO 128 ZERO-EXTEND LOW
+│   DA:GPR  │      2:3      │4:3│  3:0  │   SA:GPR  │  1:0  │ CONVERT VECTOR GPR V64 TO 128 ZERO-EXTEND HIGH
+│   DA:GPR  │      2:3      │4:0│  3:1  │   SA:GPR  │  1:0  │ CONVERT VECTOR GPR V64 TO 128 SIGN-EXTEND LOW
+│   DA:GPR  │      2:3      │4:1│  3:1  │   SA:GPR  │  1:0  │ CONVERT VECTOR GPR V64 TO 128 SIGN-EXTEND HIGH
+│   DA:GPR  │      2:3      │4:2│  3:1  │   SA:GPR  │  1:0  │ CONVERT VECTOR GPR V64 TO V32 LOW
+│   DA:GPR  │      2:3      │4:3│  3:1  │   SA:GPR  │  1:0  │ CONVERT VECTOR GPR V64 TO V32 HIGH
+│   DA:GPR  │      2:3      │4:0│  3:2  │   SA:GPR  │  1:0  │ CONVERT VECTOR GPR V32 TO V64 ZERO-EXTEND LOW
+│   DA:GPR  │      2:3      │4:1│  3:2  │   SA:GPR  │  1:0  │ CONVERT VECTOR GPR V32 TO V64 ZERO-EXTEND HIGH
+│   DA:GPR  │      2:3      │4:2│  3:2  │   SA:GPR  │  1:0  │ CONVERT VECTOR GPR V32 TO V64 SIGN-EXTEND LOW
+│   DA:GPR  │      2:3      │4:3│  3:2  │   SA:GPR  │  1:0  │ CONVERT VECTOR GPR V32 TO V64 SIGN-EXTEND HIGH
+│   DA:GPR  │      2:3      │4:0│  3:3  │   SA:GPR  │  1:0  │ CONVERT VECTOR GPR V32 TO V16 LOW
+│   DA:GPR  │      2:3      │4:1│  3:3  │   SA:GPR  │  1:0  │ CONVERT VECTOR GPR V32 TO V16 HIGH
+│   DA:GPR  │      2:3      │4:2│  3:3  │   SA:GPR  │  1:0  │ CONVERT VECTOR GPR V16 TO V32 ZERO-EXTEND LOW
+│   DA:GPR  │      2:3      │4:3│  3:3  │   SA:GPR  │  1:0  │ CONVERT VECTOR GPR V16 TO V32 ZERO-EXTEND HIGH
+│   DA:GPR  │      2:3      │4:0│  3:4  │   SA:GPR  │  1:0  │ CONVERT VECTOR GPR V16 TO V32 SIGN-EXTEND LOW
+│   DA:GPR  │      2:3      │4:1│  3:4  │   SA:GPR  │  1:0  │ CONVERT VECTOR GPR V16 TO V32 SIGN-EXTEND HIGH
+│   DA:GPR  │      2:3      │4:2│  3:4  │   SA:GPR  │  1:0  │ CONVERT VECTOR GPR V16 TO V8 LOW
+│   DA:GPR  │      2:3      │4:3│  3:4  │   SA:GPR  │  1:0  │ CONVERT VECTOR GPR V16 TO V8 HIGH
+│   DA:GPR  │      2:3      │4:0│  3:5  │   SA:GPR  │  1:0  │ CONVERT VECTOR GPR V8 TO V16 ZERO-EXTEND LOW
+│   DA:GPR  │      2:3      │4:1│  3:5  │   SA:GPR  │  1:0  │ CONVERT VECTOR GPR V8 TO V16 ZERO-EXTEND HIGH
+│   DA:GPR  │      2:3      │4:2│  3:5  │   SA:GPR  │  1:0  │ CONVERT VECTOR GPR V8 TO V16 SIGN-EXTEND LOW
+│   DA:GPR  │      2:3      │4:3│  3:5  │   SA:GPR  │  1:0  │ CONVERT VECTOR GPR V8 TO V16 SIGN-EXTEND HIGH
+│   DA:RNR  │      2:3      │4:0│  3:15 │   SA:GPR  │  1:0  │ COPY GPR TO RNR
+│   DA:RNR  │      2:4      │4:0│  3:0  │   SA:RNR  │  1:0  │ COPY RNR TO RNR
+│   DA:GPR  │      2:4      │4:0│  3:15 │   SA:RNR  │  1:0  │ COPY RNR TO GPR
+├───────────┼───────────────┼───┼───────┼───────────┼───────┤
+│   DA:GPR  │      2:5      │ T │  3:0  │   SA:GPR  │  1:0  │ VECTOR BROADCAST GPR
+│   DA:GPR  │      2:5      │ T │  3:4  │   SA:GPR  │  1:0  │ VECTOR ABSOLUTE VALUE
+│   DA:GPR  │      2:5      │ T │  3:5  │   SA:GPR  │  1:0  │ VECTOR NEGATE
+│   DA:GPR  │      2:5      │ T │  3:6  │   SA:GPR  │  1:0  │ VECTOR COUNT ZEROS
+│   DA:GPR  │      2:5      │ T │  3:7  │   SA:GPR  │  1:0  │ VECTOR COUNT ONES
+│   DA:GPR  │      2:5      │ T │  3:8  │   SA:GPR  │  1:0  │ VECTOR COUNT TRAILING ZEROS
+│   DA:GPR  │      2:5      │ T │  3:9  │   SA:GPR  │  1:0  │ VECTOR COUNT TRAILING ONES
+│   DA:GPR  │      2:5      │ T │  3:10 │   SA:GPR  │  1:0  │ VECTOR COUNT LEADING ZEROS
+│   DA:GPR  │      2:5      │ T │  3:11 │   SA:GPR  │  1:0  │ VECTOR COUNT LEADING ONES
+│   DA:RNR  │      2:6      │ T │  3:0  │   SA:RNR  │  1:0  │ VECTOR BROADCAST RNR
+├───────────┼───────────────┼───┼───┬───┼───────────┼───────┤
+│   DA:GPR  │     2:112     │4:0│3:0│ IA│   SA:GPR  │  1:0  │ VECTOR EXTRACT ELEMENT GPR V32 ZERO-EXTEND IMMEDIATE
+│   DA:GPR  │     2:112     │4:1│3:0│ IA│   SA:GPR  │  1:0  │ VECTOR EXTRACT ELEMENT GPR V32 SIGN-EXTEND IMMEDIATE
+│   DA:RNR  │     2:112     │4:0│3:2│ IA│   SA:RNR  │  1:0  │ VECTOR EXTRACT ELEMENT RNR V32 IMMEDIATE
+├───────────┼───────────────┼───┼─┬─┴───┼───────────┼───────┤
+│   DA:GPR  │     2:113     │4:0│0│  IA │   SA:GPR  │  1:0  │ VECTOR EXTRACT ELEMENT GPR V16 ZERO-EXTEND IMMEDIATE
+│   DA:GPR  │     2:113     │4:1│0│  IA │   SA:GPR  │  1:0  │ VECTOR EXTRACT ELEMENT GPR V16 SIGN-EXTEND IMMEDIATE
+│   DA:RNR  │     2:113     │4:0│1│  IA │   SA:RNR  │  1:0  │ VECTOR EXTRACT ELEMENT RNR V16 IMMEDIATE
+├───────────┼───────────────┼───┼─┴─────┼───────────┼───────┤
+│   DA:GPR  │     2:115     │3:0│   IA  │   SA:GPR  │  1:0  │ VECTOR EXTRACT ELEMENT GPR V8 ZERO-EXTEND IMMEDIATE
+│   DA:GPR  │     2:115     │3:1│   IA  │   SA:GPR  │  1:0  │ VECTOR EXTRACT ELEMENT GPR V8 SIGN-EXTEND IMMEDIATE
+│   DA:RNR  │     2:117     │3:0│   IA  │   SA:RNR  │  1:0  │ VECTOR EXTRACT ELEMENT RNR V8 IMMEDIATE
+├───────────┼───────────────┼───┴───────┼───────────┼───────┤
+│   DA:GPR  │      2:0      │   SB:GPR  │   SA:GPR  │  1:1  │ ARCHITECTURE EXTENSION
+│   DA:GPR  │      2:1      │   SB:GPR  │   SA:GPR  │  1:1  │ ADD
+│   DA:GPR  │      2:2      │   SB:GPR  │   SA:GPR  │  1:1  │ SUBTRACT
+│   DA:GPR  │      2:3      │   SB:GPR  │   SA:GPR  │  1:1  │ MULTIPLY UNSIGNED HIGH
+│   DA:GPR  │      2:4      │   SB:GPR  │   SA:GPR  │  1:1  │ MULTIPLY SIGNED BY UNSIGNED HIGH
+│   DA:GPR  │      2:5      │   SB:GPR  │   SA:GPR  │  1:1  │ MULTIPLY SIGNED LOW
+│   DA:GPR  │      2:6      │   SB:GPR  │   SA:GPR  │  1:1  │ MULTIPLY SIGNED HIGH
+│   DA:GPR  │      2:7      │   SB:GPR  │   SA:GPR  │  1:1  │ DIVIDE UNSIGNED QUOTIENT
+│   DA:GPR  │      2:8      │   SB:GPR  │   SA:GPR  │  1:1  │ DIVIDE UNSIGNED REMAINDER
+│   DA:GPR  │      2:9      │   SB:GPR  │   SA:GPR  │  1:1  │ DIVIDE SIGNED QUOTIENT
+│   DA:GPR  │      2:10     │   SB:GPR  │   SA:GPR  │  1:1  │ DIVIDE SIGNED REMAINDER
+│   DA:GPR  │      2:11     │   SB:GPR  │   SA:GPR  │  1:1  │ COMPARE EQUAL TO
+│   DA:GPR  │      2:12     │   SB:GPR  │   SA:GPR  │  1:1  │ COMPARE NOT EQUAL TO
+│   DA:GPR  │      2:13     │   SB:GPR  │   SA:GPR  │  1:1  │ COMPARE UNSIGNED LESS THAN
+│   DA:GPR  │      2:14     │   SB:GPR  │   SA:GPR  │  1:1  │ COMPARE UNSIGNED LESS THAN OR EQUAL TO
+│   DA:GPR  │      2:15     │   SB:GPR  │   SA:GPR  │  1:1  │ COMPARE SIGNED LESS THAN
+│   DA:GPR  │      2:16     │   SB:GPR  │   SA:GPR  │  1:1  │ COMPARE SIGNED LESS THAN OR EQUAL TO
+│   DA:GPR  │      2:17     │   SB:GPR  │   SA:GPR  │  1:1  │ AND
+│   DA:GPR  │      2:18     │   SB:GPR  │   SA:GPR  │  1:1  │ NOT-OR COMPLEMENT
+│   DA:GPR  │      2:19     │   SB:GPR  │   SA:GPR  │  1:1  │ AND COMPLEMENT
+│   DA:GPR  │      2:20     │   SB:GPR  │   SA:GPR  │  1:1  │ EXCLUSIVE-OR
+│   DA:GPR  │      2:21     │   SB:GPR  │   SA:GPR  │  1:1  │ OR
+│   DA:GPR  │      2:22     │   SB:GPR  │   SA:GPR  │  1:1  │ NOT-OR
+│   DA:GPR  │      2:23     │   SB:GPR  │   SA:GPR  │  1:1  │ EXCLUSIVE-NOT-OR
+│   DA:GPR  │      2:24     │   SB:GPR  │   SA:GPR  │  1:1  │ NOT-AND COMPLEMENT
+│   DA:GPR  │      2:25     │   SB:GPR  │   SA:GPR  │  1:1  │ OR COMPLEMENT
+│   DA:GPR  │      2:26     │   SB:GPR  │   SA:GPR  │  1:1  │ NOT-AND
+│   DA:GPR  │      2:27     │   SB:GPR  │   SA:GPR  │  1:1  │ SHIFT LOGICAL RIGHT
+│   DA:GPR  │      2:28     │   SB:GPR  │   SA:GPR  │  1:1  │ SHIFT LOGICAL LEFT
+│   DA:GPR  │      2:29     │   SB:GPR  │   SA:GPR  │  1:1  │ SHIFT CIRCULAR RIGHT
+│   DA:GPR  │      2:30     │   SB:GPR  │   SA:GPR  │  1:1  │ SHIFT CIRCULAR LEFT
+│   DA:GPR  │      2:31     │   SB:GPR  │   SA:GPR  │  1:1  │ SHIFT ARITHMETIC RIGHT
+│   DA:GPR  │      2:32     │   SB:GPR  │   SA:GPR  │  1:1  │ BIT GATHER
+│   DA:GPR  │      2:33     │   SB:GPR  │   SA:GPR  │  1:1  │ BIT SCATTER
+├───────────┼───────────────┼───────────┼───────────┼───────┤
+│   DA:GPR  │     2:112     │     IA    │   SA:GPR  │  1:1  │ SHIFT LOGICAL RIGHT IMMEDIATE
+│   DA:GPR  │     2:113     │     IA    │   SA:GPR  │  1:1  │ SHIFT LOGICAL RIGHT IMMEDIATE 64
+│   DA:GPR  │     2:114     │     IA    │   SA:GPR  │  1:1  │ SHIFT LOGICAL LEFT IMMEDIATE
+│   DA:GPR  │     2:115     │     IA    │   SA:GPR  │  1:1  │ SHIFT LOGICAL LEFT IMMEDIATE 64
+│   DA:GPR  │     2:116     │     IA    │   SA:GPR  │  1:1  │ SHIFT CIRCULAR RIGHT IMMEDIATE
+│   DA:GPR  │     2:117     │     IA    │   SA:GPR  │  1:1  │ SHIFT CIRCULAR RIGHT IMMEDIATE 64
+│   DA:GPR  │     2:118     │     IA    │   SA:GPR  │  1:1  │ SHIFT CIRCULAR LEFT IMMEDIATE
+│   DA:GPR  │     2:119     │     IA    │   SA:GPR  │  1:1  │ SHIFT CIRCULAR LEFT IMMEDIATE 64
+│   DA:GPR  │     2:120     │     IA    │   SA:GPR  │  1:1  │ SHIFT ARITHMETIC RIGHT IMMEDIATE
+│   DA:GPR  │     2:121     │     IA    │   SA:GPR  │  1:1  │ SHIFT ARITHMETIC RIGHT IMMEDIATE 64
+├───────────┼───────────────┼───────────┼───────────┼───────┤
+│   DA:RNR  │     2:128     │   SB:RNR  │   SA:RNR  │  1:2  │ VECTOR DEPOSIT ELEMENT RNR LOW
+│   DA:RNR  │     2:129     │   SB:RNR  │   SA:RNR  │  1:2  │ VECTOR DEPOSIT ELEMENT RNR HIGH
+├───────────┼───────┬───────┴───────────┴───────────┼───────┤
+│   DA:GPR  │  2:0  │               IA              │  1:7  │ COPY IMMEDIATE TO GPR ZERO-EXTEND
+│   DA:GPR  │  2:1  │               IA              │  1:7  │ COPY IMMEDIATE TO GPR ONE-EXTEND
+├───────────┼───────┼───────────────────────────────┼───────┤
+│     XB    │  2:12 │               XA              │  1:7  │ MEMORY BARRIER
+├─┬─┬─┬─┬─┬─┼─┬─┬─┬─┼─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┼─┬─┬─┬─┤
+│2│2│2│2│2│2│2│2│2│2│1│1│1│1│1│1│1│1│1│1│9│8│7│6│5│4│3│2│1│0│
+│9│8│7│6│5│4│3│2│1│0│9│8│7│6│5│4│3│2│1│0│ │ │ │ │ │ │ │ │ │ │
+└─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┘
+
+
+
+
+
+
+
+
+───────────────────
+40-bit Instructions
+───────────────────
+
+
+┌─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┐
+│3│3│3│3│3│3│3│3│3│3│2│2│2│2│2│2│2│2│2│2│1│1│1│1│1│1│1│1│1│1│ │ │ │ │ │ │ │ │ │ │
+│9│8│7│6│5│4│3│2│1│0│9│8│7│6│5│4│3│2│1│0│9│8│7│6│5│4│3│2│1│0│9│8│7│6│5│4│3│2│1│0│
+├─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┼─┴─┴─┴─┴─┴─┼─┴─┴─┴─┴─┴─┼─┴─┴─┴─┤
+│                      3:0                      │    2:0    │    4:0    │  1:0  │ NULL 40
+├───────────┬───┬───────────────────────────────┼───────────┼───────────┼───────┤
+│    4:0    │---│               IA              │    2:1    │    3:0    │  1:0  │ JUMP DIRECT BACKWARD
+│    4:1    │---│               IA              │    2:1    │    3:0    │  1:0  │ JUMP DIRECT FORWARD
+├───────────┼───┼───────────────────────────────┼───────────┼───────────┼───────┤
+│   DA:GPR  │---│               IA              │    2:1    │    3:1    │  1:0  │ JUMP DIRECT AND LINK BACKWARD
+│   DA:GPR  │---│               IA              │    2:1    │    3:2    │  1:0  │ JUMP DIRECT AND LINK FORWARD
+│   DA:GPR  │---│               IA              │    2:1    │    3:3    │  1:0  │ JUMP DIRECT AND LINK BACKWARD PUSH
+│   DA:GPR  │---│               IA              │    2:1    │    3:4    │  1:0  │ JUMP DIRECT AND LINK FORWARD PUSH
+├───────────┼───┼───────────────────────────────┼───────────┼───────────┼───────┤
+│    3:0    │---│               IA              │    2:2    │   SA:GPR  │  1:0  │ BRANCH BACKWARD ON CARRY REGISTER FALSE
+│    3:1    │---│               IA              │    2:2    │   SA:GPR  │  1:0  │ BRANCH BACKWARD ON CARRY REGISTER TRUE
+│    3:2    │---│               IA              │    2:2    │   SA:GPR  │  1:0  │ BRANCH BACKWARD ON LESS THAN TO ZERO
+│    3:3    │---│               IA              │    2:2    │   SA:GPR  │  1:0  │ BRANCH BACKWARD ON LESS THAN OR EQUAL TO ZERO
+│    3:4    │---│               IA              │    2:2    │   SA:GPR  │  1:0  │ BRANCH BACKWARD ON EQUAL TO ZERO
+│    3:5    │---│               IA              │    2:2    │   SA:GPR  │  1:0  │ BRANCH BACKWARD ON GREATER THAN OR EQUAL TO ZERO
+│    3:6    │---│               IA              │    2:2    │   SA:GPR  │  1:0  │ BRANCH BACKWARD ON GREATER THAN ZERO
+│    3:7    │---│               IA              │    2:2    │   SA:GPR  │  1:0  │ BRANCH BACKWARD ON NOT EQUAL TO ZERO
+│    3:8    │---│               IA              │    2:2    │   SA:GPR  │  1:0  │ BRANCH FORWARD ON CARRY REGISTER FALSE
+│    3:9    │---│               IA              │    2:2    │   SA:GPR  │  1:0  │ BRANCH FORWARD ON CARRY REGISTER TRUE
+│    3:10   │---│               IA              │    2:2    │   SA:GPR  │  1:0  │ BRANCH FORWARD ON LESS THAN TO ZERO
+│    3:11   │---│               IA              │    2:2    │   SA:GPR  │  1:0  │ BRANCH FORWARD ON LESS THAN OR EQUAL TO ZERO
+│    3:12   │---│               IA              │    2:2    │   SA:GPR  │  1:0  │ BRANCH FORWARD ON EQUAL TO ZERO
+│    3:13   │---│               IA              │    2:2    │   SA:GPR  │  1:0  │ BRANCH FORWARD ON GREATER THAN OR EQUAL TO ZERO
+│    3:14   │---│               IA              │    2:2    │   SA:GPR  │  1:0  │ BRANCH FORWARD ON GREATER THAN ZERO
+│    3:15   │---│               IA              │    2:2    │   SA:GPR  │  1:0  │ BRANCH FORWARD ON NOT EQUAL TO ZERO
+├───────────┼───┼───────────────────────────────┼───────────┼───────────┼───────┤
+│   SB:GPR  │---│               IA              │    2:3    │   SA:GPR  │  1:0  │ BRANCH BACKWARD ON EQUAL TO
+│   SB:GPR  │---│               IA              │    2:4    │   SA:GPR  │  1:0  │ BRANCH BACKWARD ON NOT EQUAL TO
+│   SB:GPR  │---│               IA              │    2:5    │   SA:GPR  │  1:0  │ BRANCH BACKWARD ON LESS THAN UNSIGNED
+│   SB:GPR  │---│               IA              │    2:6    │   SA:GPR  │  1:0  │ BRANCH BACKWARD ON LESS THAN SIGNED
+│   SB:GPR  │---│               IA              │    2:7    │   SA:GPR  │  1:0  │ BRANCH BACKWARD ON LESS THAN OR EQUAL TO UNSIGNED
+│   SB:GPR  │---│               IA              │    2:8    │   SA:GPR  │  1:0  │ BRANCH BACKWARD ON LESS THAN OR EQUAL TO SIGNED
+│   SB:GPR  │---│               IA              │    2:9    │   SA:GPR  │  1:0  │ BRANCH FORWARD ON EQUAL TO
+│   SB:GPR  │---│               IA              │    2:10   │   SA:GPR  │  1:0  │ BRANCH FORWARD ON NOT EQUAL TO
+│   SB:GPR  │---│               IA              │    2:11   │   SA:GPR  │  1:0  │ BRANCH FORWARD ON LESS THAN UNSIGNED
+│   SB:GPR  │---│               IA              │    2:12   │   SA:GPR  │  1:0  │ BRANCH FORWARD ON LESS THAN SIGNED
+│   SB:GPR  │---│               IA              │    2:13   │   SA:GPR  │  1:0  │ BRANCH FORWARD ON LESS THAN OR EQUAL TO UNSIGNED
+│   SB:GPR  │---│               IA              │    2:14   │   SA:GPR  │  1:0  │ BRANCH FORWARD ON LESS THAN OR EQUAL TO SIGNED
+├───────────┼───┼───────────────────────────────┼───────────┼───────────┼───────┤
+│     XA    │---│               IA              │    2:0    │   SA:GPR  │  1:1  │ PREFETCH
+├───────────┼───┼───────────────────────────────┼───────────┼───────────┼───────┤
+│   DA:GPR  │---│               IA              │    2:4    │   SA:GPR  │  1:1  │ LOAD GPR
+│   DA:GPR  │---│               IA              │    2:5    │   SA:GPR  │  1:1  │ LOAD ATOMIC
+│   DA:RNR  │---│               IA              │    2:8    │   SA:GPR  │  1:1  │ LOAD RNR
+│   SB:GPR  │---│               IA              │    2:12   │   SA:GPR  │  1:1  │ PREFETCH INDIRECT HINT
+│   SB:GPR  │---│               IA              │    2:16   │   SA:GPR  │  1:1  │ STORE GPR
+│   SB:RNR  │---│               IA              │    2:20   │   SA:GPR  │  1:1  │ STORE RNR
+├───────────┼───┴─┬─┬───────────────────────────┼───────────┼───────────┼───────┤
+│   DA:GPR  │ 3:0 │I│             IA            │    2:24   │   SA:GPR  │  1:1  │ LOAD GPR 64 ZERO-EXTEND
+│           │     │B│                           │           │           │       │
+│   DA:GPR  │ 3:1 │I│             IA            │    2:24   │   SA:GPR  │  1:1  │ LOAD GPR 64 SIGN-EXTEND
+│           │     │B│                           │           │           │       │
+│   DA:RNR  │ 3:2 │I│             IA            │    2:24   │   SA:GPR  │  1:1  │ LOAD RNR 64
+│           │     │B│                           │           │           │       │
+│   SB:GPR  │ 3:4 │I│             IA            │    2:24   │   SA:GPR  │  1:1  │ STORE GPR 64
+│           │     │B│                           │           │           │       │
+│   SB:RNR  │ 3:6 │I│             IA            │    2:24   │   SA:GPR  │  1:1  │ STORE RNR 64
+│           │     │B│                           │           │           │       │
+├───────────┼───┬─┴─┼───────────────────────────┼───────────┼───────────┼───────┤
+│   DA:GPR  │3:0│ IB│             IA            │    2:25   │   SA:GPR  │  1:1  │ LOAD GPR 32 ZERO-EXTEND
+│   DA:GPR  │3:1│ IB│             IA            │    2:25   │   SA:GPR  │  1:1  │ LOAD GPR 32 SIGN-EXTEND
+│   DA:RNR  │3:2│ IB│             IA            │    2:25   │   SA:GPR  │  1:1  │ LOAD RNR 32
+│   SB:GPR  │3:0│ IB│             IA            │    2:26   │   SA:GPR  │  1:1  │ STORE GPR 32
+│   SB:RNR  │3:2│ IB│             IA            │    2:26   │   SA:GPR  │  1:1  │ STORE RNR 32
+├───────────┼─┬─┴───┼───────────────────────────┼───────────┼───────────┼───────┤
+│   DA:GPR  │0│  IB │             IA            │    2:27   │   SA:GPR  │  1:1  │ LOAD GPR 16 ZERO-EXTEND
+│   DA:GPR  │1│  IB │             IA            │    2:27   │   SA:GPR  │  1:1  │ LOAD GPR 16 SIGN-EXTEND
+│   DA:RNR  │0│  IB │             IA            │    2:28   │   SA:GPR  │  1:1  │ LOAD RNR 16
+│   SB:GPR  │0│  IB │             IA            │    2:29   │   SA:GPR  │  1:1  │ STORE GPR 16
+│   SB:RNR  │0│  IB │             IA            │    2:30   │   SA:GPR  │  1:1  │ STORE RNR 16
+├───────────┼─┴─────┼───────────────────────────┼───────────┼───────────┼───────┤
+│   DA:GPR  │   IB  │             IA            │    2:32   │   SA:GPR  │  1:1  │ LOAD GPR 8 ZERO-EXTEND
+│   DA:GPR  │   IB  │             IA            │    2:33   │   SA:GPR  │  1:1  │ LOAD GPR 8 SIGN-EXTEND
+│   DA:RNR  │   IB  │             IA            │    2:34   │   SA:GPR  │  1:1  │ LOAD RNR 8
+│   SB:GPR  │   IB  │             IA            │    2:36   │   SA:GPR  │  1:1  │ STORE GPR 8
+│   SB:RNR  │   IB  │             IA            │    2:38   │   SA:GPR  │  1:1  │ STORE RNR 8
+├───────────┼───┬───┴───────────────────────────┼───────────┼───────────┼───────┤
+│   DA:GPR  │---│               IA              │    2:0    │   SA:GPR  │  1:2  │ ADD IMMEDIATE ZERO-EXTEND
+│   DA:GPR  │---│               IA              │    2:1    │   SA:GPR  │  1:2  │ ADD IMMEDIATE ONE-EXTEND
+│   DA:GPR  │---│               IA              │    2:2    │   SA:GPR  │  1:2  │ MULTIPLY UNSIGNED HIGH IMMEDIATE
+│   DA:GPR  │---│               IA              │    2:3    │   SA:GPR  │  1:2  │ MULTIPLY SIGNED BY UNSIGNED HIGH IMMEDIATE
+│   DA:GPR  │---│               IA              │    2:4    │   SA:GPR  │  1:2  │ MULTIPLY SIGNED LOW IMMEDIATE ZERO-EXTEND
+│   DA:GPR  │---│               IA              │    2:5    │   SA:GPR  │  1:2  │ MULTIPLY SIGNED LOW IMMEDIATE ONE-EXTEND
+│   DA:GPR  │---│               IA              │    2:6    │   SA:GPR  │  1:2  │ MULTIPLY SIGNED HIGH IMMEDIATE ZERO-EXTEND
+│   DA:GPR  │---│               IA              │    2:7    │   SA:GPR  │  1:2  │ MULTIPLY SIGNED HIGH IMMEDIATE ONE-EXTEND
+│   DA:GPR  │---│               IA              │    2:8    │   SA:GPR  │  1:2  │ DIVIDE UNSIGNED QUOTIENT IMMEDIATE
+│   DA:GPR  │---│               IA              │    2:9    │   SA:GPR  │  1:2  │ DIVIDE UNSIGNED REMAINDER IMMEDIATE
+│   DA:GPR  │---│               IA              │    2:10   │   SA:GPR  │  1:2  │ DIVIDE SIGNED QUOTIENT IMMEDIATE
+│   DA:GPR  │---│               IA              │    2:11   │   SA:GPR  │  1:2  │ DIVIDE SIGNED REMAINDER IMMEDIATE
+│   DA:GPR  │---│               IA              │    2:12   │   SA:GPR  │  1:2  │ COMPARE EQUAL TO IMMEDIATE ZERO-EXTEND
+│   DA:GPR  │---│               IA              │    2:13   │   SA:GPR  │  1:2  │ COMPARE EQUAL TO IMMEDIATE ONE-EXTEND
+│   DA:GPR  │---│               IA              │    2:14   │   SA:GPR  │  1:2  │ COMPARE NOT EQUAL TO IMMEDIATE ZERO-EXTEND
+│   DA:GPR  │---│               IA              │    2:15   │   SA:GPR  │  1:2  │ COMPARE NOT EQUAL TO IMMEDIATE ONE-EXTEND
+│   DA:GPR  │---│               IA              │    2:16   │   SA:GPR  │  1:2  │ COMPARE UNSIGNED LESS THAN IMMEDIATE
+│   DA:GPR  │---│               IA              │    2:17   │   SA:GPR  │  1:2  │ COMPARE UNSIGNED LESS THAN OR EQUAL TO IMMEDIATE
+│   DA:GPR  │---│               IA              │    2:18   │   SA:GPR  │  1:2  │ COMPARE UNSIGNED GREATER THAN IMMEDIATE
+│   DA:GPR  │---│               IA              │    2:19   │   SA:GPR  │  1:2  │ COMPARE UNSIGNED GREATER THAN OR EQUAL TO IMMEDIATE
+│   DA:GPR  │---│               IA              │    2:20   │   SA:GPR  │  1:2  │ COMPARE SIGNED LESS THAN IMMEDIATE ZERO-EXTEND
+│   DA:GPR  │---│               IA              │    2:21   │   SA:GPR  │  1:2  │ COMPARE SIGNED LESS THAN IMMEDIATE ONE-EXTEND
+│   DA:GPR  │---│               IA              │    2:22   │   SA:GPR  │  1:2  │ COMPARE SIGNED LESS THAN OR EQUAL TO IMMEDIATE ZERO-EXTEND
+│   DA:GPR  │---│               IA              │    2:23   │   SA:GPR  │  1:2  │ COMPARE SIGNED LESS THAN OR EQUAL TO IMMEDIATE ONE-EXTEND
+│   DA:GPR  │---│               IA              │    2:24   │   SA:GPR  │  1:2  │ COMPARE SIGNED GREATER THAN IMMEDIATE ZERO-EXTEND
+│   DA:GPR  │---│               IA              │    2:25   │   SA:GPR  │  1:2  │ COMPARE SIGNED GREATER THAN IMMEDIATE ONE-EXTEND
+│   DA:GPR  │---│               IA              │    2:26   │   SA:GPR  │  1:2  │ COMPARE SIGNED GREATER THAN OR EQUAL TO IMMEDIATE ZERO-EXTEND
+│   DA:GPR  │---│               IA              │    2:27   │   SA:GPR  │  1:2  │ COMPARE SIGNED GREATER THAN OR EQUAL TO IMMEDIATE ONE-EXTEND
+│   DA:GPR  │---│               IA              │    2:28   │   SA:GPR  │  1:2  │ AND IMMEDIATE ZERO-EXTEND
+│   DA:GPR  │---│               IA              │    2:29   │   SA:GPR  │  1:2  │ AND IMMEDIATE ONE-EXTEND
+│   DA:GPR  │---│               IA              │    2:30   │   SA:GPR  │  1:2  │ EXCLUSIVE-OR IMMEDIATE ZERO-EXTEND
+│   DA:GPR  │---│               IA              │    2:31   │   SA:GPR  │  1:2  │ EXCLUSIVE-OR IMMEDIATE ONE-EXTEND
+│   DA:GPR  │---│               IA              │    2:32   │   SA:GPR  │  1:2  │ OR IMMEDIATE ZERO-EXTEND
+│   DA:GPR  │---│               IA              │    2:33   │   SA:GPR  │  1:2  │ OR IMMEDIATE ONE-EXTEND
+│   DA:GPR  │---│               IA              │    2:34   │   SA:GPR  │  1:2  │ NOT-OR IMMEDIATE ZERO-EXTEND
+│   DA:GPR  │---│               IA              │    2:35   │   SA:GPR  │  1:2  │ NOT-OR IMMEDIATE ONE-EXTEND
+│   DA:GPR  │---│               IA              │    2:36   │   SA:GPR  │  1:2  │ EXCLUSIVE-NOT-OR IMMEDIATE ZERO-EXTEND
+│   DA:GPR  │---│               IA              │    2:37   │   SA:GPR  │  1:2  │ EXCLUSIVE-NOT-OR IMMEDIATE ONE-EXTEND
+│   DA:GPR  │---│               IA              │    2:38   │   SA:GPR  │  1:2  │ NOT-AND IMMEDIATE ZERO-EXTEND
+│   DA:GPR  │---│               IA              │    2:39   │   SA:GPR  │  1:2  │ NOT-AND IMMEDIATE ONE-EXTEND
+├───────────┼───┴─────────────┬───┬─┬───────────┼───────────┼───────────┼───────┤
+│   DA:GPR  │       2:0       │ T │0│    3:4    │   SB:GPR  │   SA:GPR  │  1:3  │ VECTOR PERMUTE GPR
+│   DA:GPR  │       2:0       │ T │0│    3:6    │   SB:GPR  │   SA:GPR  │  1:3  │ VECTOR EXTRACT ELEMENT GPR ZERO-EXTEND
+│   DA:GPR  │       2:0       │ T │1│    3:6    │   SB:GPR  │   SA:GPR  │  1:3  │ VECTOR EXTRACT ELEMENT GPR SIGN-EXTEND
+│   DA:GPR  │       2:0       │ T │0│    3:7    │   SB:GPR  │   SA:GPR  │  1:3  │ VECTOR EXTRACT ELEMENT GPR ZERO-EXTEND OCTET INDEX
+│   DA:GPR  │       2:0       │ T │1│    3:7    │   SB:GPR  │   SA:GPR  │  1:3  │ VECTOR EXTRACT ELEMENT GPR SIGN-EXTEND OCTET INDEX
+│   DA:GPR  │       2:0       │ T │0│    3:8    │   SB:GPR  │   SA:GPR  │  1:3  │ VECTOR COMPARE UNSIGNED GREATER THAN SCALAR
+│   DA:GPR  │       2:0       │ T │1│    3:8    │   SB:GPR  │   SA:GPR  │  1:3  │ VECTOR COMPARE UNSIGNED GREATER THAN OR EQUAL TO SCALAR
+│   DA:GPR  │       2:0       │ T │0│    3:9    │   SB:GPR  │   SA:GPR  │  1:3  │ VECTOR COMPARE SIGNED GREATER THAN SCALAR
+│   DA:GPR  │       2:0       │ T │1│    3:9    │   SB:GPR  │   SA:GPR  │  1:3  │ VECTOR COMPARE SIGNED GREATER THAN OR EQUAL TO SCALAR
+│   DA:GPR  │       2:0       │ T │0│    3:10   │   SB:GPR  │   SA:GPR  │  1:3  │ VECTOR SCALAR AND
+│   DA:GPR  │       2:0       │ T │1│    3:10   │   SB:GPR  │   SA:GPR  │  1:3  │ VECTOR SCALAR NOT-OR COMPLEMENT
+│   DA:GPR  │       2:0       │ T │0│    3:11   │   SB:GPR  │   SA:GPR  │  1:3  │ VECTOR SCALAR AND COMPLEMENT
+│   DA:GPR  │       2:0       │ T │1│    3:11   │   SB:GPR  │   SA:GPR  │  1:3  │ VECTOR SCALAR EXCLUSIVE-OR
+│   DA:GPR  │       2:0       │ T │0│    3:12   │   SB:GPR  │   SA:GPR  │  1:3  │ VECTOR SCALAR OR
+│   DA:GPR  │       2:0       │ T │1│    3:12   │   SB:GPR  │   SA:GPR  │  1:3  │ VECTOR SCALAR NOT-OR
+│   DA:GPR  │       2:0       │ T │0│    3:13   │   SB:GPR  │   SA:GPR  │  1:3  │ VECTOR SCALAR EXCLUSIVE-NOT-OR
+│   DA:GPR  │       2:0       │ T │1│    3:13   │   SB:GPR  │   SA:GPR  │  1:3  │ VECTOR SCALAR NOT-AND COMPLEMENT
+│   DA:GPR  │       2:0       │ T │0│    3:14   │   SB:GPR  │   SA:GPR  │  1:3  │ VECTOR SCALAR OR COMPLEMENT
+│   DA:GPR  │       2:0       │ T │1│    3:14   │   SB:GPR  │   SA:GPR  │  1:3  │ VECTOR SCALAR NOT-AND
+│   DA:RNR  │       2:0       │ T │0│    3:32   │   SB:GPR  │   SA:RNR  │  1:3  │ VECTOR PERMUTE RNR
+│   DA:RNR  │       2:0       │ T │0│    3:34   │   SB:GPR  │   SA:RNR  │  1:3  │ VECTOR EXTRACT ELEMENT RNR
+│   DA:RNR  │       2:0       │ T │1│    3:34   │   SB:GPR  │   SA:RNR  │  1:3  │ VECTOR EXTRACT ELEMENT RNR OCTET INDEX
+├───────────┼─────────────────┼───┼─┼───────────┼───────────┼───────────┼───────┤
+│   DA:GPR  │       2:1       │ T │O│    3:0    │   SB:GPR  │   SA:GPR  │  1:3  │ VECTOR ADD
+│   DA:GPR  │       2:1       │ T │O│    3:1    │   SB:GPR  │   SA:GPR  │  1:3  │ VECTOR SUBTRACT
+│   DA:GPR  │       2:1       │ T │O│    3:2    │   SB:GPR  │   SA:GPR  │  1:3  │ VECTOR MULTIPLY UNSIGNED HIGH
+│   DA:GPR  │       2:1       │ T │O│    3:3    │   SB:GPR  │   SA:GPR  │  1:3  │ VECTOR MULTIPLY SIGNED BY UNSIGNED HIGH
+│   DA:GPR  │       2:1       │ T │O│    3:4    │   SB:GPR  │   SA:GPR  │  1:3  │ VECTOR MULTIPLY SIGNED LOW
+│   DA:GPR  │       2:1       │ T │O│    3:5    │   SB:GPR  │   SA:GPR  │  1:3  │ VECTOR MULTIPLY SIGNED HIGH
+│   DA:GPR  │       2:1       │ T │O│    3:6    │   SB:GPR  │   SA:GPR  │  1:3  │ VECTOR DIVIDE UNSIGNED QUOTIENT
+│   DA:GPR  │       2:1       │ T │O│    3:7    │   SB:GPR  │   SA:GPR  │  1:3  │ VECTOR DIVIDE UNSIGNED REMAINDER
+│   DA:GPR  │       2:1       │ T │O│    3:8    │   SB:GPR  │   SA:GPR  │  1:3  │ VECTOR DIVIDE SIGNED QUOTIENT
+│   DA:GPR  │       2:1       │ T │O│    3:9    │   SB:GPR  │   SA:GPR  │  1:3  │ VECTOR DIVIDE SIGNED REMAINDER
+│   DA:GPR  │       2:1       │ T │O│    3:10   │   SB:GPR  │   SA:GPR  │  1:3  │ VECTOR COMPARE EQUAL TO
+│   DA:GPR  │       2:1       │ T │O│    3:11   │   SB:GPR  │   SA:GPR  │  1:3  │ VECTOR COMPARE NOT EQUAL TO
+│   DA:GPR  │       2:1       │ T │O│    3:12   │   SB:GPR  │   SA:GPR  │  1:3  │ VECTOR COMPARE UNSIGNED LESS THAN
+│   DA:GPR  │       2:1       │ T │O│    3:13   │   SB:GPR  │   SA:GPR  │  1:3  │ VECTOR COMPARE UNSIGNED LESS THAN OR EQUAL TO
+│   DA:GPR  │       2:1       │ T │O│    3:14   │   SB:GPR  │   SA:GPR  │  1:3  │ VECTOR COMPARE SIGNED LESS THAN
+│   DA:GPR  │       2:1       │ T │O│    3:15   │   SB:GPR  │   SA:GPR  │  1:3  │ VECTOR COMPARE SIGNED LESS THAN OR EQUAL TO
+│   DA:GPR  │       2:2       │ T │O│    3:10   │   SB:GPR  │   SA:GPR  │  1:3  │ VECTOR SHIFT LOGICAL RIGHT
+│   DA:GPR  │       2:2       │ T │O│    3:11   │   SB:GPR  │   SA:GPR  │  1:3  │ VECTOR SHIFT LOGICAL LEFT
+│   DA:GPR  │       2:2       │ T │O│    3:12   │   SB:GPR  │   SA:GPR  │  1:3  │ VECTOR SHIFT CYCLIC RIGHT
+│   DA:GPR  │       2:2       │ T │O│    3:13   │   SB:GPR  │   SA:GPR  │  1:3  │ VECTOR SHIFT CYCLIC LEFT
+│   DA:GPR  │       2:2       │ T │O│    3:14   │   SB:GPR  │   SA:GPR  │  1:3  │ VECTOR SHIFT ARITHMETIC RIGHT
+├───────────┼─────────────────┼───┴─┼───────┬───┼───────────┼───────────┼───────┤
+│   DA:GPR  │      2:120      │ 4:0 │  3:0  │ IA│   SB:GPR  │   SA:GPR  │  1:3  │ VECTOR DEPOSIT ELEMENT GPR V32 IMMEDIATE
+│   DA:RNR  │      2:120      │ 4:0 │  3:8  │ IA│   SB:RNR  │   SA:RNR  │  1:3  │ VECTOR DEPOSIT ELEMENT RNR V32 IMMEDIATE
+├───────────┼─────────────────┼─────┼─────┬─┴───┼───────────┼───────────┼───────┤
+│   DA:GPR  │      2:121      │ 4:0 │ 3:0 │  IA │   SB:GPR  │   SA:GPR  │  1:3  │ VECTOR DEPOSIT ELEMENT GPR V16 IMMEDIATE
+│   DA:RNR  │      2:121      │ 4:0 │ 3:4 │  IA │   SB:RNR  │   SA:RNR  │  1:3  │ VECTOR DEPOSIT ELEMENT RNR V16 IMMEDIATE
+├───────────┼─────────────────┼─────┼───┬─┴─────┼───────────┼───────────┼───────┤
+│   DA:GPR  │      2:122      │ 4:0 │3:0│   IA  │   SB:GPR  │   SA:GPR  │  1:3  │ VECTOR DEPOSIT ELEMENT GPR V8 IMMEDIATE
+│   DA:RNR  │      2:122      │ 4:0 │3:2│   IA  │   SB:RNR  │   SA:RNR  │  1:3  │ VECTOR DEPOSIT ELEMENT RNR V8 IMMEDIATE
+├───────────┼─────────────────┼─────┼───┴───────┼───────────┼───────────┼───────┤
+│   DA:GPR  │      2:124      │ 3:0 │   SC:GPR  │   SB:GPR  │   SA:GPR  │  1:3  │ SELECT GPR
+│   DA:GPR  │      2:124      │ 3:4 │   SC:GPR  │   SB:GPR  │   SA:GPR  │  1:3  │ ADD WITH CARRY
+│   DA:GPR  │      2:124      │ 3:5 │   SC:GPR  │   SB:GPR  │   SA:GPR  │  1:3  │ SUBTRACT WITH BORROW
+│   DA:GPR  │      2:124      │ 3:6 │   SC:GPR  │   SB:GPR  │   SA:GPR  │  1:3  │ EXTRACT BIT FIELD ZERO-EXTEND
+│   DA:GPR  │      2:124      │ 3:7 │   SC:GPR  │   SB:GPR  │   SA:GPR  │  1:3  │ EXTRACT BIT FIELD SIGN-EXTEND
+├───────────┼─────────────────┼─────┼───────────┼───────────┼───────────┼───────┤
+│   DA:GPR  │      2:128      │ 3:0 │     IB    │     IA    │   SA:GPR  │  1:3  │ EXTRACT BIT FIELD ZERO-EXTEND IMMEDIATE
+│   DA:GPR  │      2:128      │ 3:1 │     IB    │     IA    │   SA:GPR  │  1:3  │ EXTRACT BIT FIELD ZERO-EXTEND IMMEDIATE IA 64
+│   DA:GPR  │      2:128      │ 3:2 │     IB    │     IA    │   SA:GPR  │  1:3  │ EXTRACT BIT FIELD ZERO-EXTEND IMMEDIATE IB 64
+│   DA:GPR  │      2:128      │ 3:3 │     IB    │     IA    │   SA:GPR  │  1:3  │ EXTRACT BIT FIELD ZERO-EXTEND IMMEDIATE 64
+│   DA:GPR  │      2:128      │ 3:4 │     IB    │     IA    │   SA:GPR  │  1:3  │ EXTRACT BIT FIELD SIGN-EXTEND IMMEDIATE
+│   DA:GPR  │      2:128      │ 3:5 │     IB    │     IA    │   SA:GPR  │  1:3  │ EXTRACT BIT FIELD SIGN-EXTEND IMMEDIATE IA 64
+│   DA:GPR  │      2:128      │ 3:6 │     IB    │     IA    │   SA:GPR  │  1:3  │ EXTRACT BIT FIELD SIGN-EXTEND IMMEDIATE IB 64
+│   DA:GPR  │      2:128      │ 3:7 │     IB    │     IA    │   SA:GPR  │  1:3  │ EXTRACT BIT FIELD SIGN-EXTEND IMMEDIATE 64
+├───────────┼─────────────────┼─────┼───────────┼───────────┼───────────┼───────┤
+│   DA:RNR  │      2:132      │ 3:0 │   SC:GPR  │   SB:RNR  │   SA:RNR  │  1:3  │ SELECT RNR
+├───────────┼─────────────────┼───┬─┼───────────┼───────────┼───────────┼───────┤
+│   DA:GPR  │      2:136      │ T │0│   SC:GPR  │   SB:GPR  │   SA:GPR  │  1:3  │ VECTOR DEPOSIT ELEMENT GPR
+│   DA:GPR  │      2:136      │ T │1│   SC:GPR  │   SB:GPR  │   SA:GPR  │  1:3  │ VECTOR DEPOSIT ELEMENT GPR OCTET INDEX
+│   DA:GPR  │      2:137      │ T │0│   SC:GPR  │   SB:GPR  │   SA:GPR  │  1:3  │ VECTOR SELECT GPR
+│   DA:GPR  │      2:137      │ T │1│   SC:GPR  │   SB:GPR  │   SA:GPR  │  1:3  │ VECTOR MERGE GPR
+│   DA:RNR  │      2:152      │ T │0│   SC:GPR  │   SB:RNR  │   SA:RNR  │  1:3  │ VECTOR DEPOSIT ELEMENT RNR
+│   DA:RNR  │      2:152      │ T │1│   SC:GPR  │   SB:RNR  │   SA:RNR  │  1:3  │ VECTOR DEPOSIT ELEMENT RNR OCTET INDEX
+│   DA:RNR  │      2:153      │ T │0│   SC:GPR  │   SB:RNR  │   SA:RNR  │  1:3  │ VECTOR SELECT RNR
+│   DA:RNR  │      2:153      │ T │1│   SC:GPR  │   SB:RNR  │   SA:RNR  │  1:3  │ VECTOR MERGE RNR
+├───────────┼─────────────────┼───┼─┼───────────┼───────────┼───────────┼───────┤
+│   DA:GPR  │      2:168      │ T │O│   SC:GPR  │   SB:GPR  │   SA:GPR  │  1:3  │ VECTOR EXTRACT BIT FIELD ZERO-EXTEND
+│   DA:GPR  │      2:169      │ T │O│   SC:GPR  │   SB:GPR  │   SA:GPR  │  1:3  │ VECTOR EXTRACT BIT FIELD SIGN-EXTEND
+├───────────┼───┬─────────────┴───┴─┴───────────┼───────────┼───────────┼───────┤
+│   DA:GPR  │---│               IA              │   SB:GPR  │   SA:GPR  │  1:4  │ STORE ATOMIC
+├─┬─┬─┬─┬─┬─┼─┬─┼─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┼─┬─┬─┬─┬─┬─┼─┬─┬─┬─┬─┬─┼─┬─┬─┬─┤
+│3│3│3│3│3│3│3│3│3│3│2│2│2│2│2│2│2│2│2│2│1│1│1│1│1│1│1│1│1│1│9│8│7│6│5│4│3│2│1│0│
+│9│8│7│6│5│4│3│2│1│0│9│8│7│6│5│4│3│2│1│0│9│8│7│6│5│4│3│2│1│0│ │ │ │ │ │ │ │ │ │ │
+└─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┘
+
+
+
+
+
+
+
+
+───────────────────
+50-bit Instructions
+───────────────────
+
+
+┌─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┐
+│4│4│4│4│4│4│4│4│4│4│3│3│3│3│3│3│3│3│3│3│2│2│2│2│2│2│2│2│2│2│1│1│1│1│1│1│1│1│1│1│ │ │ │ │ │ │ │ │ │ │
+│9│8│7│6│5│4│3│2│1│0│9│8│7│6│5│4│3│2│1│0│9│8│7│6│5│4│3│2│1│0│9│8│7│6│5│4│3│2│1│0│9│8│7│6│5│4│3│2│1│0│
+├─┴─┴─┴─┴─┴─┼─┴─┴─┴─┴─┴─┴─┴─┴─┴─┼─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┼─┴─┴─┴─┤
+│    4:0    │        2:0        │                            3:0                            │  1:0  │ NULL 50
+├───────────┼───────────────────┼─────┬─────┬───────────┬───────────┬───────────┬───────────┼───────┤
+│   DA:GPR  │        2:1        │ 4:0 │ 3:0 │   SD:GPR  │   SC:GPR  │   SB:GPR  │   SA:GPR  │  1:0  │ DEPOSIT BIT FIELD
+├───────────┼───────────────────┼─────┼─────┼───────────┼───────────┼───────────┼───────────┼───────┤
+│   DA:GPR  │        2:1        │ 4:0 │ 3:12│   SB:GPR  │     IB    │     IA    │   SA:GPR  │  1:0  │ DEPOSIT BIT FIELD IMMEDIATE
+│   DA:GPR  │        2:1        │ 4:1 │ 3:12│   SB:GPR  │     IB    │     IA    │   SA:GPR  │  1:0  │ DEPOSIT BIT FIELD IMMEDIATE IA 64
+│   DA:GPR  │        2:1        │ 4:2 │ 3:12│   SB:GPR  │     IB    │     IA    │   SA:GPR  │  1:0  │ DEPOSIT BIT FIELD IMMEDIATE IB 64
+│   DA:GPR  │        2:1        │ 4:3 │ 3:12│   SB:GPR  │     IB    │     IA    │   SA:GPR  │  1:0  │ DEPOSIT BIT FIELD IMMEDIATE 64
+├───────────┼───────────────────┼───┬─┼─────┼───────────┼───────────┼───────────┼───────────┼───────┤
+│   DA:GPR  │        2:2        │ T │O│ 3:0 │   SD:GPR  │   SC:GPR  │   SB:GPR  │   SA:GPR  │  1:0  │ VECTOR DEPOSIT BIT FIELD
+├─┬─┬─┬─┬─┬─┼─┬─┬─┬─┬─┬─┬─┬─┬─┬─┼─┬─┼─┼─┬─┬─┼─┬─┬─┬─┬─┬─┼─┬─┬─┬─┬─┬─┼─┬─┬─┬─┬─┬─┼─┬─┬─┬─┬─┬─┼─┬─┬─┬─┤
+│4│4│4│4│4│4│4│4│4│4│3│3│3│3│3│3│3│3│3│3│2│2│2│2│2│2│2│2│2│2│1│1│1│1│1│1│1│1│1│1│9│8│7│6│5│4│3│2│1│0│
+│9│8│7│6│5│4│3│2│1│0│9│8│7│6│5│4│3│2│1│0│9│8│7│6│5│4│3│2│1│0│9│8│7│6│5│4│3│2│1│0│ │ │ │ │ │ │ │ │ │ │
+└─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┘
+
+
+
+
+
+
+
+
+───────────────────
+60-bit Instructions
+───────────────────
+
+
+┌─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┐
+│5│5│5│5│5│5│5│5│5│5│4│4│4│4│4│4│4│4│4│4│3│3│3│3│3│3│3│3│3│3│2│2│2│2│2│2│2│2│2│2│1│1│1│1│1│1│1│1│1│1│ │ │ │ │ │ │ │ │ │ │
+│9│8│7│6│5│4│3│2│1│0│9│8│7│6│5│4│3│2│1│0│9│8│7│6│5│4│3│2│1│0│9│8│7│6│5│4│3│2│1│0│9│8│7│6│5│4│3│2│1│0│9│8│7│6│5│4│3│2│1│0│
+├─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┼─┴─┴─┴─┤
+│                                                      2:0                                                      │  1:0  │ NULL 60
+├─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┬─┼─┬─┬─┬─┤
+│5│5│5│5│5│5│5│5│5│5│4│4│4│4│4│4│4│4│4│4│3│3│3│3│3│3│3│3│3│3│2│2│2│2│2│2│2│2│2│2│1│1│1│1│1│1│1│1│1│1│9│8│7│6│5│4│3│2│1│0│
+│9│8│7│6│5│4│3│2│1│0│9│8│7│6│5│4│3│2│1│0│9│8│7│6│5│4│3│2│1│0│9│8│7│6│5│4│3│2│1│0│9│8│7│6│5│4│3│2│1│0│ │ │ │ │ │ │ │ │ │ │
+└─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┘
+
+
+
+
+
+
+
+
+Copyright 2020 Marius Dahl.
+
+This document is released under the Creative Commons Attribution-ShareAlike 4.0
+International License (CC BY-SA 4.0).
+
+A copy of the license can be found at:
+
+https://creativecommons.org/licenses/by-sa/4.0/
+
+
+Marius Dahl <mariusdahl27@protonmail.com>

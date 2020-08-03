@@ -1,0 +1,1289 @@
+The AVRA Computer Architecture
+
+Version 1.0
+
+
+Part I: Introduction
+
+
+
+
+Document Version: DRAFT 2020-07-31
+
+
+
+
+Marius Dahl
+
+
+
+
+
+
+
+
+Copyright 2020 Marius Dahl.
+
+This document is released under the Creative Commons Attribution-ShareAlike 4.0 International License (CC BY-SA 4.0).
+
+A copy of the license can be found at:
+
+https://creativecommons.org/licenses/by-sa/4.0/
+
+
+Marius Dahl:
+
+mariusdahl27@protonmail.com
+
+
+
+
+
+
+
+
+The AVRA Computer Architecture:
+
+• Part I: Introduction
+• Part II: Instruction Descriptions
+• Part III: Instruction Encoding Tables
+
+
+The latest version of this document can be found at:
+
+https://github.com/mariusdahl27/aura
+
+
+
+
+
+
+
+
+────────
+Contents
+────────
+
+
+1  Introduction
+2  Versioning and Compatibility
+3  The Computer System
+4  Processors
+     4.1  Privilege Levels
+     4.2  Exceptions
+     4.3  Interrupts
+     4.4  Architectural State
+     4.5  Data Types
+     4.6  Instructions
+     4.7  Vector Processing
+5  Primary Memory
+6  Agents
+7  The Aura Memory Consistency Model
+     7.1  Characteristics
+     7.2  Instructions Requiring Special Consideration
+8  Extending Aura
+9  Derivative Computer Architectures
+
+
+
+
+
+
+
+
+───────────────
+1  Introduction
+───────────────
+
+
+Aura[N1] is an experimental computer architecture[N2] for exploring 128-bit computing. Aura is an open architecture. A license does not have to be obtained in order to design architecture extensions and implementations. Architecture extensions and implementations may be open or proprietary.
+
+Aura has a minimal scope to maximize implementation freedom. It defines a base architecture that is missing most of the privileged architecture necessary for realizing a complete computer system. The missing features must be provided by implementation-specific or standardized architecture extensions in order to realize a functional implementation. There are a small number of restrictions on the design of these extensions, in order to ensure that an implementation's privileged architecture has can support the base architecture.
+
+
+[N1]: 'Aura' is the Classical Latin word for 'breeze'. 'Aura' should be pronounced as it is in Classical Latin to distinguish it from the English word, and it may be written in the Classical convention ('AVRA') if desired.
+
+[N2]: For brevity, this document also refers to 'computer architecture' as 'architecture'.
+
+
+
+
+
+
+
+
+───────────────────────────────
+2  Versioning and Compatibility
+───────────────────────────────
+
+
+The Architecture Version Number (AVN) is a unique 128-bit integer. The value '0' is reserved for private experimental use. The value '0' is shared by all experimental versions and is unsuitable for production implementations. AVNs are assigned in sequential order starting from '0'. AVN assignments are permanent. All unassigned AVNs are reserved.
+
+As of this document version, the following AVNs have been assigned:
+
+• 128'D0: Experimental
+• 128'D1: Aura Version 1.0
+
+
+Compatibility is not required between different versions of Aura. This allows Aura to avoid the complexity and cost that arises when very different versions must be compatible. It is expected, but not required, that a later version of Aura would be backwards compatible with the preceding version (at minimum), or the preceding n versions (at most), where n is a reasonable (small) number.
+
+
+
+
+
+
+
+
+──────────────────────
+3  The Computer System
+──────────────────────
+
+
+Aura is a computer architecture for a digital, general-purpose, stored-program computer. An Aura computer system consists of one or more processors, the primary memory, and one or more agents. The architecture directly supports the multiple instruction, multiple data (MIMD) multiprocessing paradigm via the shared primary memory and memory consistency model.
+
+
+
+
+
+
+
+
+─────────────
+4  Processors
+─────────────
+
+
+A processor is an abstract entity that has its own instruction and data streams. Each processor operates independently and concurrently with all other processors and agents in an Aura computer system. In the Aura computer architecture, the concept of a processor is unrelated to any physical entity that may be called a processor in another context.
+
+The processors in an Aura computer system may implement different versions of the architecture if they are mutually compatible. Additionally, all of the implemented architecture extensions must be mutually compatible.
+
+When an Aura computer system is started, each processor begins performing the stored-program computer instruction cycle. This instruction cycle is repeats until the Aura computer system is stopped.
+
+A processor's instruction stream is not guaranteed to be coherent with the primary memory. If a processor implementation does not provide coherence between its instruction stream and the primary primary, it is required to provide a privileged mechanism for enforcing coherence via an architecture extension.
+
+Processors must implement an architecture extension that provides a privileged mechanism for interrupting other processors and agents. The privilege level of this mechanism must be the highest privilege level supported by the processor.
+
+Processors address other processors using a 128-bit processor address. A subset of the 128-bit processor address space may be supported by limiting the size of the processor address to some non-zero integral number of bits.
+
+Processors address agents using a 128-bit address. A subset of the 128-bit agent address space may be supported by limiting the size of the agent address to some non-zero integral number of bits.
+
+
+
+
+─────────────────────
+4.1  Privilege Levels
+─────────────────────
+
+
+The base architecture provides a framework for security via privilege levels. All instructions have a privilege level, which expresses the operating privilege level required to execute the instructions. Because architectural state is accessed by instructions, and the exception and interrupt mechanisms build upon the privilege level framework, these also privilege levels.
+
+Every processor operates in one of the defined privilege levels at all times: its operating privilege level. Only architectural state and instructions with a privilege level equal to or less than the operating privilege level can be accessed or executed, respectively. The initial operating privilege level of all processors is the highest supported privilege level.
+
+Attempting to execute an instruction that requires a higher operating privilege level than the current one produces a precise exception (INSUFFICIENT PRIVILEGE). This exception has a privilege level that is one level higher than the operating privilege level used during the attempted execution.
+
+The base architecture has two privilege levels:
+
+• 0: Unprivileged
+• 1: Environment
+
+The privilege level is specified as an unsigned integer. The privilege level specified corresponds to its magnitude; zero is unprivileged, and all values greater than zero are privileged. Architecture extensions may define additional privilege levels.
+
+The base architecture does not define the architectural state and instructions for supporting privilege levels. These features must be defined as architecture extensions.
+
+
+
+
+───────────────
+4.2  Exceptions
+───────────────
+
+
+Exceptions are signals generated by instructions to indicate two facts:
+
+• The instruction has encountered an exceptional condition. In this context, "exceptional" means the opposite of common. In practice, this may be the ideal, not the reality.
+• The exceptional condition can only be resolved by software that runs in a privilege level that is higher than the one the instruction ran in.
+
+An exception causes the processor to stop receiving external interrupts, elevate its operating privilege level to the one required by the exception, and to transfer control to the exceptional condition-resolving software (such as an operating system's exception handler).
+
+After the exceptional condition has been resolved, the privileged software returns from the exception by restoring the processor's former operating privilege level, and by transferring control back to the appropriate instruction.
+
+Exceptions are internal to the processor that executed the exception-causing instruction. They do not modify any architectural state or cause a transfer of control in another processor or agent.
+
+There are two types of exceptions: precise and imprecise. The type of exception generated depends on the nature of the condition.
+
+Precise exceptions leave the processor architectural state as it was before the exception-causing instruction was executed (the exception-causing instruction does not modify any processor architectural state). The control transfer must occur immediately after the exception-causing instruction.
+
+Imprecise exceptions allow the processor architectural state to be modified by instructions following the exception-causing instruction. The control transfer must occur eventually, but not necessarily immediately after the exception-causing instruction.
+
+The defined exceptional condition that necessitated the exception is identified by its abstract exception identifier. This identifier is conceptual in nature, it does not have an integral value, and consequently cannot be used by implementations to represent the condition in any architectural state.
+
+Implementations must define a concrete exception identifier, a unique integer code, for each abstract exception identifier. The base architecture does not define any concrete exception identifiers because implementations should devise their own optimal encoding.
+
+Control is transferred to the first whole instruction in the instruction package located at the memory address registered for the exception condition-resolving software. At minimum, each privilege level used by exceptions has its own piece of exceptional condition-resolving software, which can handle all the exceptions that have the same privilege level. Architecture extensions may provide a mechanism for registering a memory address for exception condition-resolving software that are specialized for classes of exceptions or individual exceptions.
+
+These registered memory addresses are contained in the processor's privileged architectural state. Each piece of state has the same the privilege level as that of the exceptions it serves.
+
+At minimum, the exceptional condition-resolving software requires the following information in order to successfully resolve the exceptional condition:
+
+• The operating privilege level the processor was in when it executed the exception-causing instruction.
+• The memory address of the instruction package containing the exception-causing instruction. For instructions that span two instruction packages, the memory address is that of the instruction package that contains the leading part of the instruction.
+• The integer that identifies which instruction inside an instruction package is the exception-causing instruction.
+• The concrete exception identifier.
+
+This information is written to the processor's architectural state when an exception is generated. There is a set of this state for each privilege level that is used by exceptions. The privilege level of this state is that of the software required to resolve the exceptional condition.
+
+Architecture extensions may define additional information that is saved in order to successfully resolve the exceptional condition, or in order to improve the performance of resolving the exceptional condition.
+
+The base architecture defines exceptions as requirements that must be met by all implementations. A functional computer system requires further treatment on exceptions that is outside the scope of the base architecture. Architecture extensions must complete the base architecture.
+
+The base architecture permits this architecture extensions to redefine the privilege levels of exceptions to a higher level if necessary.
+
+
+
+
+──────────────────────────────
+Abstract Exception Identifiers
+──────────────────────────────
+
+
+• INSUFFICIENT PRIVILEGE
+
+  Type: Precise
+  Description: See Section 4.1
+
+
+• INVALID INSTRUCTION
+
+  Type: Precise
+  Description: See Section 4.6
+
+
+• INVALID INSTRUCTION PACKAGE
+
+  Type: Precise
+  Description: See Section 4.6
+
+
+• INVALID SPANNED INSTRUCTION
+
+  Type: Precise
+  Description: See Section 4.6
+
+
+• UNALIGNED ELEMENT SELECT
+  Type: Precise
+  Description: See Part II, Section 23
+
+
+
+
+───────────────
+4.3  Interrupts
+───────────────
+
+
+Interrupts are signals that request attention. There are two types of interrupts, based on the origin of the interrupt from the perspective of the processor that received it: internal and external.
+
+Internal interrupts originate from the same processor that received it. They are a mechanism for less-privileged software to request attention from more-privileged software.
+
+A processor generates internal interrupts by executing certain instructions. The privilege level of these interrupts is determined by the interrupt-generating instruction.
+
+External interrupts originate from another processor or from an agent. They are a mechanism for processors and agents to request attention from a processor.
+
+Processors can send interrupts to other processors and agents. Interrupts are sent by a processor to another processor or agent are unordered, but cannot be speculative. The interrupts received by a processor or agent do not have to be in the same order in which they were sent. Mechanisms to enforce interrupt ordering may be provided by architecture extensions.
+
+External interrupts have the same privilege level as the instructions that generated them.
+
+Processors can disable the reception of external interrupts. The reception of internal interrupts cannot be disabled.
+
+An interrupt causes the processor to cease receiving other interrupts, change its operating privilege level to that of the interrupt (if it is not already in that level), and transfer control to the software handling the interrupt (such as an operating system's interrupt handler).
+
+After the interrupt has been serviced, the interrupt-handling software returns from the interrupt by restoring the processor's former operating privilege level (if necessary), and by transferring control to the appropriate instruction.
+
+Control is transferred to the first whole instruction in the instruction package at the memory address registered for the interrupt-handling software. At minimum, each privilege level used by an interrupts has its own piece of interrupt-handling software, which can handle all interrupts that have the same privilege level.
+
+These registered memory addresses are contained the processor's privileged architecture state. Each piece of state has the same privilege level as that of the interrupts it serves.
+
+The base architecture permits architecture extensions to redefine the privilege levels of interrupts to a higher level if necessary.
+
+The base architecture defines interrupts as requirements that must be met by all implementations. A functional computer system requires further treatment on interrupts that is outside the scope of the base architecture. Architecture extensions must complete the base architecture.
+
+
+
+
+────────────────────────
+4.4  Architectural State
+────────────────────────
+
+
+Each processor has the following architectural state:
+
+• An instruction package memory address register (IPMAR)
+• A general-purpose register (GPR) set
+• A carry register (CR) set
+• A real number register (RNR) set
+
+The above architectural state has a privilege level of −1 (User).
+
+The IPMAR is 128 bits wide. It holds the 128-bit memory address of instruction package that contains the instruction being executed, or the trailing part of the instruction being executed.
+
+The GPR set contains 64 registers, each 128 bits wide. Each GPR is identified by its register index (GPR[0]—GPR[63]). These registers are primarily intended for holding integers for addressing and computation. Each GPR is associated with the CR that has same register index (for example, GPR[0] is associated with CR[0]).
+
+The CR set contains 64 registers, each 1 bit wide. Each CR is identified by its register index (CR[0]—CR[63]). These registers are used to accommodate the most-significant bit of the 129-bit results produced by some integer instructions. Each CR is associated with the GPR that the same register index (for example, CR[0] is associated with GPR[0]).
+
+The RNR set contains 64 registers, each 128 bits wide. Each RNR is identified by its register index (RNR[0]—RNR[63]). These registers are primarily intended for holding real numbers for computation, and the integer operands and results of instructions that consume or produce integers and real numbers.
+
+All registers have an unpredictable initial value, except for the IPMAR, which has an initial value of 128'B0.
+
+Bits in all registers are numbered starting from zero. The first bit is the least-significant bit.
+
+
+
+
+───────────────
+4.5  Data Types
+───────────────
+
+
+Aura supports plain words, unsigned integers, and signed integers (with the two's complement representation). Aura has a 128-bit native word size. The native size of these data types is equal to the native word size. Aura supports 128-bit scalars and five types of vector.
+
+
+
+
+───────────
+Plain Words
+───────────
+
+
+The plain word data type does not interpret the bits in a word as a value. The bits are treated as a collection of bits where only the value of individual bits are considered. Plain words are supported as scalars and as elements in vectors.
+
+
+
+
+────────
+Integers
+────────
+
+
+Unsigned integers and signed integers (with the two's complement representation) are supported as scalars and as elements in vectors.
+
+
+Unsigned Integer Numerical Ranges:
+
+┌──────┬─────┬──────────────────────────────────────────────────────┐
+│ Size │ MIN │                                                  MAX │
+├──────┼─────┼──────────────────────────────────────────────────────┤
+│    8 │   0 │                                                  255 │
+├──────┼─────┼──────────────────────────────────────────────────────┤
+│   16 │   0 │                                               65,535 │
+├──────┼─────┼──────────────────────────────────────────────────────┤
+│   32 │   0 │                                        4,294,967,295 │
+├──────┼─────┼──────────────────────────────────────────────────────┤
+│   64 │   0 │                           18,446,744,073,709,551,615 │
+├──────┼─────┼──────────────────────────────────────────────────────┤
+│  128 │   0 │  340,282,366,920,938,463,463,374,607,431,768,211,455 │
+└──────┴─────┴──────────────────────────────────────────────────────┘
+
+
+Signed Integer Numerical Ranges:
+
+┌──────┬─────┬──────────────────────────────────────────────────────┐
+│ Size │     │                                                      │
+├──────┼─────┼──────────────────────────────────────────────────────┤
+│    8 │ MIN │                                                 −128 │
+│      │ MAX │                                                  127 │
+├──────┼─────┼──────────────────────────────────────────────────────┤
+│   16 │ MIN │                                              −32,768 │
+│      │ MAX │                                               32,767 │
+├──────┼─────┼──────────────────────────────────────────────────────┤
+│   32 │ MIN │                                       −2,147,483,648 │
+│      │ MAX │                                        2,147,483,647 │
+├──────┼─────┼──────────────────────────────────────────────────────┤
+│   64 │ MIN │                           −9,223,372,036,854,775,808 │
+│      │ MAX │                            9,223,372,036,854,775,807 │
+├──────┼─────┼──────────────────────────────────────────────────────┤
+│  128 │ MIN │ −170,141,183,460,469,231,731,687,303,715,884,105,728 │
+│      │ MAX │  170,141,183,460,469,231,731,687,303,715,884,105,727 │
+└──────┴─────┴──────────────────────────────────────────────────────┘
+
+
+
+
+────────────
+Real Numbers
+────────────
+
+
+Aura does not support any real number data types in the base architecture. All support for real numbers, both data types and instructions, must be provided by architecture extensions. Support for real numbers has been omitted because of the relative impermanence of real number representations compared to those for integers.
+
+
+
+
+───────
+Vectors
+───────
+
+
+There are four vector types: V8, V16, V32, and V64. The characteristics of these vectors are given in the following table:
+
+
+┌────────┬─────────┬────────────┐
+│ Vector │ Element │ Vector     │
+│ Type   │ Size    │ Length     │
+│        │ (Bits)  │ (Elements) │
+├────────┼─────────┼────────────┤
+│ V8     │ 8       │ 16         │
+├────────┼─────────┼────────────┤
+│ V16    │ 16      │ 8          │
+├────────┼─────────┼────────────┤
+│ V32    │ 32      │ 4          │
+├────────┼─────────┼────────────┤
+│ V64    │ 64      │ 2          │
+└────────┴─────────┴────────────┘
+
+
+The vector length is the number of elements a vector contains.
+
+The layout of these vectors is given below:
+
+
+V8 Layout:
+
+┌─────────┬─────┬─────┐
+│ Element │ MSB │ LSB │
+├─────────┼─────┼─────┤
+│  0      │   7 │   0 │
+│  1      │  15 │   8 │
+│  2      │  23 │  16 │
+│  3      │  31 │  24 │
+│  4      │  39 │  32 │
+│  5      │  47 │  40 │
+│  6      │  55 │  48 │
+│  7      │  63 │  56 │
+│  8      │  71 │  64 │
+│  9      │  79 │  72 │
+│ 10      │  87 │  80 │
+│ 11      │  95 │  88 │
+│ 12      │ 103 │  96 │
+│ 13      │ 111 │ 104 │
+│ 14      │ 119 │ 112 │
+│ 15      │ 127 │ 120 │
+└─────────┴─────┴─────┘
+
+
+V16 Layout:
+
+┌─────────┬─────┬─────┐
+│ Element │ MSB │ LSB │
+├─────────┼─────┼─────┤
+│ 0       │  15 │   0 │
+│ 1       │  31 │  16 │
+│ 2       │  47 │  32 │
+│ 3       │  63 │  48 │
+│ 4       │  79 │  64 │
+│ 5       │  95 │  80 │
+│ 6       │ 111 │  96 │
+│ 7       │ 127 │ 112 │
+└─────────┴─────┴─────┘
+
+
+V32 Layout:
+
+┌─────────┬─────┬─────┐
+│ Element │ MSB │ LSB │
+├─────────┼─────┼─────┤
+│ 0       │  31 │   0 │
+│ 1       │  63 │  32 │
+│ 2       │  95 │  64 │
+│ 3       │ 127 │  96 │
+└─────────┴─────┴─────┘
+
+
+V64 Layout:
+
+┌─────────┬─────┬─────┐
+│ Element │ MSB │ LSB │
+├─────────┼─────┼─────┤
+│ 0       │  63 │   0 │
+│ 1       │ 127 │  64 │
+└─────────┴─────┴─────┘
+
+
+
+
+─────────────────
+4.6  Instructions
+─────────────────
+
+
+Instructions are 30, 40, 50, or 60 bits long. Multiple instructions are packaged into 128-bit words called 'instruction packages' because they are smaller than the smallest addressable unit of memory (a 128-bit word). Consequently, instructions are generally addressed indirectly at the instruction package level, and the architecture does not expose the addressing of instructions within an instruction package in most cases. 
+
+To improve code density, instructions that cannot fit into an instruction package are split into two parts: the low-order part is the 'leading part' and the high-order part is the 'trailing part'. These parts are placed into two adjacent instruction packages. The leading part resides in the instruction package with the smaller memory address; the trailing part resides in the instruction package with the larger memory address (this convention is reversed if the instruction package containing the low-order part of the instruction is stored in the last word in the primary memory because of memory address warp-around).
+
+The first instruction in an instruction package is the first wholly contained instruction. An instruction's trailing part is considered to belong to the instruction package containing its leading part. The memory address of such an instruction is the memory address of the instruction package containing its leading part part.
+
+Instruction packages consists of two parts: an 8-bit 'Format' field that occupies bits 0—7, and a 120-bit 'Payload' field that occupies bits 8—127.
+
+The Format field is an 8-bit unsigned integer that specifies the format of the Payload field. The format determines the number of instructions in the Payload field, the sizes of these instructions, the positions of these instructions in the Payload field, whether or not there is a leading part of instruction from the previous instruction package, whether or not the last instruction in the instruction package crosses instruction packages, and whether or not there is a 'Zero' field.
+
+There are 157 formats that permit the instruction package to accommodate all combinations of the aforementioned features. The Format field has 256 possible values, of which 157 are assigned to the defined formats. All unused values are reserved. An instruction package with a Format field that contains an unused value causes a precise exception (INVALID INSTRUCTION PACKAGE) to be generated. This exception has a privilege level of 0 (Environment).
+
+The length of an instruction that crosses instruction packages is determined by the Format fields of the two instruction packages that contains its parts. The Format fields of instruction package pairs must be in agreement in regards to whether or not there is an instruction crossing their boundary, and the length of this instruction if one exists. Otherwise, a precise exception (INVALID SPANNED INSTRUCTION) is generated.
+
+To elaborate, if the first instruction package in a pair has a 40-bit leading part of an instruction in bits 80—119 of its Payload field, then the second instruction package must have either a 10- or 20-bit trailing part of an instruction in bits 0—9 or 0—19, respectively.
+
+The later instruction package cannot lack a trailing part of an instruction because the earlier instruction package has a leading part of an instruction. Also, the second instruction package cannot have a trailing part of an instruction greater than 20 bits in length because an instruction's maximum length is 60 bits.
+
+The requirement for the Format fields of the current and previous instruction packages to agree is waived at initialization and when there is a transfer of control (such as branch to another instruction package), since it would not make sense for there to be spanned instructions in these cases. The requirement is not enforced until execution has advanced sufficiently to caused the IPMAR to be incremented.
+
+Some instruction package formats have a 'Zero' sub-field in the high-order 10 or 20 bits of the Payload field. This sub-field does not contain any part of an instruction and is filled with zeros. If this invariant does not hold, an INVALID INSTRUCTION PACKAGE is generated.
+
+The primary purpose of the 'Zero' field is to terminate basic blocks that cannot fill the last instruction package's Payload field with an instruction due to insufficient space. This ensures maximum instruction density by not requiring an unnecessary NULL instruction (that would cross instruction packages). The secondary purpose is to improve performance by prevent an instruction from crossing instruction packages if doing so will cause a reduction in performance.
+
+Instructions in an instruction package are executed sequentially (unless there is a control flow instruction or some kind of event such as an exception or interrupt). Execution begins at the first instruction in an instruction package. A precise exception (INVALID INSTRUCTION) is generated when an unrecognized instruction is encountered. This exception has a privilege level of 0 (Environment).
+
+
+
+
+─────────────────────
+Payload Field Formats
+─────────────────────
+
+
+Legend:
+
+• The Format code is specified as a decimal number to the right of each format.
+• Each sub-field contains a letter that identifies what the sub-field is:
+    • I: Instruction
+    • L: Leading Part (of an instruction)
+    • T: Trailing Part (of an instruction)
+    • Z: Zero Sub-field
+• The number in parentheses is the number of bits in the sub-field.
+• The number after the colon of 'I' sub-fields identifies whether the instruction is the first, second, third, or fourth instruction in the instruction package.
+• Some 'I' sub-fields have an 'L' after the colon and number. This indicates that the sub-field is the leading part of an instruction that crosses instruction packages.
+
+
+┌───────────┬─────────────────┬─────────────────┬─────────────────┬─────┐
+│    Z (20) │        I:2 (30) │        I:1 (30) │        I:0 (30) │   T │   0
+│           │                 │                 │                 │ (10)│
+├───────────┼─────────────────┼─────────────────┼─────────────────┼─────┤
+│ I:2L (20) │        I:2 (30) │        I:1 (30) │        I:0 (30) │   T │   1
+│           │                 │                 │                 │ (10)│
+├─────┬─────┴─────────────────┼─────────────────┼─────────────────┼─────┤
+│   Z │              I:2 (40) │        I:1 (30) │        I:0 (30) │   T │   2
+│ (10)│                       │                 │                 │ (10)│
+├─────┼───────────────────────┼─────────────────┼─────────────────┼─────┤
+│ I:3L│              I:2 (40) │        I:1 (30) │        I:0 (30) │   T │   3
+│ (10)│                       │                 │                 │ (10)│
+├─────┴───────────────────────┼─────────────────┼─────────────────┼─────┤
+│                    I:2 (50) │        I:1 (30) │        I:0 (30) │   T │   4
+│                             │                 │                 │ (10)│
+├─────────────────────────────┼─────────────────┼─────────────────┼─────┤
+│                   I:2L (50) │        I:1 (30) │        I:0 (30) │   T │   5
+│                             │                 │                 │ (10)│
+├─────┬─────────────────┬─────┴─────────────────┼─────────────────┼─────┤
+│   Z │        I:2 (30) │              I:1 (40) │        I:0 (30) │   T │   6
+│ (10)│                 │                       │                 │ (10)│
+├─────┼─────────────────┼───────────────────────┼─────────────────┼─────┤
+│ I:3L│        I:2 (30) │              I:1 (40) │        I:0 (30) │   T │   7
+│ (10)│                 │                       │                 │ (10)│
+├─────┴─────────────────┼───────────────────────┼─────────────────┼─────┤
+│              I:2 (40) │              I:1 (40) │        I:0 (30) │   T │   8
+│                       │                       │                 │ (10)│
+├───────────────────────┼───────────────────────┼─────────────────┼─────┤
+│             I:2L (40) │              I:1 (40) │        I:0 (30) │   T │   9
+│                       │                       │                 │ (10)│
+├─────────────────┬─────┴───────────────────────┼─────────────────┼─────┤
+│        I:2 (30) │                    I:1 (50) │        I:0 (30) │   T │  10
+│                 │                             │                 │ (10)│
+├─────────────────┼─────────────────────────────┼─────────────────┼─────┤
+│       I:2L (30) │                    I:1 (50) │        I:0 (30) │   T │  11
+│                 │                             │                 │ (10)│
+├───────────┬─────┴─────────────────────────────┼─────────────────┼─────┤
+│    Z (20) │                          I:1 (60) │        I:0 (30) │   T │  12
+│           │                                   │                 │ (10)│
+├───────────┼───────────────────────────────────┼─────────────────┼─────┤
+│ I:2L (20) │                          I:1 (60) │        I:0 (30) │   T │  13
+│           │                                   │                 │ (10)│
+├─────┬─────┴───────────┬─────────────────┬─────┴─────────────────┼─────┤
+│   Z │        I:2 (30) │        I:1 (30) │              I:0 (40) │   T │  14
+│ (10)│                 │                 │                       │ (10)│
+├─────┼─────────────────┼─────────────────┼───────────────────────┼─────┤
+│ I:3L│        I:2 (30) │        I:1 (30) │              I:0 (40) │   T │  15
+│ (10)│                 │                 │                       │ (10)│
+├─────┴─────────────────┼─────────────────┼───────────────────────┼─────┤
+│              I:2 (40) │        I:1 (30) │              I:0 (40) │   T │  16
+│                       │                 │                       │ (10)│
+├───────────────────────┼─────────────────┼───────────────────────┼─────┤
+│             I:2L (40) │        I:1 (30) │              I:0 (40) │   T │  17
+│                       │                 │                       │ (10)│
+├─────────────────┬─────┴─────────────────┼───────────────────────┼─────┤
+│        I:2 (30) │              I:1 (40) │              I:0 (40) │   T │  18
+│                 │                       │                       │ (10)│
+├─────────────────┼───────────────────────┼───────────────────────┼─────┤
+│       I:2L (30) │              I:1 (40) │              I:0 (40) │   T │  19
+│                 │                       │                       │ (10)│
+├───────────┬─────┴───────────────────────┼───────────────────────┼─────┤
+│       Z   │                    I:1 (50) │              I:0 (40) │   T │  20
+│      (20) │                             │                       │ (10)│
+├───────────┼─────────────────────────────┼───────────────────────┼─────┤
+│ I:2L (20) │                    I:1 (50) │              I:0 (40) │   T │  21
+│           │                             │                       │ (10)│
+├─────┬─────┴─────────────────────────────┼───────────────────────┼─────┤
+│   Z │                          I:1 (60) │              I:0 (40) │   T │  22
+│ (10)│                                   │                       │ (10)│
+├─────┼───────────────────────────────────┼───────────────────────┼─────┤
+│ I:2L│                          I:1 (60) │              I:0 (40) │   T │  23
+│ (10)│                                   │                       │ (10)│
+├─────┴───────────┬─────────────────┬─────┴───────────────────────┼─────┤
+│        I:2 (30) │        I:1 (30) │                    I:0 (50) │   T │  24
+│                 │                 │                             │ (10)│
+├─────────────────┼─────────────────┼─────────────────────────────┼─────┤
+│        I:2 L:30 │        I:1 (30) │                    I:0 (50) │   T │  25
+│                 │                 │                             │ (10)│
+├───────────┬─────┴─────────────────┼─────────────────────────────┼─────┤
+│    Z (20) │              I:1 (40) │                    I:0 (50) │   T │  26
+│           │                       │                             │ (10)│
+├───────────┼───────────────────────┼─────────────────────────────┼─────┤
+│ I:2L (20) │              I:1 (40) │                    I:0 (50) │   T │  27
+│           │                       │                             │ (10)│
+├─────┬─────┴───────────────────────┼─────────────────────────────┼─────┤
+│   Z │                    I:1 (50) │                    I:0 (50) │   T │  28
+│ (10)│                             │                             │ (10)│
+├─────┼─────────────────────────────┼─────────────────────────────┼─────┤
+│ I:2L│                    I:1 (50) │                    I:0 (50) │   T │  29
+│ (10)│                             │                             │ (10)│
+├─────┴─────────────────────────────┼─────────────────────────────┼─────┤
+│                          I:1 (60) │                    I:0 (50) │   T │  30
+│                                   │                             │ (10)│
+├───────────┬─────────────────┬─────┴─────────────────────────────┼─────┤
+│    Z (20) │        I:1 (30) │                          I:0 (60) │   T │  31
+│           │                 │                                   │ (10)│
+├───────────┼─────────────────┼───────────────────────────────────┼─────┤
+│ I:2L (20) │        I:1 (30) │                          I:0 (60) │   T │  32
+│           │                 │                                   │ (10)│
+├─────┬─────┴─────────────────┼───────────────────────────────────┼─────┤
+│   Z │              I:1 (40) │                          I:0 (60) │   T │  33
+│ (10)│                       │                                   │ (10)│
+├─────┼───────────────────────┼───────────────────────────────────┼─────┤
+│ I:2L│              I:1 (40) │                          I:0 (60) │   T │  34
+│ (10)│                       │                                   │ (10)│
+├─────┴───────────────────────┼───────────────────────────────────┼─────┤
+│                    I:1 (50) │                          I:0 (60) │   T │  35
+│                             │                                   │ (10)│
+├─────────────────────────────┼───────────────────────────────────┼─────┤
+│                   I:1L (50) │                          I:0 (60) │   T │  36
+│                             │                                   │ (10)│
+├─────┬─────────────────┬─────┴───────────┬─────────────────┬─────┴─────┤
+│   Z │        I:2 (30) │        I:1 (30) │        I:0 (30) │    T (20) │  37
+│ (10)│                 │                 │                 │           │
+├─────┼─────────────────┼─────────────────┼─────────────────┼───────────┤
+│ I:3L│        I:2 (30) │        I:1 (30) │        I:0 (30) │    T (20) │  38
+│ (10)│                 │                 │                 │           │
+├─────┴─────────────────┼─────────────────┼─────────────────┼───────────┤
+│              I:2 (40) │        I:1 (30) │        I:0 (30) │    T (20) │  39
+├───────────────────────┼─────────────────┼─────────────────┼───────────┤
+│             I:2L (40) │        I:1 (30) │        I:0 (30) │    T (20) │  40
+├─────────────────┬─────┴─────────────────┼─────────────────┼───────────┤
+│        I:2 (30) │              I:1 (40) │        I:0 (30) │    T (20) │  41
+├─────────────────┼───────────────────────┼─────────────────┼───────────┤
+│       I:2L (30) │              I:1 (40) │        I:0 (30) │    T (20) │  42
+├───────────┬─────┴───────────────────────┼─────────────────┼───────────┤
+│    Z (20) │                    I:1 (50) │        I:0 (30) │    T (20) │  43
+├───────────┼─────────────────────────────┼─────────────────┼───────────┤
+│ I:2L (20) │                    I:1 (50) │        I:0 (30) │    T (20) │  44
+├─────┬─────┴─────────────────────────────┼─────────────────┼───────────┤
+│   Z │                          I:1 (60) │        I:0 (30) │    T (20) │  45
+│ (10)│                                   │                 │           │
+├─────┼───────────────────────────────────┼─────────────────┼───────────┤
+│ I:2L│                          I:1 (60) │        I:0 (30) │    T (20) │  46
+│ (10)│                                   │                 │           │
+├─────┴───────────┬─────────────────┬─────┴─────────────────┼───────────┤
+│        I:2 (30) │        I:1 (30) │              I:0 (40) │    T (20) │  47
+├─────────────────┼─────────────────┼───────────────────────┼───────────┤
+│       I:2L (30) │        I:1 (30) │              I:0 (40) │    T (20) │  48
+├───────────┬─────┴─────────────────┼───────────────────────┼───────────┤
+│    Z (20) │              I:1 (40) │              I:0 (40) │    T (20) │  49
+├───────────┼───────────────────────┼───────────────────────┼───────────┤
+│ I:2L (20) │              I:1 (40) │              I:0 (40) │    T (20) │  50
+├─────┬─────┴───────────────────────┼───────────────────────┼───────────┤
+│   Z │                    I:1 (50) │              I:0 (40) │    T (20) │  51
+│ (10)│                             │                       │           │
+├─────┼─────────────────────────────┼───────────────────────┼───────────┤
+│ I:2L│                    I:1 (50) │              I:0 (40) │    T (20) │  52
+│ (10)│                             │                       │           │
+├─────┴─────────────────────────────┼───────────────────────┼───────────┤
+│                          I:1 (60) │              I:0 (40) │    T (20) │  53
+├───────────┬─────────────────┬─────┴───────────────────────┼───────────┤
+│    Z (20) │        I:1 (30) │                    I:0 (50) │    T (20) │  54
+├───────────┼─────────────────┼─────────────────────────────┼───────────┤
+│ I:2L (20) │        I:1 (30) │                    I:0 (50) │    T (20) │  55
+├─────┬─────┴─────────────────┼─────────────────────────────┼───────────┤
+│   Z │              I:1 (40) │                    I:0 (50) │    T (20) │  56
+│ (10)│                       │                             │           │
+├─────┼───────────────────────┼─────────────────────────────┼───────────┤
+│ I:2L│              I:1 (40) │                    I:0 (50) │    T (20) │  57
+│ (10)│                       │                             │           │
+├─────┴───────────────────────┼─────────────────────────────┼───────────┤
+│                    I:1 (50) │                    I:0 (50) │    T (20) │  58
+├─────────────────────────────┼─────────────────────────────┼───────────┤
+│                   I:1L (50) │                    I:0 (50) │    T (20) │  59
+├─────┬─────────────────┬─────┴─────────────────────────────┼───────────┤
+│   Z │        I:1 (30) │                          I:0 (60) │    T (20) │  60
+│ (10)│                 │                                   │           │
+├─────┼─────────────────┼───────────────────────────────────┼───────────┤
+│ I:2L│        I:1 (30) │                          I:0 (60) │    T (20) │  61
+│ (10)│                 │                                   │           │
+├─────┴─────────────────┼───────────────────────────────────┼───────────┤
+│              I:1 (40) │                          I:0 (60) │    T (20) │  62
+├───────────────────────┼───────────────────────────────────┼───────────┤
+│             I:1L (40) │                          I:0 (60) │    T (20) │  63
+├─────────────────┬─────┴───────────┬─────────────────┬─────┴───────────┤
+│        I:2 (30) │        I:1 (30) │        I:0 (30) │          T (30) │  64
+├─────────────────┼─────────────────┼─────────────────┼─────────────────┤
+│       I:2L (30) │        I:1 (30) │        I:0 (30) │          T (30) │  65
+├─────────────────┼─────────────────┼─────────────────┼─────────────────┤
+│        I:3 (30) │        I:2 (30) │        I:1 (30) │        I:0 (30) │  66
+├─────────────────┼─────────────────┼─────────────────┼─────────────────┤
+│       I:3L (30) │        I:2 (30) │        I:1 (30) │        I:0 (30) │  67
+├───────────┬─────┴─────────────────┼─────────────────┼─────────────────┤
+│    Z (20) │              I:1 (40) │        I:0 (30) │          T (30) │  68
+├───────────┼───────────────────────┼─────────────────┼─────────────────┤
+│ I:2L (20) │              I:1 (40) │        I:0 (30) │          T (30) │  69
+├───────────┼───────────────────────┼─────────────────┼─────────────────┤
+│    Z (20) │              I:2 (40) │        I:1 (30) │        I:0 (30) │  70
+├───────────┼───────────────────────┼─────────────────┼─────────────────┤
+│ I:3L (20) │              I:2 (40) │        I:1 (30) │        I:0 (30) │  71
+├─────┬─────┴───────────────────────┼─────────────────┼─────────────────┤
+│   Z │                    I:1 (50) │        I:0 (30) │          T (30) │  72
+│ (10)│                             │                 │                 │
+├─────┼─────────────────────────────┼─────────────────┼─────────────────┤
+│ I:2L│                    I:1 (50) │        I:0 (30) │          T (30) │  73
+│ (10)│                             │                 │                 │
+├─────┼─────────────────────────────┼─────────────────┼─────────────────┤
+│   Z │                    I:2 (50) │        I:1 (30) │        I:0 (30) │  74
+│ (10)│                             │                 │                 │
+├─────┼─────────────────────────────┼─────────────────┼─────────────────┤
+│ I:3L│                    I:2 (50) │        I:1 (30) │        I:0 (30) │  75
+│ (10)│                             │                 │                 │
+├─────┴─────────────────────────────┼─────────────────┼─────────────────┤
+│                          I:1 (60) │        I:0 (30) │          T (30) │  76
+├───────────────────────────────────┼─────────────────┼─────────────────┤
+│                          I:2 (60) │        I:1 (30) │        I:0 (30) │  77
+├───────────┬─────────────────┬─────┴─────────────────┼─────────────────┤
+│    Z (20) │        I:1 (30) │              I:0 (40) │          T (30) │  78
+├───────────┼─────────────────┼───────────────────────┼─────────────────┤
+│ I:2L (20) │        I:1 (30) │              I:0 (40) │          T (30) │  79
+├───────────┼─────────────────┼───────────────────────┼─────────────────┤
+│    Z (20) │        I:2 (30) │              I:1 (40) │        I:0 (30) │  80
+├───────────┼─────────────────┼───────────────────────┼─────────────────┤
+│ I:3L (20) │        I:2 (30) │              I:1 (40) │        I:0 (30) │  81
+├─────┬─────┴─────────────────┼───────────────────────┼─────────────────┤
+│   Z │              I:1 (40) │              I:0 (40) │          T (30) │  82
+│ (10)│                       │                       │                 │
+├─────┼───────────────────────┼───────────────────────┼─────────────────┤
+│ I:2L│              I:1 (40) │              I:0 (40) │          T (30) │  83
+│ (10)│                       │                       │                 │
+├─────┼───────────────────────┼───────────────────────┼─────────────────┤
+│   Z │              I:2 (40) │              I:1 (40) │        I:0 (30) │  84
+│ (10)│                       │                       │                 │
+├─────┼───────────────────────┼───────────────────────┼─────────────────┤
+│ I:3L│              I:2 (40) │              I:1 (40) │        I:0 (30) │  85
+│ (10)│                       │                       │                 │
+├─────┴───────────────────────┼───────────────────────┼─────────────────┤
+│                    I:1 (50) │              I:0 (40) │          T (30) │  86
+├─────────────────────────────┼───────────────────────┼─────────────────┤
+│                   I:1L (50) │              I:0 (40) │          T (30) │  87
+├─────────────────────────────┼───────────────────────┼─────────────────┤
+│                    I:2 (50) │              I:1 (40) │        I:0 (30) │  88
+├─────────────────────────────┼───────────────────────┼─────────────────┤
+│                   I:2L (50) │              I:1 (40) │        I:0 (30) │  89
+├─────┬─────────────────┬─────┴───────────────────────┼─────────────────┤
+│   Z │        I:1 (30) │                    I:0 (50) │          T (30) │  90
+│ (10)│                 │                             │                 │
+├─────┼─────────────────┼─────────────────────────────┼─────────────────┤
+│ I:2L│        I:1 (30) │                    I:0 (50) │          T (30) │  91
+│ (10)│                 │                             │                 │
+├─────┼─────────────────┼─────────────────────────────┼─────────────────┤
+│   Z │        I:2 (30) │                    I:1 (50) │        I:0 (30) │  92
+│ (10)│                 │                             │                 │
+├─────┼─────────────────┼─────────────────────────────┼─────────────────┤
+│ I:3L│        I:2 (30) │                    I:1 (50) │        I:0 (30) │  93
+│ (10)│                 │                             │                 │
+├─────┴─────────────────┼─────────────────────────────┼─────────────────┤
+│              I:1 (40) │                    I:0 (50) │          T (30) │  94
+├───────────────────────┼─────────────────────────────┼─────────────────┤
+│             I:1L (40) │                    I:0 (50) │          T (30) │  95
+├───────────────────────┼─────────────────────────────┼─────────────────┤
+│              I:2 (40) │                    I:1 (50) │        I:0 (30) │  96
+├───────────────────────┼─────────────────────────────┼─────────────────┤
+│             I:2L (40) │                    I:1 (50) │        I:0 (30) │  97
+├─────────────────┬─────┴─────────────────────────────┼─────────────────┤
+│        I:1 (30) │                          I:0 (60) │          T (30) │  98
+├─────────────────┼───────────────────────────────────┼─────────────────┤
+│       I:1L (30) │                          I:0 (60) │          T (30) │  99
+├─────────────────┼───────────────────────────────────┼─────────────────┤
+│        I:2 (30) │                          I:1 (60) │        I:0 (30) │ 100
+├─────────────────┼───────────────────────────────────┼─────────────────┤
+│       I:2L (30) │                          I:1 (60) │        I:0 (30) │ 101
+├───────────┬─────┴───────────┬─────────────────┬─────┴─────────────────┤
+│    Z (20) │        I:1 (30) │        I:0 (30) │                T (40) │ 102
+├───────────┼─────────────────┼─────────────────┼───────────────────────┤
+│ I:2L (20) │        I:1 (30) │        I:0 (30) │                T (40) │ 103
+├───────────┼─────────────────┼─────────────────┼───────────────────────┤
+│    Z (20) │        I:2 (30) │        I:1 (30) │              I:0 (40) │ 104
+├───────────┼─────────────────┼─────────────────┼───────────────────────┤
+│ I:3L (30) │        I:2 (30) │        I:1 (30) │              I:0 (40) │ 105
+├─────┬─────┴─────────────────┼─────────────────┼───────────────────────┤
+│   Z │              I:1 (40) │        I:0 (30) │                T (40) │ 106
+│ (10)│                       │                 │                       │
+├─────┼───────────────────────┼─────────────────┼───────────────────────┤
+│ I:2L│              I:1 (40) │        I:0 (30) │                T (40) │ 107
+│ (10)│                       │                 │                       │
+├─────┼───────────────────────┼─────────────────┼───────────────────────┤
+│   Z │              I:2 (40) │        I:1 (30) │              I:0 (40) │ 108
+│ (10)│                       │                 │                       │
+├─────┼───────────────────────┼─────────────────┼───────────────────────┤
+│ I:3L│              I:2 (40) │        I:1 (30) │              I:0 (40) │ 109
+│ (10)│                       │                 │                       │
+├─────┴───────────────────────┼─────────────────┼───────────────────────┤
+│                    I:1 (50) │        I:0 (30) │                T (40) │ 110
+├─────────────────────────────┼─────────────────┼───────────────────────┤
+│                   I:1L (50) │        I:0 (30) │                T (40) │ 111
+├─────────────────────────────┼─────────────────┼───────────────────────┤
+│                    I:2 (50) │        I:0 (30) │              I:0 (40) │ 112
+├─────────────────────────────┼─────────────────┼───────────────────────┤
+│                   I:2L (50) │        I:0 (30) │              I:0 (40) │ 113
+├─────┬─────────────────┬─────┴─────────────────┼───────────────────────┤
+│   Z │        I:1 (30) │              I:0 (40) │                T (40) │ 114
+│ (10)│                 │                       │                       │
+├─────┼─────────────────┼───────────────────────┼───────────────────────┤
+│ 1:2L│        I:1 (30) │              I:0 (40) │                T (40) │ 115
+│ (10)│                 │                       │                       │
+├─────┼─────────────────┼───────────────────────┼───────────────────────┤
+│   Z │        I:2 (30) │              I:1 (40) │              I:0 (40) │ 116
+│ (10)│                 │                       │                       │
+├─────┼─────────────────┼───────────────────────┼───────────────────────┤
+│ 1:3L│        I:2 (30) │              I:1 (40) │              I:0 (40) │ 117
+│ (10)│                 │                       │                       │
+├─────┴─────────────────┼───────────────────────┼───────────────────────┤
+│              I:1 (40) │              I:0 (40) │                T (40) │ 118
+├───────────────────────┼───────────────────────┼───────────────────────┤
+│             I:1L (40) │              I:0 (40) │                T (40) │ 119
+├───────────────────────┼───────────────────────┼───────────────────────┤
+│              I:2 (40) │              I:1 (40) │              I:0 (40) │ 120
+├───────────────────────┼───────────────────────┼───────────────────────┤
+│             I:2L (40) │              I:1 (40) │              I:0 (40) │ 121
+├─────────────────┬─────┴───────────────────────┼───────────────────────┤
+│        I:1 (30) │                    I:0 (50) │                T (40) │ 122
+├─────────────────┼─────────────────────────────┼───────────────────────┤
+│       I:1L (30) │                    I:0 (50) │                T (40) │ 123
+├─────────────────┼─────────────────────────────┼───────────────────────┤
+│        I:2 (30) │                    I:1 (50) │              I:0 (40) │ 124
+├─────────────────┼─────────────────────────────┼───────────────────────┤
+│       I:2L (40) │                    I:1 (50) │              I:0 (40) │ 125
+├───────────┬─────┴─────────────────────────────┼───────────────────────┤
+│    Z (20) │                          I:0 (60) │                T (40) │ 126
+├───────────┼───────────────────────────────────┼───────────────────────┤
+│ I:1L (20) │                          I:0 (60) │                T (40) │ 127
+├───────────┼───────────────────────────────────┼───────────────────────┤
+│    Z (20) │                          I:1 (60) │              I:0 (40) │ 128
+├───────────┼───────────────────────────────────┼───────────────────────┤
+│ I:2L (20) │                          I:1 (60) │              I:0 (40) │ 129
+├─────┬─────┴───────────┬─────────────────┬─────┴───────────────────────┤
+│   Z │        I:1 (30) │        I:0 (30) │                      T (50) │ 130
+│ (10)│                 │                 │                             │
+├─────┼─────────────────┼─────────────────┼─────────────────────────────┤
+│ I:2L│        I:1 (30) │        I:0 (30) │                      T (50) │ 131
+│ (10)│                 │                 │                             │
+├─────┼─────────────────┼─────────────────┼─────────────────────────────┤
+│   Z │        I:2 (30) │        I:1 (30) │                    I:0 (50) │ 132
+│ (10)│                 │                 │                             │
+├─────┼─────────────────┼─────────────────┼─────────────────────────────┤
+│ I:3L│        I:2 (30) │        I:1 (30) │                    I:0 (50) │ 133
+│ (10)│                 │                 │                             │
+├─────┴─────────────────┼─────────────────┼─────────────────────────────┤
+│              I:1 (40) │        I:0 (30) │                      T (50) │ 134
+├───────────────────────┼─────────────────┼─────────────────────────────┤
+│             I:1L (40) │        I:0 (30) │                      T (50) │ 135
+├───────────────────────┼─────────────────┼─────────────────────────────┤
+│              I:2 (40) │        I:1 (30) │                    I:0 (50) │ 136
+├───────────────────────┼─────────────────┼─────────────────────────────┤
+│             I:2L (40) │        I:1 (30) │                    I:0 (50) │ 137
+├─────────────────┬─────┴─────────────────┼─────────────────────────────┤
+│        I:1 (30) │              I:0 (40) │                      T (50) │ 138
+├─────────────────┼───────────────────────┼─────────────────────────────┤
+│       I:1L (30) │              I:0 (40) │                      T (50) │ 139
+├─────────────────┼───────────────────────┼─────────────────────────────┤
+│        I:2 (30) │              I:1 (40) │                    I:0 (50) │ 140
+├─────────────────┼───────────────────────┼─────────────────────────────┤
+│       I:2L (30) │              I:1 (40) │                    I:0 (50) │ 141
+├───────────┬─────┴───────────────────────┼─────────────────────────────┤
+│    Z (20) │                    I:0 (50) │                      T (50) │ 142
+├───────────┼─────────────────────────────┼─────────────────────────────┤
+│ I:1L (20) │                    I:0 (50) │                      T (50) │ 143
+├───────────┼─────────────────────────────┼─────────────────────────────┤
+│    Z (20) │                    I:1 (50) │                    I:0 (50) │ 144
+├───────────┼─────────────────────────────┼─────────────────────────────┤
+│ I:2L (20) │                    I:1 (50) │                    I:0 (50) │ 145
+├─────┬─────┴─────────────────────────────┼─────────────────────────────┤
+│   Z │                          I:0 (60) │                      T (50) │ 146
+│ (10)│                                   │                             │
+├─────┼───────────────────────────────────┼─────────────────────────────┤
+│ I:1L│                          I:0 (60) │                      T (50) │ 147
+│ (10)│                                   │                             │
+├─────┼───────────────────────────────────┼─────────────────────────────┤
+│   Z │                          I:1 (60) │                    I:0 (50) │ 148
+│ (10)│                                   │                             │
+├─────┼───────────────────────────────────┼─────────────────────────────┤
+│ I:2L│                          I:1 (60) │                    I:0 (50) │ 149
+│ (10)│                                   │                             │
+├─────┴───────────┬─────────────────┬─────┴─────────────────────────────┤
+│        I:2 (30) │        I:1 (30) │                          I:0 (60) │ 150
+├─────────────────┼─────────────────┼───────────────────────────────────┤
+│       I:2L (30) │        I:1 (30) │                          I:0 (60) │ 151
+├───────────┬─────┴─────────────────┼───────────────────────────────────┤
+│    Z (20) │              I:1 (40) │                          I:0 (60) │ 152
+├───────────┼───────────────────────┼───────────────────────────────────┤
+│ I:2L (20) │              I:1 (40) │                          I:0 (60) │ 153
+├─────┬─────┴───────────────────────┼───────────────────────────────────┤
+│   Z │                    I:1 (50) │                          I:0 (60) │ 154
+│ (10)│                             │                                   │
+├─────┼─────────────────────────────┼───────────────────────────────────┤
+│ I:2L│                    I:1 (50) │                          I:0 (60) │ 155
+│ (10)│                             │                                   │
+├─────┴─────────────────────────────┼───────────────────────────────────┤
+│                          I:1 (60) │                          I:0 (60) │ 156
+└───────────────────────────────────┴───────────────────────────────────┘
+
+
+
+
+──────────────────────
+4.7  Vector Processing
+──────────────────────
+
+
+
+
+───────────────
+Scalar Operands
+───────────────
+
+
+Scalar operands in vector instructions have a value that is constant. That is, for every iteration of the vector operation, the value of the scalar operands is the same. The scalar operands are consumed when they are read for the first iteration. Afterwards, their registers are no longer a part of the vector instruction, and can be reused by a subsequent instruction.
+
+
+
+
+─────────────
+The 'T' Field
+─────────────
+
+
+Some vector instructions contain a 2-bit 'T' field that specifies the vector type of the operands and result. The value of the 'T' field identifies the vector type. The values and their definitions are as follows:
+
+• 2'B00: V64
+• 2'B01: V32
+• 2'B10: V16
+• 2'B11: V8
+
+Some vector instructions may define an alternative use, or additional uses, for the 'T' field.
+
+
+
+
+───────────
+The 'O' Bit
+───────────
+
+
+Some vector instructions can mix scalar operands with vector operands. Instructions that have this capability generally specify the operand types involved via the 'O' bit. Generally, one or more operands are 128-bit scalars if the value of the 'O' bit is 1'B0; and all operands are vectors if the value of the 'O' bit is 1'B1. Some vector instructions may define an alternative interpretation for the 'O' bit.
+
+
+
+
+
+
+
+
+─────────────────
+5  Primary Memory
+─────────────────
+
+
+The primary memory is an abstract entity consisting of architectural state that is shared by all processors and agents in the computer system. The architectural state is a random-access memory (RAM) with a 128-bit flat address space. The addressable unit is a 128-bit word. The address space and addressable unit combined permits the primary memory to have a maximum capacity of 2**135 bits (2**132 octets).
+
+The primary memory's abstract nature permits implementations to choose the organization that is most suitable for the implementations' role. For example, the primary memory does not have to be a physically monolithic entity, it may instead be composed out of multiple physical entities.
+
+Implementations may support a subset of the 128-bit primary memory address space by computing primary memory addresses to the desired number of bits and sign-extending it to 128 bits. For example, for a 64-bit address space, the implementation computes 64-bit memory addresses, and sign-extends them to 128 bits by using bit 63 as the sign bit.
+
+Accessing words outside of the supported primary memory address space causes a precise exception (PRIMARY MEMORY ADDRESS OUT OF RANGE) to be generated. This exception has a privilege level of 0 (Environment).
+
+For convenience, the descriptions of instructions that compute memory addresses in The Aura Computer Architecture document are written as if the full 128-bit addresses are always computed.
+
+The primary memory can be read and written by all processors and agents in the computer system. Reads and writes do not have any side effects. A side effect is any effect other than the effect or effects prescribed by the mechanism that caused the read or write.
+
+The primary memory is required to have a word at the first address (address zero), because the initial value of the instruction package memory address register is zero. The primary memory is not required to have a word at every other address in the address space, and whether an address has a word or not can vary over time. It is guaranteed that each address either has or does not have a word. There cannot be an intermediate position where some bits of a 128-bit word are non-existent.
+
+Reads of addresses with a non-existent word return an unpredictable value. Writes to such addresses do not perform any action, and STORE ATOMIC instructions always fail. Implementations can define additional effects for accesses to non-existent words. If additional effects have been defined, they are not considered to be side effects.
+
+Architecture extensions can impose additional restrictions on the characteristics of non-existent words. The architecture does not provide any specific mechanism for querying which addresses have words and which do not, or for notifying software when the addresses containing existent and non-existent words have changed.
+
+The architecture conceptualizes there being existent and non-existent words in order to provide architectural clarity when an implementation is configured or operated with a primary memory whose capacity is less than that supported by its implemented address space. This effort should not be construed as condoning the haphazard implementation or configuration of non-existent words throughout the address space. Implementations and configurations are expected to be sensible.
+
+The initial value of the existent word at each address is unpredictable from the perspective of the architecture. In order to realize practical implementations that are capable of running software, there must be deterministic behavior after the Aura computer system is started. This deterministic behavior is the effect of an implementation-specific mechanism that "initializes" some of the primary memory with data from storage when an Aura computer system is started.
+
+
+
+
+
+
+
+
+─────────
+6  Agents
+─────────
+
+
+Agents are computer systems that perform tasks on the behalf of processors. Examples of such tasks include accelerating specialized workloads and providing input/output capability. Agents operate independently of, and concurrently with, other agents and processors in an Aura computer system.
+
+Agents are abstract entities that do not imply any concrete mapping to physical entities. For example, it is possible for multiple agents to be implemented as a time-division multiplexed state machine, or as an equal number of dedicated programmable general-purpose computers.
+
+Agents are heterogeneous with respect to processors. Each agent may have its own architecture, implementation, or both; thus, agents may be heterogeneous to other agents by any degree. The architecture and implementation of agents is mostly outside the scope of the Aura computer architecture. Aura merely requires the architectures of agents to have certain characteristics in order to inter-operate with processors and the primary memory.
+
+Agents are identified and addressed by a 128-bit agent address. Agents can support a subset of the 128-bit agent address space by limiting the size of the agent address to some number of bits.
+
+Agents address processors using a 128-bit processor address. Agents may support a subset of the 128-bit processor address space by limiting the size of the processor address to some number of bits.
+
+Agents must be able to send and receive interrupts to and from processors. Additionally, agents can optionally send and receive interrupts to and from other agents. Interrupts sent by an agent to a processor or another agent are unordered, but cannot be speculative. The interrupts received by a processor or agent do not have to be in the same order in which they were sent. An agent may have mechanisms to enforce interrupt ordering.
+
+Agents must be able to access the primary memory in the same manner as processors. Which types of memory accesses are supported depends on the functionality provided by the agent. For example, an agent may only support reads if its functionality does not require writes.
+
+Agents are not required to support the entire primary memory address space. If an agent supports a subset of the primary memory address space, it follows the standard primary memory address space sub-setting rules.
+
+
+
+
+
+
+
+
+────────────────────────────────────
+7  The Aura Memory Consistency Model
+────────────────────────────────────
+
+
+The Aura Memory Consistency Model (AMCM) is a set of rules that define which values a read of the primary memory may return. The AMCM is a weak memory consistency model (MCM). It has few implicitly enforced orderings between memory accesses, which enables efficient, high-performance implementations. The majority of enforced orderings must be explicitly stated.
+
+For processors, software explicitly states which orderings are enforced by inserting appropriately specified MEMORY BARRIER instructions into the static instruction stream where necessary. For agents, the equivalent is accomplished by an agent-defined mechanism that is equivalent or similar to the functionality of the MEMORY BARRIER instruction.
+
+Processors and agents may implement an MCM that is stronger than the AMCM if its weak nature is undesirable. This stronger MCM must be compatible with all processors and agents in the computer system.
+
+NOTE: This description of the AMCM should be treated as a rough outline of intent, not as a precise definition. As of this document version, the AMCM has not been formally defined, analyzed, or verified.
+
+
+
+
+────────────────────
+7.1  Characteristics
+────────────────────
+
+
+
+
+───────────────────────────────────────────────────────
+The Definition of 'Program Order' and 'Operation Order'
+───────────────────────────────────────────────────────
+
+
+The AMCM pertains to memory accesses (reads and writes) and memory ordering mechanisms. The cause of these events (an instruction in a program, or a hardware state machine) is irrelevant. The order in which events are initiated is related to the order of the mechanisms that initiate them. For processors, this order is the 'program order', which is the order in which events are relevant instructions (such as those that initiate memory accesses) appear in a processor's dynamic instruction stream. The equivalent of this concept for agents is called the 'operation order', since agents are not required to be stored-program computers, and may be, for example, hardware state machines. The event order is the order in which relevant events (such as those that initiate memory accesses) appear in an agent's operation sequence.
+
+
+
+
+──────────────────
+Implicit Orderings
+──────────────────
+
+
+The AMCM enforces the following memory accesses and memory ordering mechanisms:
+
+• A read or write precedes a memory ordering mechanism in program or operation order.
+• A memory ordering mechanism precedes a read or write in program or operation order.
+• A memory ordering mechanism precedes another memory ordering mechanism in program or operation order.
+
+• A read precedes a write in program or operation order, if their addresses are identical.
+• A write precedes a read in program or operation order, if their addresses are identical. This ordering is enforced only on the processor or agent that initiated the write and read, not between writes and reads from different processors or agents.
+• A write precedes another write in program or operation order, if their addresses are identical.
+
+The instructions in a processor's dynamic instruction stream or the events in an agent's event sequence may be related by dependencies. Some of these dependencies have implications for memory ordering. There are three types of dependencies:
+
+• Address dependence: A read value is consumed to produced the memory address for a memory access.
+• Control dependence: A read value is consumed by a control flow instruction or an equivalent mechanism that decides whether a memory access is initiated or not.
+• Data dependence: A read value is consumed by a write as the write value.
+
+These dependencies may be direct or indirect; in the former case, the read value is immediately consumed by the memory access, whereas in the latter case, the read value may undergo processing by any number of intermediate instructions or operations before being consumed.
+
+The existence of any dependence between a read and a write that succeeds the read in program or operation order causes them to be ordered as they are in the program or operation order.
+
+
+
+
+─────────────────────────────
+The Definition of 'Performed'
+─────────────────────────────
+
+
+Reads and writes by a given processor or agent are 'performed' with respect to other processors and agents.
+
+
+
+
+──────────────
+Write Progress
+──────────────
+
+
+Writes from a given processor or agent must be performed with respect to all other processors and agents after a finite amount of time.
+
+
+
+
+───────────────────
+Write Serialization
+───────────────────
+
+
+Writes to the same primary memory location by any processor or agent are serialized. The order in which the writes are serialized is unpredictable.
+
+
+
+
+───────────────
+Write Atomicity
+───────────────
+
+
+The AMCM is not multi-copy write atomic. Writes from a given processor or agent are propagated to all other processors and agents at different times, different orders, or both. A given processor or agent (including the processor or agent from which the write originated from) may read from a write that has not propagated to all processors and agents.
+
+
+
+
+───────────────────────────────────────────
+Memory Ordering Mechanisms and Cumulativity
+───────────────────────────────────────────
+
+
+The MEMORY BARRIER instruction and the equivalent mechanism in agents are 'cumulative'. This property is defined as follows:
+
+• A given processor or agent (P1 or A1), uses a memory ordering mechanism (M).
+• The memory accesses from P1 or A1 that precede M in program order or the equivalent concept in agents are members of set P.
+• All memory accesses from all other processors and agents that have been performed with respect to P1 or A1 before M was used are also members of set P.
+• The memory accesses from P1 or A1 that succeed M in program order or the equivalent concept in agents are members of set S.
+• All memory accesses from all other processors and agents that are ordered after M, by implicit orderings or explicit memory ordering mechanisms, are also members of set S.
+
+
+
+
+─────────────────────────────────────────────────
+7.2  Instructions Requiring Special Consideration
+─────────────────────────────────────────────────
+
+
+Some instructions in the architecture have characteristics that require special consideration by the AMCM. These instructions are documented here. Agents access the primary memory in the same or similar manner as processors. If an agent has an architecture or organization (since agents may be non-programmable) that replicates or is similar in functionality to any of the instructions here, it must take the same special considerations.
+
+
+
+
+────────────────────────────────────────
+STORE ATOMIC Instructions and Operations
+────────────────────────────────────────
+
+
+STORE ATOMIC instructions that do not write to the primary memory (because they did not meet the necessary conditions) do not initiate a write. STORE ATOMIC instructions that do not initiate a write are consequently invisible to the AMCM.
+
+
+
+
+
+
+
+
+──────────────────────────
+8  Architecture Extensions
+──────────────────────────
+
+
+Aura can be extended by Architecture Extensions (AEs). These can extend the architecture in any manner, but cannot redefine the base architecture (redefining the base architecture is exclusive to new versions).
+
+For example, adding support for virtual memory to the base architecture is permitted because it does not contradict the base architecture (which does not have any conception of virtual and physical addresses); the virtual-to-physical address translation that is performed is invisible to the base architecture, and the supporting architectural state and instructions added are clearly extensions of the base architecture. Contrarily, redefining the primary memory so that it is octet-addressed instead of word-addressed is forbidden because it contradicts the base architecture.
+
+AEs are uniquely identified by the combination of two 128-bit unsigned integers: an Architecture Extension Namespace (AEN) and Architecture Extension Identifier (AEI).
+
+Every instruction format across all instruction sizes have a 4-bit primary operation code field in bits 0—3. Primary operation codes in the range of 4'D8 through to 4'D15, inclusive, are reserved for use by AEs in AENs greater than AEN 0. AEs generally cannot use any other primary operation codes.
+
+AEs are not guaranteed to be free of instruction encoding collisions. It is the responsibility of the implementer to ensure that they do not implement AEs with instruction encoding conflicts.
+
+An AE can be promoted into the base architecture in a future version of Aura. If the AEN of the AE is AEN 0, promotion is straightforward. The AEI of the AE is reported as supported by the implementation, even though the AE is now a part of the base architecture, and not an optional AE.
+
+If the AEN of the AE is not AEN 0, promotion requires all the instructions defined by the AE to be re-encoded so that their primary operation codes lie within the appropriate range (4'D0 through to 4'D7, inclusive).
+
+The original instruction encoding of AE may be supported by the implementation. If this is the case, the AEI of the AE is reported by supported by the implementation. If this is not the case, then binary compatibility is lost, and the AEI of promoted AE must be reported as unsupported by the implementation.
+
+The ability to have two instruction encodings of a promoted AE is intended to give time to software to migrate from the older encoding to the newer. This allows the encoding space used by the older encoding to be reused at a later time.
+
+Future versions of Aura may reuse instruction encodings used by some AEs for other purposes. If this occurs, those AEs must be reported as unsupported by the implementations of the future version of Aura.
+
+
+
+
+─────────────────────────────────
+Architecture Extension Namespaces
+─────────────────────────────────
+
+
+AENs disambiguate identical AEIs by providing information that identifies the creator of an AE. AENs are assigned to AE creators by Aura's architect upon request. There are 2**128 AENs, which are assigned in sequential order starting from 128'B0.
+
+Under normal circumstances, an entity may only be assigned one AEN (Aura's architect is exempt from restriction). AEN assignments are permanent, however, if warranted, the AEN assignment can be updated upon request. These requests must not be for trivial reasons; requests deemed to be unwarranted will be rejected.
+
+An AEN assigned to an entity that has been subsumed by another entity is reassigned to the subsuming entity. The subsuming entity may already have an AEN, and it may gain multiple AENs through subsuming other entities. The subsuming entity may use the AEN assigned to the subsumed entity for any purpose, but it is expected that the usual usage of the AEN be continued. 
+
+Subsuming an entity with an AEN warrants an update of the subsumed entity's AEN.
+
+Of the 2**128 AENs, two are assigned in the base architecture:
+
+• 128'D0, AEN 0: The Aura computer architecture
+• 128'D1, AEN 1: The Aura computer architecture
+
+AEN 0 is intended to contain AEs that provide unprivileged, processing-related functionality (such as floating-point arithmetic instructions). These AEs are open, optional, and are intended to be implemented widely. The AEs in this AEN can be viewed as "official" AEs. As such, the instructions belonging to these AEs may have instruction encodings with primary operation codes that are in the range of 4'D0 through to 4'D7, inclusive. It is not guaranteed these AEs are compatible with each other (since instructions in different AEs may have the same instruction encoding).
+
+AEN 1 is intended to contain AEs that provide privileged, system-related functionality (such as virtual memory). These AEs are open and optional, but are not intended to be implemented widely; it is expected that most implementers will design the most appropriate system-related functionality for their application. These AEs can be viewed as the equivalent of those AEs created by other implementers.
+
+AEN 0 and 1 are ultimately assigned to Aura's architect.
+
+All other AEN assignments are documented separately.
+
+
+
+
+──────────────────────────────────
+Architecture Extension Identifiers
+──────────────────────────────────
+
+
+AEIs uniquely identify an AE within an AEN. Each AEN contains 2**128 AEIs, which are assigned in sequential order starting from 128'B0. AEI assignments are permanent. Entities that have AEN(s) are responsible for assigning the AEIs contained within their AEN(s), and for documenting and publishing their AEI assignments (the publishing of AEIs is optional).
+
+
+
+
+
+
+
+
+────────────────────────────────────
+9  Derivative Computer Architectures
+────────────────────────────────────
+
+
+Aura is an open computer architecture from which separate architectures can be derived (or forked). Derivatives of Aura are by definition, not Aura. Thus, if any Aura versioning and architecture extension identification features are retained, these are reset: no assigned Architecture Version Numbers, Architecture Extension Namespaces, and Architecture Extension Identifiers are carried over to the derived architecture.

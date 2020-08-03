@@ -1,0 +1,1701 @@
+The AVRA Computer Architecture
+
+Version 1.0
+
+
+Part III: Instruction Encoding Tables
+
+
+
+
+Document Version: DRAFT 2020-07-31
+
+
+
+
+Marius Dahl
+
+
+
+
+
+
+
+
+Copyright 2020 Marius Dahl.
+
+This document is released under the Creative Commons Attribution-ShareAlike 4.0 International License (CC BY-SA 4.0).
+
+A copy of the license can be found at:
+
+https://creativecommons.org/licenses/by-sa/4.0/
+
+
+Marius Dahl:
+
+mariusdahl27@protonmail.com
+
+
+
+
+
+
+
+
+The AVRA Computer Architecture:
+
+• Part I: Introduction
+• Part II: Instruction Descriptions
+• Part III: Instruction Encoding Tables
+
+
+The latest version of this document can be found at:
+
+https://github.com/mariusdahl27/aura
+
+
+
+
+
+
+
+
+────────
+Contents
+────────
+
+
+1  Conventions
+2  30-bit Instructions
+3  40-bit Instructions
+4  50-bit Instructions
+5  60-bit Instructions
+
+
+
+
+
+
+
+
+──────────────
+1  Conventions
+──────────────
+
+
+The instruction encoding is described in four sections, each corresponding to an instruction size (the architecture has 30-, 40-, 50-, or 60-bit instructions). Each section is further divided into subsections for each instruction format. The title of each subsection is the name of format. Each subsection lists the relevant information for the instructions that use the format.
+
+The instruction format names are systematically constructed. They consist of a sequence of hyphen-separated starting bit and field name pairs, starting from the low-order field. These field names are either the same as those used in the instruction descriptions (Part II), or are sufficiently similar to those so that the correspondence between them can always be determined.
+
+Operation code fields are named "OC" and are suffixed by a number. This number denotes the order in which the operation code fields are decoded. Operation code fields are given as decimal numbers.
+
+Register fields that have a single purpose (for example, specifying the first source register), and that refer to a single register set, are named after their purpose, and state the register set enclosed in a parentheses.
+
+Register fields that refer to different register sets are named according to their purpose (for example, SA).
+
+Register fields that have multiple purposes (for example, specifying a source and a destination) are named "F", and are suffixed by a number that distinguishes multiple such fields. The numbering of these fields starts at one, for the least-significant field.
+
+Fields that are named "MBZ" are must-be-zero fields.
+
+
+
+
+
+
+
+
+──────────────────────
+2  30-bit Instructions
+──────────────────────
+
+
+
+
+──────────────────────────────
+2.1  0:OC1-4:OC3-16:OC2-24:OC4
+──────────────────────────────
+
+
+┌───────┬──────┬──────────┐
+│ Field │ Size │ Position │
+├───────┼──────┼──────────┤
+│ OC1   │ 4    │ 0—3      │
+│ OC3   │ 12   │ 4—15     │
+│ OC2   │ 8    │ 16—23    │
+│ OC4   │ 6    │ 24—29    │
+└───────┴──────┴──────────┘
+
+
+┌─────┬─────┬─────┬─────┬─────────────┐
+│ OC4 │ OC2 │ OC3 │ OC1 │ Instruction │
+├─────┼─────┼─────┼─────┼─────────────┤
+│ 0   │ 0   │ 0   │ 0   │ NULL 30     │
+└─────┴─────┴─────┴─────┴─────────────┘
+
+
+
+
+
+
+
+
+────────────────────────────────────────────
+2.2  0:OC1-4:OC4-10:OC3-14:OC6-16:OC2-24:OC5
+────────────────────────────────────────────
+
+
+┌───────┬──────┬──────────┐
+│ Field │ Size │ Position │
+├───────┼──────┼──────────┤
+│ OC1   │  4   │ 0—3      │
+│ OC4   │  6   │ 4—9      │
+│ OC3   │  4   │ 10—13    │
+│ OC6   │  2   │ 14—15    │
+│ OC2   │  8   │ 16—23    │
+│ OC5   │  6   │ 24—29    │
+└───────┴──────┴──────────┘
+
+
+┌─────┬─────┬─────┬─────┬─────┬─────┬─────────────────────────────┐
+│ OC5 │ OC2 │ OC6 │ OC3 │ OC4 │ OC1 │ Instruction                 │
+├─────┼─────┼─────┼─────┼─────┼─────┼─────────────────────────────┤
+│ 0   │ 1   │ 0   │ 0   │ 0   │ 0   │ IMPRECISE EXCEPTION BARRIER │
+│ 0   │ 1   │ 2   │ 0   │ 0   │ 0   │ CALL                        │
+│ 0   │ 1   │ 3   │ 0   │ 0   │ 0   │ BREAK                       │
+└─────┴─────┴─────┴─────┴─────┴─────┴─────────────────────────────┘
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────
+2.3  0:OC1-4:OC4-10:OC3-14:OC5-16:OC2-24:DA(GPR)
+────────────────────────────────────────────────
+
+
+┌───────┬──────┬──────────┐
+│ Field │ Size │ Position │
+├───────┼──────┼──────────┤
+│ OC1   │ 4    │ 0—3      │
+│ OC4   │ 6    │ 4—9      │
+│ OC3   │ 4    │ 10—13    │
+│ OC5   │ 2    │ 14—15    │
+│ OC2   │ 8    │ 16—23    │
+│ DA    │ 6    │ 24—29    │
+└───────┴──────┴──────────┘
+
+
+┌─────┬─────┬─────┬─────┬─────┬──────────────────────┐
+│ OC2 │ OC5 │ OC3 │ OC4 │ OC1 │ Instruction          │
+├─────┼─────┼─────┼─────┼─────┼──────────────────────┤
+│ 1   │ 0   │ 0   │ 2   │ 0   │ ARCHITECTURE VERSION │
+│ 1   │ 0   │ 0   │ 3   │ 0   │ COPY 0 TO CR         │
+│ 1   │ 1   │ 0   │ 3   │ 0   │ COPY 1 TO CR         │
+│ 1   │ 2   │ 0   │ 3   │ 0   │ PACK CR TO GPR       │
+└─────┴─────┴─────┴─────┴─────┴──────────────────────┘
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────
+2.4  0:OC1-4:SA(GPR)-10:OC3-14:OC5-16:OC2-24:OC4
+────────────────────────────────────────────────
+
+
+┌───────┬──────┬──────────┐
+│ Field │ Size │ Position │
+├───────┼──────┼──────────┤
+│ OC1   │ 4    │ 0—3      │
+│ SA    │ 6    │ 4—9      │
+│ OC3   │ 4    │ 10—13    │
+│ OC5   │ 2    │ 14—15    │
+│ OC2   │ 8    │ 16—23    │
+│ OC4   │ 6    │ 24—29    │
+└───────┴──────┴──────────┘
+
+
+┌─────┬─────┬─────┬─────┬─────┬───────────────────┐
+│ OC4 │ OC2 │ OC5 │ OC3 │ OC1 │ Instruction       │
+├─────┼─────┼─────┼─────┼─────┼───────────────────┤
+│ 0   │ 1   │ 0   │ 1   │ 0   │ UNPACK GPR TO CR  │
+│ 3   │ 1   │ 0   │ 1   │ 0   │ JUMP INDIRECT     │
+│ 3   │ 1   │ 1   │ 1   │ 0   │ JUMP INDIRECT POP │
+└─────┴─────┴─────┴─────┴─────┴───────────────────┘
+
+
+
+
+
+
+
+
+──────────────────────────────────────────
+2.5  0:OC1-4:SA-10:OC3-14:OC4-16:OC2-24:DA
+──────────────────────────────────────────
+
+
+┌───────┬──────┬──────────┐
+│ Field │ Size │ Position │
+├───────┼──────┼──────────┤
+│ OC1   │ 4    │ 0—3      │
+│ SA    │ 6    │ 4—9      │
+│ OC3   │ 4    │ 10—13    │
+│ OC4   │ 2    │ 14—15    │
+│ OC2   │ 8    │ 16—23    │
+│ DA    │ 6    │ 24—29    │
+└───────┴──────┴──────────┘
+
+
+┌─────┬─────┬─────┬─────┬─────┬─────┬──────────────────────────────────────────┐
+│ DA  │ OC2 │ OC4 │ OC3 │ SA  │ OC1 │ Instruction                              │
+├─────┼─────┼─────┼─────┼─────┼─────┼──────────────────────────────────────────┤
+│ GPR │ 1   │ 0   │ 10  │ GPR │ 0   │ COPY GPR TO GPR                          │
+│ GPR │ 1   │ 2   │ 10  │ GPR │ 0   │ COPY GPR TO CR                           │
+│ GPR │ 1   │ 3   │ 10  │ GPR │ 0   │ COPY CR TO GPR                           │
+│ GPR │ 1   │ 0   │ 11  │ GPR │ 0   │ JUMP INDIRECT AND LINK                   │
+│ GPR │ 1   │ 1   │ 11  │ GPR │ 0   │ JUMP INDIRECT AND LINK WITH POP          │
+│ GPR │ 1   │ 2   │ 11  │ GPR │ 0   │ JUMP INDIRECT AND LINK WITH PUSH         │
+│ GPR │ 1   │ 3   │ 11  │ GPR │ 0   │ JUMP INDIRECT AND LINK WITH POP AND PUSH │
+│ GPR │ 1   │ 0   │ 12  │ GPR │ 0   │ ABSOLUTE VALUE                           │
+│ GPR │ 1   │ 1   │ 12  │ GPR │ 0   │ NEGATE                                   │
+│ GPR │ 1   │ 2   │ 12  │ GPR │ 0   │ COUNT ZEROS                              │
+│ GPR │ 1   │ 3   │ 12  │ GPR │ 0   │ COUNT ONES                               │
+│ GPR │ 1   │ 0   │ 13  │ GPR │ 0   │ COUNT TRAILING ZEROS                     │
+│ GPR │ 1   │ 1   │ 13  │ GPR │ 0   │ COUNT TRAILING ONES                      │
+│ GPR │ 1   │ 2   │ 13  │ GPR │ 0   │ COUNT LEADING ZEROS                      │
+│ GPR │ 1   │ 3   │ 13  │ GPR │ 0   │ COUNT LEADING ONES                       │
+│ GPR │ 3   │ 0   │ 0   │ GPR │ 0   │ CONVERT VECTOR GPR 128 TO V64 LOW        │
+│ GPR │ 3   │ 1   │ 0   │ GPR │ 0   │ CONVERT VECTOR GPR 128 TO V64 HIGH       │
+│ GPR │ 3   │ 2   │ 0   │ GPR │ 0   │ CONVERT VECTOR GPR V64 TO 128 ZERO-      │
+│     │     │     │     │     │     │     EXTEND LOW                           │
+│ GPR │ 3   │ 3   │ 0   │ GPR │ 0   │ CONVERT VECTOR GPR V64 TO 128 ZERO-      │
+│     │     │     │     │     │     │     EXTEND HIGH                          │
+│ GPR │ 3   │ 0   │ 1   │ GPR │ 0   │ CONVERT VECTOR GPR V64 TO 128 SIGN-      │
+│     │     │     │     │     │     │     EXTEND LOW                           │
+│ GPR │ 3   │ 1   │ 1   │ GPR │ 0   │ CONVERT VECTOR GPR V64 TO 128 SIGN-      │
+│     │     │     │     │     │     │     EXTEND HIGH                          │
+│ GPR │ 3   │ 2   │ 1   │ GPR │ 0   │ CONVERT VECTOR GPR V64 TO V32 LOW        │
+│ GPR │ 3   │ 3   │ 1   │ GPR │ 0   │ CONVERT VECTOR GPR V64 TO V32 HIGH       │
+│ GPR │ 3   │ 0   │ 2   │ GPR │ 0   │ CONVERT VECTOR GPR V32 TO V64 ZERO-      │
+│     │     │     │     │     │     │     EXTEND LOW                           │
+│ GPR │ 3   │ 1   │ 2   │ GPR │ 0   │ CONVERT VECTOR GPR V32 TO V64 ZERO-      │
+│     │     │     │     │     │     │     EXTEND HIGH                          │
+│ GPR │ 3   │ 2   │ 2   │ GPR │ 0   │ CONVERT VECTOR GPR V32 TO V64 SIGN-      │
+│     │     │     │     │     │     │     EXTEND LOW                           │
+│ GPR │ 3   │ 3   │ 2   │ GPR │ 0   │ CONVERT VECTOR GPR V32 TO V64 SIGN-      │
+│     │     │     │     │     │     │     EXTEND HIGH                          │
+│ GPR │ 3   │ 0   │ 3   │ GPR │ 0   │ CONVERT VECTOR GPR V32 TO V16 LOW        │
+│ GPR │ 3   │ 1   │ 3   │ GPR │ 0   │ CONVERT VECTOR GPR V32 TO V16 HIGH       │
+│ GPR │ 3   │ 2   │ 3   │ GPR │ 0   │ CONVERT VECTOR GPR V16 TO V32 ZERO-      │
+│     │     │     │     │     │     │     EXTEND LOW                           │
+│ GPR │ 3   │ 3   │ 3   │ GPR │ 0   │ CONVERT VECTOR GPR V16 TO V32 ZERO-      │
+│     │     │     │     │     │     │     EXTEND HIGH                          │
+│ GPR │ 3   │ 0   │ 4   │ GPR │ 0   │ CONVERT VECTOR GPR V16 TO V32 SIGN-      │
+│     │     │     │     │     │     │     EXTEND LOW                           │
+│ GPR │ 3   │ 1   │ 4   │ GPR │ 0   │ CONVERT VECTOR GPR V16 TO V32 SIGN-      │
+│     │     │     │     │     │     │     EXTEND HIGH                          │
+│ GPR │ 3   │ 2   │ 4   │ GPR │ 0   │ CONVERT VECTOR GPR V16 TO V8 LOW         │
+│ GPR │ 3   │ 3   │ 4   │ GPR │ 0   │ CONVERT VECTOR GPR V16 TO V8 HIGH        │
+│ GPR │ 3   │ 0   │ 5   │ GPR │ 0   │ CONVERT VECTOR GPR V8 TO V16 ZERO-       │
+│     │     │     │     │     │     │     EXTEND LOW                           │
+│ GPR │ 3   │ 1   │ 5   │ GPR │ 0   │ CONVERT VECTOR GPR V8 TO V16 ZERO-       │
+│     │     │     │     │     │     │     EXTEND HIGH                          │
+│ GPR │ 3   │ 2   │ 5   │ GPR │ 0   │ CONVERT VECTOR GPR V8 TO V16 SIGN-       │
+│     │     │     │     │     │     │     EXTEND LOW                           │
+│ GPR │ 3   │ 3   │ 5   │ GPR │ 0   │ CONVERT VECTOR GPR V8 TO V16 SIGN-       │
+│     │     │     │     │     │     │     EXTEND HIGH                          │
+│ RNR │ 3   │ 0   │ 15  │ GPR │ 0   │ COPY GPR TO RNR                          │
+│ RNR │ 4   │ 0   │ 0   │ RNR │ 0   │ COPY RNR TO RNR                          │
+│ GPR │ 4   │ 0   │ 15  │ RNR │ 0   │ COPY RNR TO GPR                          │
+└─────┴─────┴─────┴─────┴─────┴─────┴──────────────────────────────────────────┘
+
+
+
+
+
+
+
+
+────────────────────────────────────────
+2.6  0:OC1-4:SA-10:OC3-14:T-16:OC2-24:DA
+────────────────────────────────────────
+
+
+┌───────┬──────┬──────────┐
+│ Field │ Size │ Position │
+├───────┼──────┼──────────┤
+│ OC1   │ 4    │ 0—3      │
+│ SA    │ 6    │ 4—9      │
+│ OC3   │ 4    │ 10—13    │
+│ T     │ 2    │ 14—15    │
+│ OC2   │ 8    │ 16—23    │
+│ DA    │ 6    │ 24—29    │
+└───────┴──────┴──────────┘
+
+
+┌─────┬─────┬─────┬─────┬─────┬─────────────────────────────┐
+│ DA  │ OC2 │ OC3 │ SA  │ OC1 │ Instruction                 │
+├─────┼─────┼─────┼─────┼─────┼─────────────────────────────┤
+│ GPR │ 5   │ 0   │ GPR │ 0   │ VECTOR BROADCAST GPR        │
+│ GPR │ 5   │ 4   │ GPR │ 0   │ VECTOR ABSOLUTE VALUE       │
+│ GPR │ 5   │ 5   │ GPR │ 0   │ VECTOR NEGATE               │
+│ GPR │ 5   │ 6   │ GPR │ 0   │ VECTOR COUNT ZEROS          │
+│ GPR │ 5   │ 7   │ GPR │ 0   │ VECTOR COUNT ONES           │
+│ GPR │ 5   │ 8   │ GPR │ 0   │ VECTOR COUNT TRAILING ZEROS │
+│ GPR │ 5   │ 9   │ GPR │ 0   │ VECTOR COUNT TRAILING ONES  │
+│ GPR │ 5   │ 10  │ GPR │ 0   │ VECTOR COUNT LEADING ZEROS  │
+│ GPR │ 5   │ 11  │ GPR │ 0   │ VECTOR COUNT LEADING ONES   │
+│ RNR │ 6   │ 0   │ RNR │ 0   │ VECTOR BROADCAST RNR        │
+└─────┴─────┴─────┴─────┴─────┴─────────────────────────────┘
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────
+2.7  0:OC1-4:SA-10:IA-12:OC3-14:OC4-16:OC2-24:DA
+────────────────────────────────────────────────
+
+
+┌───────┬──────┬──────────┐
+│ Field │ Size │ Position │
+├───────┼──────┼──────────┤
+│ OC1   │ 4    │ 0—3      │
+│ SA    │ 6    │ 4—9      │
+│ IA    │ 2    │ 10—11    │
+│ OC3   │ 2    │ 12—13    │
+│ OC4   │ 2    │ 14—15    │
+│ OC2   │ 8    │ 16—23    │
+│ DA    │ 6    │ 24—29    │
+└───────┴──────┴──────────┘
+
+
+┌─────┬─────┬─────┬─────┬─────┬─────┬──────────────────────────────────────────┐
+│ DA  │ OC2 │ OC4 │ OC3 │ SA  │ OC1 │ Instruction                              │
+├─────┼─────┼─────┼─────┼─────┼─────┼──────────────────────────────────────────┤
+│ GPR │ 112 │ 0   │ 0   │ GPR │ 0   │ VECTOR EXTRACT ELEMENT GPR V32 ZERO-     │
+│     │     │     │     │     │     │     EXTEND IMMEDIATE                     │
+│ GPR │ 112 │ 1   │ 0   │ GPR │ 0   │ VECTOR EXTRACT ELEMENT GPR V32 SIGN-     │
+│     │     │     │     │     │     │     EXTEND IMMEDIATE                     │
+│ RNR │ 112 │ 0   │ 2   │ RNR │ 0   │ VECTOR EXTRACT ELEMENT RNR V32 IMMEDIATE │
+└─────┴─────┴─────┴─────┴─────┴─────┴──────────────────────────────────────────┘
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────
+2.8  0:OC1-4:SA-10:IA-13:OC3-14:OC4-16:OC2-24:DA
+────────────────────────────────────────────────
+
+
+┌───────┬──────┬──────────┐
+│ Field │ Size │ Position │
+├───────┼──────┼──────────┤
+│ OC1   │ 4    │ 0—3      │
+│ SA    │ 6    │ 4—9      │
+│ IA    │ 3    │ 10—12    │
+│ OC3   │ 1    │ 13       │
+│ OC4   │ 2    │ 14—15    │
+│ OC2   │ 8    │ 16—23    │
+│ DA    │ 6    │ 24—29    │
+└───────┴──────┴──────────┘
+
+
+┌─────┬─────┬─────┬─────┬─────┬─────┬──────────────────────────────────────────┐
+│ DA  │ OC2 │ OC4 │ OC3 │ SA  │ OC1 │ Instruction                              │
+├─────┼─────┼─────┼─────┼─────┼─────┼──────────────────────────────────────────┤
+│ GPR │ 113 │ 0   │ 0   │ GPR │ 0   │ VECTOR EXTRACT ELEMENT GPR V16 ZERO-     │
+│     │     │     │     │     │     │     EXTEND IMMEDIATE                     │
+│ GPR │ 113 │ 1   │ 0   │ GPR │ 0   │ VECTOR EXTRACT ELEMENT GPR V16 SIGN-     │
+│     │     │     │     │     │     │     EXTEND IMMEDIATE                     │
+│ RNR │ 113 │ 0   │ 1   │ RNR │ 0   │ VECTOR EXTRACT ELEMENT RNR V16 IMMEDIATE │
+└─────┴─────┴─────┴─────┴─────┴─────┴──────────────────────────────────────────┘
+
+
+
+
+
+
+
+
+─────────────────────────────────────────
+2.9  0:OC1-4:SA-10:IA-14:OC3-16:OC2-24:DA
+─────────────────────────────────────────
+
+
+┌───────┬──────┬──────────┐
+│ Field │ Size │ Position │
+├───────┼──────┼──────────┤
+│ OC1   │ 4    │ 0—3      │
+│ SA    │ 6    │ 4—9      │
+│ IA    │ 4    │ 10—13    │
+│ OC3   │ 2    │ 14—15    │
+│ OC2   │ 8    │ 16—23    │
+│ DA    │ 6    │ 24—29    │
+└───────┴──────┴──────────┘
+
+
+┌─────┬─────┬─────┬─────┬─────┬───────────────────────────────────────────┐
+│ DA  │ OC2 │ OC3 │ SA  │ OC1 │ Instruction                               │
+├─────┼─────┼─────┼─────┼─────┼───────────────────────────────────────────┤
+│ GPR │ 115 │ 0   │ GPR │ 0   │ VECTOR EXTRACT ELEMENT GPR V8 ZERO-EXTEND │
+│     │     │     │     │     │     IMMEDIATE                             │
+│ GPR │ 115 │ 1   │ GPR │ 0   │ VECTOR EXTRACT ELEMENT GPR V8 SIGN-EXTEND │
+│     │     │     │     │     │     IMMEDIATE                             │
+│ RNR │ 117 │ 0   │ RNR │ 0   │ VECTOR EXTRACT ELEMENT RNR V8 IMMEDIATE   │
+└─────┴─────┴─────┴─────┴─────┴───────────────────────────────────────────┘
+
+
+
+
+
+
+
+
+──────────────────────────────────────────────────
+2.10  0:OC1-4:SA(GPR)-10:SB(GPR)-16:OC2-24:DA(GPR)
+──────────────────────────────────────────────────
+
+
+┌───────┬──────┬──────────┐
+│ Field │ Size │ Position │
+├───────┼──────┼──────────┤
+│ OC1   │ 4    │ 0—3      │
+│ SA    │ 6    │ 4—9      │
+│ SB    │ 6    │ 10—15    │
+│ OC2   │ 8    │ 16—23    │
+│ DA    │ 6    │ 24—29    │
+└───────┴──────┴──────────┘
+
+
+┌─────┬─────┬────────────────────────────────────────┐
+│ OC2 │ OC1 │ Instruction                            │
+├─────┼─────┼────────────────────────────────────────┤
+│ 0   │ 1   │ ARCHITECTURE EXTENSION                 │
+│ 1   │ 1   │ ADD                                    │
+│ 2   │ 1   │ SUBTRACT                               │
+│ 3   │ 1   │ MULTIPLY UNSIGNED HIGH                 │
+│ 4   │ 1   │ MULTIPLY SIGNED BY UNSIGNED HIGH       │
+│ 5   │ 1   │ MULTIPLY SIGNED LOW                    │
+│ 6   │ 1   │ MULTIPLY SIGNED HIGH                   │
+│ 7   │ 1   │ DIVIDE UNSIGNED QUOTIENT               │
+│ 8   │ 1   │ DIVIDE UNSIGNED REMAINDER              │
+│ 9   │ 1   │ DIVIDE SIGNED QUOTIENT                 │
+│ 10  │ 1   │ DIVIDE SIGNED REMAINDER                │
+│ 11  │ 1   │ COMPARE EQUAL TO                       │
+│ 12  │ 1   │ COMPARE NOT EQUAL TO                   │
+│ 13  │ 1   │ COMPARE UNSIGNED LESS THAN             │
+│ 14  │ 1   │ COMPARE UNSIGNED LESS THAN OR EQUAL TO │
+│ 15  │ 1   │ COMPARE SIGNED LESS THAN               │
+│ 16  │ 1   │ COMPARE SIGNED LESS THAN OR EQUAL TO   │
+│ 17  │ 1   │ AND                                    │
+│ 18  │ 1   │ NOT-OR COMPLEMENT                      │
+│ 19  │ 1   │ AND COMPLEMENT                         │
+│ 20  │ 1   │ EXCLUSIVE-OR                           │
+│ 21  │ 1   │ OR                                     │
+│ 22  │ 1   │ NOT-OR                                 │
+│ 23  │ 1   │ EXCLUSIVE-NOT-OR                       │
+│ 24  │ 1   │ NOT-AND COMPLEMENT                     │
+│ 25  │ 1   │ OR COMPLEMENT                          │
+│ 26  │ 1   │ NOT-AND                                │
+│ 27  │ 1   │ SHIFT LOGICAL RIGHT                    │
+│ 28  │ 1   │ SHIFT LOGICAL LEFT                     │
+│ 29  │ 1   │ SHIFT CIRCULAR RIGHT                   │
+│ 30  │ 1   │ SHIFT CIRCULAR LEFT                    │
+│ 31  │ 1   │ SHIFT ARITHMETIC RIGHT                 │
+│ 32  │ 1   │ BIT GATHER                             │
+│ 33  │ 1   │ BIT SCATTER                            │
+└─────┴─────┴────────────────────────────────────────┘
+
+
+
+
+
+
+
+
+─────────────────────────────────────────────
+2.11  0:OC1-4:SA(GPR)-10:IA-16:OC2-24:DA(GPR)
+─────────────────────────────────────────────
+
+
+┌───────┬──────┬──────────┐
+│ Field │ Size │ Position │
+├───────┼──────┼──────────┤
+│ OC1   │ 4    │ 0—3      │
+│ SA    │ 6    │ 4—9      │
+│ IA    │ 6    │ 10—15    │
+│ OC2   │ 8    │ 16—23    │
+│ DA    │ 6    │ 24—29    │
+└───────┴──────┴──────────┘
+
+
+┌─────┬─────┬─────────────────────────────────────┐
+│ OC2 │ OC1 │ Instruction                         │
+├─────┼─────┼─────────────────────────────────────┤
+│ 112 │ 1   │ SHIFT LOGICAL RIGHT IMMEDIATE       │
+│ 113 │ 1   │ SHIFT LOGICAL RIGHT IMMEDIATE 64    │
+│ 114 │ 1   │ SHIFT LOGICAL LEFT IMMEDIATE        │
+│ 115 │ 1   │ SHIFT LOGICAL LEFT IMMEDIATE 64     │
+│ 116 │ 1   │ SHIFT CIRCULAR RIGHT IMMEDIATE      │
+│ 117 │ 1   │ SHIFT CIRCULAR RIGHT IMMEDIATE 64   │
+│ 118 │ 1   │ SHIFT CIRCULAR LEFT IMMEDIATE       │
+│ 119 │ 1   │ SHIFT CIRCULAR LEFT IMMEDIATE 64    │
+│ 120 │ 1   │ SHIFT ARITHMETIC RIGHT IMMEDIATE    │
+│ 121 │ 1   │ SHIFT ARITHMETIC RIGHT IMMEDIATE 64 │
+└─────┴─────┴─────────────────────────────────────┘
+
+
+
+
+
+
+
+
+──────────────────────────────────────────────────
+2.12  0:OC1-4:SA(RNR)-10:SB(RNR)-16:OC2-24:DA(RNR)
+──────────────────────────────────────────────────
+
+
+┌───────┬──────┬──────────┐
+│ Field │ Size │ Position │
+├───────┼──────┼──────────┤
+│ OC1   │ 4    │ 0—3      │
+│ SA    │ 6    │ 4—9      │
+│ SB    │ 6    │ 10—15    │
+│ OC2   │ 8    │ 16—23    │
+│ DA    │ 6    │ 24—29    │
+└───────┴──────┴──────────┘
+
+
+┌─────┬─────┬─────────────────────────────────────┐
+│ OC2 │ OC1 │ Instruction                         │
+├─────┼─────┼─────────────────────────────────────┤
+│ 128 │ 2   │ VECTOR DEPOSIT ELEMENT RNR V64 LOW  │
+│ 129 │ 2   │ VECTOR DEPOSIT ELEMENT RNR V64 HIGH │
+└─────┴─────┴─────────────────────────────────────┘
+
+
+
+
+
+
+
+
+──────────────────────────────────
+2.13  0:OC1-4:IA-20:OC2-24:DA(GPR)
+──────────────────────────────────
+
+
+┌───────┬──────┬──────────┐
+│ Field │ Size │ Position │
+├───────┼──────┼──────────┤
+│ OC1   │ 4    │ 0—3      │
+│ IA    │ 16   │ 4—19     │
+│ OC2   │ 4    │ 20—23    │
+│ DA    │ 6    │ 24—29    │
+└───────┴──────┴──────────┘
+
+
+┌─────┬─────┬──────────────────────────────────────────────┐
+│ OC2 │ OC1 │ Instruction                                  │
+├─────┼─────┼──────────────────────────────────────────────┤
+│ 1   │ 7   │ COPY IMMEDIATE TO GPR ZERO-EXTEND            │
+│ 2   │ 7   │ COPY IMMEDIATE TO GPR ONE-EXTEND             │
+└─────┴─────┴──────────────────────────────────────────────┘
+
+
+
+
+
+
+
+
+─────────────────────────────
+2.14  0:OC1-4:XA-20:OC2-24:XB
+─────────────────────────────
+
+
+┌───────┬──────┬──────────┐
+│ Field │ Size │ Position │
+├───────┼──────┼──────────┤
+│ OC1   │ 4    │ 0—3      │
+│ XA    │ 16   │ 4—19     │
+│ OC2   │ 4    │ 20—23    │
+│ XB    │ 6    │ 24—29    │
+└───────┴──────┴──────────┘
+
+
+┌─────┬─────┬────────────────┐
+│ OC2 │ OC1 │ Instruction    │
+├─────┼─────┼────────────────┤
+│ 12  │ 7   │ MEMORY BARRIER │
+└─────┴─────┴────────────────┘
+
+
+
+
+
+
+
+
+──────────────────────
+3  40-bit Instructions
+──────────────────────
+
+
+
+
+──────────────────────────────
+3.1  0:OC1-4:OC4-10:OC2-16:OC3
+──────────────────────────────
+
+
+┌───────┬──────┬──────────┐
+│ Field │ Size │ Position │
+├───────┼──────┼──────────┤
+│ OC1   │ 4    │ 0—3      │
+│ OC4   │ 6    │ 4—9      │
+│ OC2   │ 6    │ 10—15    │
+│ OC3   │ 24   │ 16—39    │
+└───────┴──────┴──────────┘
+
+
+┌─────┬─────┬─────┬─────┬─────────────┐
+│ OC3 │ OC2 │ OC4 │ OC1 │ Instruction │
+├─────┼─────┼─────┼─────┼─────────────┤
+│ 0   │ 0   │ 0   │ 0   │ NULL 40     │
+└─────┴─────┴─────┴─────┴─────────────┘
+
+
+
+
+
+
+
+
+────────────────────────────────────
+3.2  0:OC1-4:OC3-10:OC2-16:IA-34:OC4
+────────────────────────────────────
+
+
+┌───────┬──────┬──────────┐
+│ Field │ Size │ Position │
+├───────┼──────┼──────────┤
+│ OC1   │ 4    │ 0—3      │
+│ OC3   │ 6    │ 4—9      │
+│ OC2   │ 6    │ 10—15    │
+│ IA    │ 16   │ 16—31    │
+│ MBZ   │ 2    │ 32—33    │
+│ OC4   │ 6    │ 34—39    │
+└───────┴──────┴──────────┘
+
+
+┌─────┬─────┬─────┬─────┬──────────────────────┐
+│ OC4 │ OC2 │ OC3 │ OC1 │ Instruction          │
+├─────┼─────┼─────┼─────┼──────────────────────┤
+│ 0   │ 1   │ 0   │ 0   │ JUMP DIRECT BACKWARD │
+│ 1   │ 1   │ 0   │ 0   │ JUMP DIRECT FORWARD  │
+└─────┴─────┴─────┴─────┴──────────────────────┘
+
+
+
+
+
+
+
+
+────────────────────────────────────────
+3.3  0:OC1-4:OC3-10:IA-16:OC2-34:DA(GPR)
+────────────────────────────────────────
+
+
+┌───────┬──────┬──────────┐
+│ Field │ Size │ Position │
+├───────┼──────┼──────────┤
+│ OC1   │ 4    │ 0—3      │
+│ OC3   │ 6    │ 4—9      │
+│ OC2   │ 6    │ 10—15    │
+│ IA    │ 16   │ 16—31    │
+│ MBZ   │ 2    │ 32—33    │
+│ DA    │ 6    │ 34—39    │
+└───────┴──────┴──────────┘
+
+
+┌─────┬─────┬─────┬────────────────────────────────────┐
+│ OC2 │ OC3 │ OC1 │ Instruction                        │
+├─────┼─────┼─────┼────────────────────────────────────┤
+│ 1   │ 1   │ 0   │ JUMP DIRECT AND LINK BACKWARD      │
+│ 1   │ 2   │ 0   │ JUMP DIRECT AND LINK FORWARD       │
+│ 1   │ 3   │ 0   │ JUMP DIRECT AND LINK BACKWARD PUSH │
+│ 1   │ 4   │ 0   │ JUMP DIRECT AND LINK FORWARD PUSH  │
+└─────┴─────┴─────┴────────────────────────────────────┘
+
+
+
+
+
+
+
+
+────────────────────────────────────────
+3.4  0:OC1-4:SA(GPR)-10:OC2-16:IA-34:OC3
+────────────────────────────────────────
+
+
+┌───────┬──────┬──────────┐
+│ Field │ Size │ Position │
+├───────┼──────┼──────────┤
+│ OC1   │ 4    │ 0—3      │
+│ SA    │ 6    │ 4—9      │
+│ OC2   │ 6    │ 10—15    │
+│ IA    │ 16   │ 16—31    │
+│ MBZ   │ 2    │ 32—33    │
+│ OC3   │ 6    │ 34—39    │
+└───────┴──────┴──────────┘
+
+
+┌─────┬─────┬─────┬──────────────────────────────────────────────────┐
+│ OC3 │ OC2 │ OC1 │ Instruction                                      │
+├─────┼─────┼─────┼──────────────────────────────────────────────────┤
+│ 0   │ 2   │ 0   │ BRANCH BACKWARD ON CARRY REGISTER FALSE          │
+│ 1   │ 2   │ 0   │ BRANCH BACKWARD ON CARRY REGISTER TRUE           │
+│ 2   │ 2   │ 0   │ BRANCH BACKWARD ON LESS THAN TO ZERO             │
+│ 3   │ 2   │ 0   │ BRANCH BACKWARD ON LESS THAN OR EQUAL TO ZERO    │
+│ 4   │ 2   │ 0   │ BRANCH BACKWARD ON EQUAL TO ZERO                 │
+│ 5   │ 2   │ 0   │ BRANCH BACKWARD ON GREATER THAN OR EQUAL TO ZERO │
+│ 6   │ 2   │ 0   │ BRANCH BACKWARD ON GREATER THAN ZERO             │
+│ 7   │ 2   │ 0   │ BRANCH BACKWARD ON NOT EQUAL TO ZERO             │
+│ 8   │ 2   │ 0   │ BRANCH FORWARD ON CARRY REGISTER FALSE           │
+│ 9   │ 2   │ 0   │ BRANCH FORWARD ON CARRY REGISTER TRUE            │
+│ 10  │ 2   │ 0   │ BRANCH FORWARD ON LESS THAN TO ZERO              │
+│ 11  │ 2   │ 0   │ BRANCH FORWARD ON LESS THAN OR EQUAL TO ZERO     │
+│ 12  │ 2   │ 0   │ BRANCH FORWARD ON EQUAL TO ZERO                  │
+│ 13  │ 2   │ 0   │ BRANCH FORWARD ON GREATER THAN OR EQUAL TO ZERO  │
+│ 14  │ 2   │ 0   │ BRANCH FORWARD ON GREATER THAN ZERO              │
+│ 15  │ 2   │ 0   │ BRANCH FORWARD ON NOT EQUAL TO ZERO              │
+└─────┴─────┴─────┴──────────────────────────────────────────────────┘
+
+
+
+
+
+
+
+
+────────────────────────────────────────────
+3.5  0:OC1-4:SA(GPR)-10:OC2-16:IA-34:SB(GPR)
+────────────────────────────────────────────
+
+
+┌───────┬──────┬──────────┐
+│ Field │ Size │ Position │
+├───────┼──────┼──────────┤
+│ OC1   │ 4    │ 0—3      │
+│ SA    │ 7    │ 4—9      │
+│ OC2   │ 6    │ 10—15    │
+│ IA    │ 16   │ 16—31    │
+│ MBZ   │ 2    │ 32—33    │
+│ SB    │ 6    │ 34—39    │
+└───────┴──────┴──────────┘
+
+
+┌─────┬─────┬───────────────────────────────────────────────────┐
+│ OC2 │ OC1 │ Instruction                                       │
+├─────┼─────┼───────────────────────────────────────────────────┤
+│ 3   │ 0   │ BRANCH BACKWARD ON EQUAL TO                       │
+│ 4   │ 0   │ BRANCH BACKWARD ON NOT EQUAL TO                   │
+│ 5   │ 0   │ BRANCH BACKWARD ON LESS THAN UNSIGNED             │
+│ 6   │ 0   │ BRANCH BACKWARD ON LESS THAN SIGNED               │
+│ 7   │ 0   │ BRANCH BACKWARD ON LESS THAN OR EQUAL TO UNSIGNED │
+│ 8   │ 0   │ BRANCH BACKWARD ON LESS THAN OR EQUAL TO SIGNED   │
+│ 9   │ 0   │ BRANCH FORWARD ON EQUAL TO                        │
+│ 10  │ 0   │ BRANCH FORWARD ON NOT EQUAL TO                    │
+│ 11  │ 0   │ BRANCH FORWARD ON LESS THAN UNSIGNED              │
+│ 12  │ 0   │ BRANCH FORWARD ON LESS THAN SIGNED                │
+│ 13  │ 0   │ BRANCH FORWARD ON LESS THAN OR EQUAL TO UNSIGNED  │
+│ 14  │ 0   │ BRANCH FORWARD ON LESS THAN OR EQUAL TO SIGNED    │
+└─────┴─────┴───────────────────────────────────────────────────┘
+
+
+
+
+
+
+
+
+──────────────────────────────────
+3.6  0:OC1-4:SA-10:OC2-16:IA-34:XA
+──────────────────────────────────
+
+
+┌───────┬──────┬──────────┐
+│ Field │ Size │ Position │
+├───────┼──────┼──────────┤
+│ OC1   │ 4    │ 0—3      │
+│ SA    │ 6    │ 4—9      │
+│ OC2   │ 6    │ 10—15    │
+│ IA    │ 16   │ 16—31    │
+│ MBZ   │ 2    │ 32—33    │
+│ XA    │ 6    │ 34—39    │
+└───────┴──────┴──────────┘
+
+
+┌─────┬─────┬─────────────┐
+│ OC2 │ OC1 │ Instruction │
+├─────┼─────┼─────────────┤
+│ 0   │ 1   │ PREFETCH    │
+└─────┴─────┴─────────────┘
+
+
+
+
+
+
+
+
+───────────────────────────────────────
+3.7  0:OC1-4:SA(GPR)-10:OC2-16:IA-34:F1
+───────────────────────────────────────
+
+
+┌───────┬──────┬──────────┐
+│ Field │ Size │ Position │
+├───────┼──────┼──────────┤
+│ OC1   │ 4    │ 0—3      │
+│ SA    │ 6    │ 4—9      │
+│ OC2   │ 6    │ 10—15    │
+│ IA    │ 16   │ 16—31    │
+│ MBZ   │ 2    │ 32—33    │
+│ F1    │ 6    │ 34—39    │
+└───────┴──────┴──────────┘
+
+
+┌────────┬─────┬─────┬────────────────────────┐
+│ F1     │ OC2 │ OC1 │ Instruction            │
+├────────┼─────┼─────┼────────────────────────┤
+│ DA:GPR │ 4   │ 1   │ LOAD GPR               │
+│ DA:GPR │ 5   │ 1   │ LOAD ATOMIC            │
+│ DA:RNR │ 8   │ 1   │ LOAD RNR               │
+│ SB:GPR │ 12  │ 1   │ PREFETCH INDIRECT HINT │
+│ SB:GPR │ 16  │ 1   │ STORE GPR              │
+│ SB:RNR │ 20  │ 1   │ STORE RNR              │
+└────────┴─────┴─────┴────────────────────────┘
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────
+3.8  0:OC1-4:SA(GPR)-10:OC2-16:IA-30:IB-31:OC3-34:F1
+────────────────────────────────────────────────────
+
+
+┌───────┬──────┬──────────┐
+│ Field │ Size │ Position │
+├───────┼──────┼──────────┤
+│ OC1   │ 4    │ 0—3      │
+│ SA    │ 6    │ 4—9      │
+│ OC2   │ 6    │ 10—15    │
+│ IA    │ 12   │ 16—29    │
+│ IB    │ 1    │ 30       │
+│ OC3   │ 3    │ 31—33    │
+│ F1    │ 6    │ 34—39    │
+└───────┴──────┴──────────┘
+
+
+┌────────┬─────┬─────┬─────┬─────────────────────────┐
+│ F1     │ OC3 │ OC2 │ OC1 │ Instruction             │
+├────────┼─────┼─────┼─────┼─────────────────────────┤
+│ DA:GPR │ 0   │ 24  │ 1   │ LOAD GPR 64 ZERO-EXTEND │
+│ DA:GPR │ 1   │ 24  │ 1   │ LOAD GPR 64 SIGN-EXTEND │
+│ DA:RNR │ 2   │ 24  │ 1   │ LOAD RNR 64             │
+│ SB:GPR │ 4   │ 24  │ 1   │ STORE GPR 64            │
+│ SB:RNR │ 6   │ 24  │ 1   │ STORE RNR 64            │
+└────────┴─────┴─────┴─────┴─────────────────────────┘
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────
+3.9  0:OC1-4:SA(GPR)-10:OC2-16:IA-30:IB-32:OC3-34:F1
+────────────────────────────────────────────────────
+
+
+┌───────┬──────┬──────────┐
+│ Field │ Size │ Position │
+├───────┼──────┼──────────┤
+│ OC1   │ 4    │ 0—3      │
+│ SA    │ 6    │ 4—9      │
+│ OC2   │ 6    │ 10—15    │
+│ IA    │ 12   │ 16—29    │
+│ IB    │ 2    │ 30—31    │
+│ OC3   │ 2    │ 32—33    │
+│ F1    │ 6    │ 34—39    │
+└───────┴──────┴──────────┘
+
+
+┌────────┬─────┬─────┬─────┬─────────────────────────┐
+│ F1     │ OC3 │ OC2 │ OC1 │ Instruction             │
+├────────┼─────┼─────┼─────┼─────────────────────────┤
+│ DA:GPR │ 0   │ 25  │ 1   │ LOAD GPR 32 ZERO-EXTEND │
+│ DA:GPR │ 1   │ 25  │ 1   │ LOAD GPR 32 SIGN-EXTEND │
+│ DA:RNR │ 2   │ 25  │ 1   │ LOAD RNR 32             │
+│ SB:GPR │ 0   │ 26  │ 1   │ STORE GPR 32            │
+│ SB:RNR │ 2   │ 26  │ 1   │ STORE RNR 32            │
+└────────┴─────┴─────┴─────┴─────────────────────────┘
+
+
+
+
+
+
+
+
+─────────────────────────────────────────────────────
+3.10  0:OC1-4:SA(GPR)-10:OC2-16:IA-30:IB-33:OC3-34:F1
+─────────────────────────────────────────────────────
+
+
+┌───────┬──────┬──────────┐
+│ Field │ Size │ Position │
+├───────┼──────┼──────────┤
+│ OC1   │ 4    │ 0—3      │
+│ SA    │ 6    │ 4—9      │
+│ OC2   │ 6    │ 10—15    │
+│ IA    │ 12   │ 16—29    │
+│ IB    │ 3    │ 30—32    │
+│ OC3   │ 1    │ 33       │
+│ F1    │ 6    │ 34—39    │
+└───────┴──────┴──────────┘
+
+
+┌────────┬─────┬─────┬─────┬─────────────────────────┐
+│ F1     │ OC3 │ OC2 │ OC1 │ Instruction             │
+├────────┼─────┼─────┼─────┼─────────────────────────┤
+│ DA:GPR │ 0   │ 27  │ 1   │ LOAD GPR 16 ZERO-EXTEND │
+│ DA:GPR │ 1   │ 27  │ 1   │ LOAD GPR 16 SIGN-EXTEND │
+│ DA:RNR │ 0   │ 28  │ 1   │ LOAD RNR 16             │
+│ SB:GPR │ 0   │ 29  │ 1   │ STORE GPR 16            │
+│ SB:RNR │ 0   │ 30  │ 1   │ STORE RNR 16            │
+└────────┴─────┴─────┴─────┴─────────────────────────┘
+
+
+
+
+
+
+
+
+───────────────────────────────────────────────
+3.11  0:OC1-4:SA(GPR)-10:OC2-16:IA-30:OC3-34:F1
+───────────────────────────────────────────────
+
+
+┌───────┬──────┬──────────┐
+│ Field │ Size │ Position │
+├───────┼──────┼──────────┤
+│ OC1   │ 4    │ 0—3      │
+│ SA    │ 6    │ 4—9      │
+│ OC2   │ 6    │ 10—15    │
+│ IA    │ 12   │ 16—29    │
+│ IB    │ 4    │ 30—33    │
+│ F1    │ 6    │ 34—39    │
+└───────┴──────┴──────────┘
+
+
+┌────────┬─────┬─────┬────────────────────────┐
+│ F1     │ OC2 │ OC1 │ Instruction            │
+├────────┼─────┼─────┼────────────────────────┤
+│ DA:GPR │ 32  │ 1   │ LOAD GPR 8 ZERO-EXTEND │
+│ DA:GPR │ 33  │ 1   │ LOAD GPR 8 SIGN-EXTEND │
+│ DA:RNR │ 34  │ 1   │ LOAD RNR 8             │
+│ SB:GPR │ 36  │ 1   │ STORE GPR 8            │
+│ SB:RNR │ 38  │ 1   │ STORE RNR 8            │
+└────────┴─────┴─────┴────────────────────────┘
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────
+3.12  0:OC1-4:SA(GPR)-10:OC2-16:IA-32:OC3-34:DA(GPR)
+────────────────────────────────────────────────────
+
+
+┌───────┬──────┬──────────┐
+│ Field │ Size │ Position │
+├───────┼──────┼──────────┤
+│ OC1   │ 4    │ 0—3      │
+│ SA    │ 6    │ 4—9      │
+│ OC2   │ 6    │ 10—15    │
+│ IA    │ 16   │ 16—31    │
+│ OC3   │ 2    │ 32—33    │
+│ DA    │ 6    │ 34—39    │
+└───────┴──────┴──────────┘
+
+
+┌─────┬─────┬────────────────────────────────────────────────────────────┐
+│ OC2 │ OC1 │ Instruction                                                │
+├─────┼─────┼────────────────────────────────────────────────────────────┤
+│ 0   │ 2   │ ADD IMMEDIATE ZERO-EXTEND                                  │
+│ 1   │ 2   │ ADD IMMEDIATE ONE-EXTEND                                   │
+│ 2   │ 2   │ MULTIPLY UNSIGNED HIGH IMMEDIATE                           │
+│ 3   │ 2   │ MULTIPLY SIGNED BY UNSIGNED HIGH IMMEDIATE                 │
+│ 4   │ 2   │ MULTIPLY SIGNED LOW IMMEDIATE ZERO-EXTEND                  │
+│ 5   │ 2   │ MULTIPLY SIGNED LOW IMMEDIATE ONE-EXTEND                   │
+│ 6   │ 2   │ MULTIPLY SIGNED HIGH IMMEDIATE ZERO-EXTEND                 │
+│ 7   │ 2   │ MULTIPLY SIGNED HIGH IMMEDIATE ONE-EXTEND                  │
+│ 8   │ 2   │ DIVIDE UNSIGNED QUOTIENT IMMEDIATE                         │
+│ 9   │ 2   │ DIVIDE UNSIGNED REMAINDER IMMEDIATE                        │
+│ 10  │ 2   │ DIVIDE SIGNED QUOTIENT IMMEDIATE                           │
+│ 11  │ 2   │ DIVIDE SIGNED REMAINDER IMMEDIATE                          │
+│ 12  │ 2   │ COMPARE EQUAL TO IMMEDIATE ZERO-EXTEND                     │
+│ 13  │ 2   │ COMPARE EQUAL TO IMMEDIATE ONE-EXTEND                      │
+│ 14  │ 2   │ COMPARE NOT EQUAL TO IMMEDIATE ZERO-EXTEND                 │
+│ 15  │ 2   │ COMPARE NOT EQUAL TO IMMEDIATE ONE-EXTEND                  │
+│ 16  │ 2   │ COMPARE UNSIGNED LESS THAN IMMEDIATE                       │
+│ 17  │ 2   │ COMPARE UNSIGNED LESS THAN OR EQUAL TO IMMEDIATE           │
+│ 18  │ 2   │ COMPARE UNSIGNED GREATER THAN IMMEDIATE                    │
+│ 19  │ 2   │ COMPARE UNSIGNED GREATER THAN OR EQUAL TO IMMEDIATE        │
+│ 20  │ 2   │ COMPARE SIGNED LESS THAN IMMEDIATE ZERO-EXTEND             │
+│ 21  │ 2   │ COMPARE SIGNED LESS THAN IMMEDIATE ONE-EXTEND              │
+│ 22  │ 2   │ COMPARE SIGNED LESS THAN OR EQUAL TO IMMEDIATE ZERO-EXTEND │
+│ 23  │ 2   │ COMPARE SIGNED LESS THAN OR EQUAL TO IMMEDIATE ONE-EXTEND  │
+│ 24  │ 2   │ COMPARE SIGNED GREATER THAN IMMEDIATE ZERO-EXTENDED        │
+│ 25  │ 2   │ COMPARE SIGNED GREATER THAN IMMEDIATE ONE-EXTENDED         │
+│ 26  │ 2   │ COMPARE SIGNED GREATER THAN OR EQUAL TO IMMEDIATE ZERO-    │
+│     │     │     EXTEND                                                 │
+│ 27  │ 2   │ COMPARE SIGNED GREATER THAN OR EQUAL TO IMMEDIATE ONE-     │
+│     │     │     EXTEND                                                 │
+│ 28  │ 2   │ AND IMMEDIATE ZERO-EXTEND                                  │
+│ 29  │ 2   │ AND IMMEDIATE ONE-EXTEND                                   │
+│ 30  │ 2   │ EXCLUSIVE-OR IMMEDIATE ZERO-EXTEND                         │
+│ 31  │ 2   │ EXCLUSIVE-OR IMMEDIATE ONE-EXTEND                          │
+│ 32  │ 2   │ OR IMMEDIATE ZERO-EXTEND                                   │
+│ 33  │ 2   │ OR IMMEDIATE ONE-EXTEND                                    │
+│ 34  │ 2   │ NOT-OR IMMEDIATE ZERO-EXTEND                               │
+│ 35  │ 2   │ NOT-OR IMMEDIATE ONE-EXTEND                                │
+│ 36  │ 2   │ EXCLUSIVE-NOT-OR IMMEDIATE ZERO-EXTEND                     │
+│ 37  │ 2   │ EXCLUSIVE-NOT-OR IMMEDIATE ONE-EXTEND                      │
+│ 38  │ 2   │ NOT-AND IMMEDIATE ZERO-EXTEND                              │
+│ 39  │ 2   │ NOT-AND IMMEDIATE ONE-EXTEND                               │
+└─────┴─────┴────────────────────────────────────────────────────────────┘
+
+
+
+
+
+
+
+
+───────────────────────────────────────────────────────────
+3.13  0:OC1-4:SA-10:SB(GPR)-16:OC3-22:OC4-23:T-25:OC2-34:DA
+───────────────────────────────────────────────────────────
+
+
+┌───────┬──────┬──────────┐
+│ Field │ Size │ Position │
+├───────┼──────┼──────────┤
+│ OC1   │ 4    │ 0—3      │
+│ SA    │ 6    │ 4—9      │
+│ SB    │ 6    │ 10—15    │
+│ OC3   │ 6    │ 16—21    │
+│ OC4   │ 1    │ 22       │
+│ T     │ 2    │ 23—24    │
+│ OC2   │ 9    │ 25—33    │
+│ DA    │ 6    │ 34—39    │
+└───────┴──────┴──────────┘
+
+
+┌─────┬─────┬─────┬─────┬─────┬─────┬────────────────────────────────────────┐
+│ DA  │ OC2 │ OC4 │ OC3 │ SA  │ OC1 │ Instruction                            │
+├─────┼─────┼─────┼─────┼─────┼─────┼────────────────────────────────────────┤
+│ GPR │ 0   │ 0   │ 4   │ GPR │ 3   │ VECTOR PERMUTE GPR                     │
+│ GPR │ 0   │ 0   │ 6   │ GPR │ 3   │ VECTOR EXTRACT ELEMENT GPR ZERO-EXTEND │
+│ GPR │ 0   │ 1   │ 6   │ GPR │ 3   │ VECTOR EXTRACT ELEMENT GPR SIGN-EXTEND │
+│ GPR │ 0   │ 0   │ 7   │ GPR │ 3   │ VECTOR EXTRACT ELEMENT GPR ZERO-EXTEND │
+│     │     │     │     │     │     │     OCTET INDEX                        │
+│ GPR │ 0   │ 1   │ 7   │ GPR │ 3   │ VECTOR EXTRACT ELEMENT GPR SIGN-EXTEND │
+│     │     │     │     │     │     │     OCTET INDEX                        │
+│ GPR │ 0   │ 0   │ 8   │ GPR │ 3   │ VECTOR SCALAR COMPARE UNSIGNED GREATER │
+│     │     │     │     │     │     │     THAN                               │
+│ GPR │ 0   │ 1   │ 8   │ GPR │ 3   │ VECTOR SCALAR COMPARE UNSIGNED GREATER │
+│     │     │     │     │     │     │     THAN OR EQUAL TO                   │
+│ GPR │ 0   │ 0   │ 9   │ GPR │ 3   │ VECTOR SCALAR COMPARE SIGNED GREATER   │
+│     │     │     │     │     │     │     THAN                               │
+│ GPR │ 0   │ 1   │ 9   │ GPR │ 3   │ VECTOR SCALAR COMPARE SIGNED GREATER   │
+│     │     │     │     │     │     │     THAN OR EQUAL TO                   │
+│ GPR │ 0   │ 0   │ 10  │ GPR │ 3   │ VECTOR SCALAR AND                      │
+│ GPR │ 0   │ 1   │ 10  │ GPR │ 3   │ VECTOR SCALAR NOT-OR COMPLEMENT        │
+│ GPR │ 0   │ 0   │ 11  │ GPR │ 3   │ VECTOR SCALAR AND COMPLEMENT           │
+│ GPR │ 0   │ 1   │ 11  │ GPR │ 3   │ VECTOR SCALAR EXCLUSIVE-OR             │
+│ GPR │ 0   │ 0   │ 12  │ GPR │ 3   │ VECTOR SCALAR OR                       │
+│ GPR │ 0   │ 1   │ 12  │ GPR │ 3   │ VECTOR SCALAR NOT-OR                   │
+│ GPR │ 0   │ 0   │ 13  │ GPR │ 3   │ VECTOR SCALAR EXCLUSIVE-NOT-OR         │
+│ GPR │ 0   │ 1   │ 13  │ GPR │ 3   │ VECTOR SCALAR NOT-AND COMPLEMENT       │
+│ GPR │ 0   │ 0   │ 14  │ GPR │ 3   │ VECTOR SCALAR OR COMPLEMENT            │
+│ GPR │ 0   │ 1   │ 14  │ GPR │ 3   │ VECTOR SCALAR NOT-AND                  │
+│ RNR │ 0   │ 0   │ 32  │ RNR │ 3   │ VECTOR PERMUTE RNR                     │
+│ RNR │ 0   │ 0   │ 34  │ RNR │ 3   │ VECTOR EXTRACT ELEMENT RNR             │
+│ RNR │ 0   │ 1   │ 34  │ RNR │ 3   │ VECTOR EXTRACT ELEMENT RNR OCTET INDEX │
+└─────┴─────┴─────┴─────┴─────┴─────┴────────────────────────────────────────┘
+
+
+
+
+
+
+
+
+───────────────────────────────────────────────────────────────────
+3.14  0:OC1-4:SA(GPR)-10:SB(GPR)-16:OC3-22:O-23:T-25:OC2-34:DA(GPR)
+───────────────────────────────────────────────────────────────────
+
+
+┌───────┬──────┬──────────┐
+│ Field │ Size │ Position │
+├───────┼──────┼──────────┤
+│ OC1   │ 4    │ 0—3      │
+│ SA    │ 6    │ 4—9      │
+│ SB    │ 6    │ 10—15    │
+│ OC3   │ 4    │ 16—21    │
+│ O     │ 1    │ 22       │
+│ T     │ 2    │ 23—24    │
+│ OC2   │ 9    │ 25—33    │
+│ DA    │ 6    │ 34—39    │
+└───────┴──────┴──────────┘
+
+
+┌─────┬─────┬─────┬───────────────────────────────────────────────┐
+│ OC2 │ OC3 │ OC1 │ Instruction                                   │
+├─────┼─────┼─────┼───────────────────────────────────────────────┤
+│ 1   │ 0   │ 3   │ VECTOR ADD                                    │
+│ 1   │ 1   │ 3   │ VECTOR SUBTRACT                               │
+│ 1   │ 2   │ 3   │ VECTOR MULTIPLY UNSIGNED HIGH                 │
+│ 1   │ 3   │ 3   │ VECTOR MULTIPLY SIGNED BY UNSIGNED HIGH       │
+│ 1   │ 4   │ 3   │ VECTOR MULTIPLY SIGNED LOW                    │
+│ 1   │ 5   │ 3   │ VECTOR MULTIPLY SIGNED HIGH                   │
+│ 1   │ 6   │ 3   │ VECTOR DIVIDE UNSIGNED QUOTIENT               │
+│ 1   │ 7   │ 3   │ VECTOR DIVIDE UNSIGNED REMAINDER              │
+│ 1   │ 8   │ 3   │ VECTOR DIVIDE SIGNED QUOTIENT                 │
+│ 1   │ 9   │ 3   │ VECTOR DIVIDE SIGNED REMAINDER                │
+│ 1   │ 10  │ 3   │ VECTOR COMPARE EQUAL TO                       │
+│ 1   │ 11  │ 3   │ VECTOR COMPARE NOT EQUAL TO                   │
+│ 1   │ 12  │ 3   │ VECTOR COMPARE UNSIGNED LESS THAN             │
+│ 1   │ 13  │ 3   │ VECTOR COMPARE UNSIGNED LESS THAN OR EQUAL TO │
+│ 1   │ 14  │ 3   │ VECTOR COMPARE SIGNED LESS THAN               │
+│ 1   │ 15  │ 3   │ VECTOR COMPARE SIGNED LESS THAN OR EQUAL TO   │
+│ 2   │ 10  │ 3   │ VECTOR SHIFT LOGICAL RIGHT                    │
+│ 2   │ 11  │ 3   │ VECTOR SHIFT LOGICAL LEFT                     │
+│ 2   │ 12  │ 3   │ VECTOR SHIFT CYCLIC RIGHT                     │
+│ 2   │ 13  │ 3   │ VECTOR SHIFT CYCLIC LEFT                      │
+│ 2   │ 14  │ 3   │ VECTOR SHIFT ARITHMETIC RIGHT                 │
+└─────┴─────┴─────┴───────────────────────────────────────────────┘
+
+
+
+
+
+
+
+
+───────────────────────────────────────────────────────
+3.15  0:OC1-4:SA-10:SB-16:IA-18:OC3-22:OC4-25:OC2-34:DA
+───────────────────────────────────────────────────────
+
+
+┌───────┬──────┬──────────┐
+│ Field │ Size │ Position │
+├───────┼──────┼──────────┤
+│ OC1   │ 4    │ 0—3      │
+│ SA    │ 6    │ 4—9      │
+│ SB    │ 6    │ 10—15    │
+│ IA    │ 2    │ 16—17    │
+│ OC3   │ 4    │ 18—21    │
+│ OC4   │ 3    │ 22—24    │
+│ OC2   │ 9    │ 25—33    │
+│ DA    │ 6    │ 34—39    │
+└───────┴──────┴──────────┘
+
+
+┌─────┬─────┬─────┬─────┬─────┬─────┬─────┬────────────────────────────────┐
+│ DA  │ OC2 │ OC4 │ OC3 │ SB  │ SA  │ OC1 │ Instruction                    │
+├─────┼─────┼─────┼─────┼─────┼─────┼─────┼────────────────────────────────┤
+│ GPR │ 120 │ 0   │ 0   │ GPR │ GPR │ 3   │ VECTOR DEPOSIT ELEMENT GPR V32 │
+│     │     │     │     │     │     │     │     IMMEDIATE                  │
+│ RNR │ 120 │ 0   │ 8   │ RNR │ RNR │ 3   │ VECTOR DEPOSIT ELEMENT RNR V32 │
+│     │     │     │     │     │     │     │     IMMEDIATE                  │
+└─────┴─────┴─────┴─────┴─────┴─────┴─────┴────────────────────────────────┘
+
+
+
+
+
+
+
+
+───────────────────────────────────────────────────────
+3.16  0:OC1-4:SA-10:SB-16:IA-19:OC3-22:OC4-25:OC2-34:DA
+───────────────────────────────────────────────────────
+
+
+┌───────┬──────┬──────────┐
+│ Field │ Size │ Position │
+├───────┼──────┼──────────┤
+│ OC1   │ 4    │ 0—3      │
+│ SA    │ 6    │ 4—9      │
+│ SB    │ 6    │ 10—15    │
+│ IA    │ 3    │ 16—18    │
+│ OC3   │ 3    │ 19—21    │
+│ OC4   │ 3    │ 22—24    │
+│ OC2   │ 9    │ 25—33    │
+│ DA    │ 6    │ 34—39    │
+└───────┴──────┴──────────┘
+
+
+┌─────┬─────┬─────┬─────┬─────┬─────┬─────┬────────────────────────────────┐
+│ DA  │ OC2 │ OC4 │ OC3 │ SB  │ SA  │ OC1 │ Instruction                    │
+├─────┼─────┼─────┼─────┼─────┼─────┼─────┼────────────────────────────────┤
+│ GPR │ 121 │ 0   │ 0   │ GPR │ GPR │ 3   │ VECTOR DEPOSIT ELEMENT GPR V16 │
+│     │     │     │     │     │     │     │     IMMEDIATE                  │
+│ RNR │ 121 │ 0   │ 4   │ RNR │ RNR │ 3   │ VECTOR DEPOSIT ELEMENT RNR V16 │
+│     │     │     │     │     │     │     │     IMMEDIATE                  │
+└─────┴─────┴─────┴─────┴─────┴─────┴─────┴────────────────────────────────┘
+
+
+
+
+
+
+
+
+───────────────────────────────────────────────────────
+3.17  0:OC1-4:SA-10:SB-16:IA-20:OC3-22:OC4-25:OC2-34:DA
+───────────────────────────────────────────────────────
+
+
+┌───────┬──────┬──────────┐
+│ Field │ Size │ Position │
+├───────┼──────┼──────────┤
+│ OC1   │ 4    │ 0—3      │
+│ SA    │ 6    │ 4—9      │
+│ SB    │ 6    │ 10—15    │
+│ IA    │ 3    │ 16—19    │
+│ OC3   │ 3    │ 20—21    │
+│ OC4   │ 3    │ 22—24    │
+│ OC2   │ 9    │ 25—33    │
+│ DA    │ 6    │ 34—39    │
+└───────┴──────┴──────────┘
+
+
+┌─────┬─────┬─────┬─────┬─────┬─────┬─────┬───────────────────────────────┐
+│ DA  │ OC2 │ OC4 │ OC3 │ SB  │ SA  │ OC1 │ Instruction                   │
+├─────┼─────┼─────┼─────┼─────┼─────┼─────┼───────────────────────────────┤
+│ GPR │ 122 │ 0   │ 0   │ GPR │ GPR │ 3   │ VECTOR DEPOSIT ELEMENT GPR V8 │
+│     │     │     │     │     │     │     │     IMMEDIATE                 │
+│ RNR │ 122 │ 0   │ 2   │ RNR │ RNR │ 3   │ VECTOR DEPOSIT ELEMENT RNR V8 │
+│     │     │     │     │     │     │     │     IMMEDIATE                 │
+└─────┴─────┴─────┴─────┴─────┴─────┴─────┴───────────────────────────────┘
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────
+3.18  0:OC1-4:SA(GPR)-10:SB(GPR)-16:SC(GPR)-22:OC3-25:OC2-34:DA(GPR)
+────────────────────────────────────────────────────────────────────
+
+
+┌───────┬──────┬──────────┐
+│ Field │ Size │ Position │
+├───────┼──────┼──────────┤
+│ OC1   │ 4    │ 0—3      │
+│ SA    │ 6    │ 4—9      │
+│ SB    │ 6    │ 10—15    │
+│ SC    │ 6    │ 16—21    │
+│ OC3   │ 3    │ 22—24    │
+│ OC2   │ 9    │ 25—33    │
+│ DA    │ 6    │ 34—39    │
+└───────┴──────┴──────────┘
+
+
+┌─────┬─────┬─────┬───────────────────────────────┐
+│ OC2 │ OC3 │ OC1 │ Instruction                   │
+├─────┼─────┼─────┼───────────────────────────────┤
+│ 124 │ 0   │ 3   │ SELECT GPR                    │
+│ 124 │ 4   │ 3   │ ADD WITH CARRY                │
+│ 124 │ 5   │ 3   │ SUBTRACT WITH BORROW          │
+│ 124 │ 6   │ 3   │ EXTRACT BIT FIELD ZERO-EXTEND │
+│ 124 │ 7   │ 3   │ EXTRACT BIT FIELD SIGN-EXTEND │
+└─────┴─────┴─────┴───────────────────────────────┘
+
+
+
+
+
+
+
+
+──────────────────────────────────────────────────────────
+3.19  0:OC1-4:SA(GPR)-10:IA-16:IB-22:OC3-25:OC2-34:DA(GPR)
+──────────────────────────────────────────────────────────
+
+
+┌───────┬──────┬──────────┐
+│ Field │ Size │ Position │
+├───────┼──────┼──────────┤
+│ OC1   │ 4    │ 0—3      │
+│ SA    │ 6    │ 4—9      │
+│ IA    │ 6    │ 10—15    │
+│ IB    │ 6    │ 16—21    │
+│ OC3   │ 3    │ 22—24    │
+│ OC2   │ 9    │ 25—33    │
+│ DA    │ 6    │ 34—39    │
+└───────┴──────┴──────────┘
+
+
+┌─────┬─────┬─────┬───────────────────────────────────────────────┐
+│ OC2 │ OC3 │ OC1 │ Instruction                                   │
+├─────┼─────┼─────┼───────────────────────────────────────────────┤
+│ 128 │ 0   │ 3   │ EXTRACT BIT FIELD ZERO-EXTEND IMMEDIATE       │
+│ 128 │ 1   │ 3   │ EXTRACT BIT FIELD ZERO-EXTEND IMMEDIATE IA 64 │
+│ 128 │ 2   │ 3   │ EXTRACT BIT FIELD ZERO-EXTEND IMMEDIATE IB 64 │
+│ 128 │ 3   │ 3   │ EXTRACT BIT FIELD ZERO-EXTEND IMMEDIATE 64    │
+│ 128 │ 4   │ 3   │ EXTRACT BIT FIELD SIGN-EXTEND IMMEDIATE       │
+│ 128 │ 5   │ 3   │ EXTRACT BIT FIELD SIGN-EXTEND IMMEDIATE IA 64 │
+│ 128 │ 6   │ 3   │ EXTRACT BIT FIELD SIGN-EXTEND IMMEDIATE IB 64 │
+│ 128 │ 7   │ 3   │ EXTRACT BIT FIELD SIGN-EXTEND IMMEDIATE 64    │
+└─────┴─────┴─────┴───────────────────────────────────────────────┘
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────
+3.20  0:OC1-4:SA(RNR)-10:SB(RNR)-16:SC(GPR)-22:OC3-25:OC2-34:DA(RNR)
+────────────────────────────────────────────────────────────────────
+
+
+┌───────┬──────┬──────────┐
+│ Field │ Size │ Position │
+├───────┼──────┼──────────┤
+│ OC1   │ 4    │ 0—3      │
+│ SA    │ 6    │ 4—9      │
+│ SB    │ 6    │ 10—15    │
+│ SC    │ 6    │ 16—21    │
+│ OC3   │ 3    │ 22—24    │
+│ OC2   │ 9    │ 25—33    │
+│ DA    │ 6    │ 34—39    │
+└───────┴──────┴──────────┘
+
+
+┌─────┬─────┬─────┬─────────────┐
+│ OC3 │ OC2 │ OC1 │ Instruction │
+├─────┼─────┼─────┼─────────────┤
+│ 132 │ 0   │ 3   │ SELECT RNR  │
+└─────┴─────┴─────┴─────────────┘
+
+
+
+
+
+
+
+
+──────────────────────────────────────────────────────────
+3.21  0:OC1-4:SA-10:SB-16:SC(GPR)-22:OC3-23:T-25:OC2-34:DA
+──────────────────────────────────────────────────────────
+
+
+┌───────┬──────┬──────────┐
+│ Field │ Size │ Position │
+├───────┼──────┼──────────┤
+│ OC1   │ 4    │ 0—3      │
+│ SA    │ 6    │ 4—9      │
+│ SB    │ 6    │ 10—15    │
+│ SC    │ 6    │ 16—21    │
+│ OC3   │ 1    │ 22       │
+│ T     │ 2    │ 23—24    │
+│ OC2   │ 9    │ 25—33    │
+│ DA    │ 6    │ 34—39    │
+└───────┴──────┴──────────┘
+
+
+┌─────┬─────┬─────┬─────┬─────┬─────┬────────────────────────────────────────┐
+│ DA  │ OC2 │ OC3 │ SB  │ SA  │ OC1 │ Instruction                            │
+├─────┼─────┼─────┼─────┼─────┼─────┼────────────────────────────────────────┤
+│ GPR │ 136 │ 0   │ GPR │ GPR │ 3   │ VECTOR DEPOSIT ELEMENT GPR             │
+│ GPR │ 136 │ 1   │ GPR │ GPR │ 3   │ VECTOR DEPOSIT ELEMENT GPR OCTET INDEX │
+│ GPR │ 137 │ 0   │ GPR │ GPR │ 3   │ VECTOR SELECT GPR                      │
+│ GPR │ 137 │ 1   │ GPR │ GPR │ 3   │ VECTOR MERGE GPR                       │
+│ RNR │ 152 │ 0   │ RNR │ RNR │ 3   │ VECTOR DEPOSIT ELEMENT RNR             │
+│ RNR │ 152 │ 1   │ RNR │ RNR │ 3   │ VECTOR DEPOSIT ELEMENT RNR OCTET INDEX │
+│ RNR │ 153 │ 0   │ RNR │ RNR │ 3   │ VECTOR SELECT RNR                      │
+│ RNR │ 153 │ 1   │ RNR │ RNR │ 3   │ VECTOR MERGE RNR                       │
+└─────┴─────┴─────┴─────┴─────┴─────┴────────────────────────────────────────┘
+
+
+
+
+
+
+
+
+───────────────────────────────────────────────────────────────────────
+3.22  0:OC1-4:SA(GPR)-10:SB(GPR)-16:SC(GPR)-22:O-23:T-25:OC2-34:DA(GPR)
+───────────────────────────────────────────────────────────────────────
+
+
+┌───────┬──────┬──────────┐
+│ Field │ Size │ Position │
+├───────┼──────┼──────────┤
+│ OC1   │ 4    │ 0—3      │
+│ SA    │ 6    │ 4—9      │
+│ SB    │ 6    │ 10—15    │
+│ SC    │ 6    │ 16—21    │
+│ O     │ 1    │ 22       │
+│ T     │ 2    │ 23—24    │
+│ OC2   │ 9    │ 25—33    │
+│ DA    │ 6    │ 34—39    │
+└───────┴──────┴──────────┘
+
+
+┌─────┬─────┬──────────────────────────────────────┐
+│ OC2 │ OC1 │ Instruction                          │
+├─────┼─────┼──────────────────────────────────────┤
+│ 168 │ 3   │ VECTOR EXTRACT BIT FIELD ZERO-EXTEND │
+│ 169 │ 3   │ VECTOR EXTRACT BIT FIELD SIGN-EXTEND │
+└─────┴─────┴──────────────────────────────────────┘
+
+
+
+
+
+
+
+
+─────────────────────────────────────────────────
+3.23  0:OC1-4:SA(GPR)-10:SB(GPR)-16:IA-34:DA(GPR)
+─────────────────────────────────────────────────
+
+
+┌───────┬──────┬──────────┐
+│ Field │ Size │ Position │
+├───────┼──────┼──────────┤
+│ OC1   │ 4    │ 0—3      │
+│ SA    │ 6    │ 4—9      │
+│ SB    │ 6    │ 10—15    │
+│ IA    │ 18   │ 16—33    │
+│ DA    │ 6    │ 34—39    │
+└───────┴──────┴──────────┘
+
+
+┌─────┬──────────────┐
+│ OC1 │ Instruction  │
+├─────┼──────────────┤
+│ 4   │ STORE ATOMIC │
+└─────┴──────────────┘
+
+
+
+
+
+
+
+
+──────────────────────
+4  50-bit Instructions
+──────────────────────
+
+
+
+
+──────────────────────────────
+4.1  0:OC1-4:OC3-35:OC2-44:OC4
+──────────────────────────────
+
+
+┌───────┬──────┬──────────┐
+│ Field │ Size │ Position │
+├───────┼──────┼──────────┤
+│ OC1   │ 4    │ 0—3      │
+│ OC3   │ 31   │ 4—34     │
+│ OC2   │ 9    │ 35—43    │
+│ OC4   │ 6    │ 44—49    │
+└───────┴──────┴──────────┘
+
+
+┌─────┬─────┬─────┬─────┬─────────────┐
+│ OC4 │ OC2 │ OC3 │ OC1 │ Instruction │
+├─────┼─────┼─────┼─────┼─────────────┤
+│ 0   │ 0   │ 0   │ 0   │ NULL 50     │
+└─────┴─────┴─────┴─────┴─────────────┘
+
+
+
+
+
+
+
+
+───────────────────────────────────────────────────────────────────────────
+4.2  0:OC1-4:SA(GPR)-10:SB(GPR)-16:SC(GPR)-22:SD(GPR)-28:OC3-31:OC4-34:OC2-
+     44:DA(GPR)
+───────────────────────────────────────────────────────────────────────────
+
+
+┌───────┬──────┬──────────┐
+│ Field │ Size │ Position │
+├───────┼──────┼──────────┤
+│ OC1   │ 4    │ 0—3      │
+│ SA    │ 6    │ 4—9      │
+│ SB    │ 6    │ 10—15    │
+│ SC    │ 6    │ 16—21    │
+│ SD    │ 6    │ 22—27    │
+│ OC3   │ 3    │ 28—30    │
+│ OC4   │ 3    │ 31—33    │
+│ OC2   │ 10   │ 34—43    │
+│ DA    │ 6    │ 44—49    │
+└───────┴──────┴──────────┘
+
+
+┌─────┬─────┬─────┬─────┬───────────────────┐
+│ OC2 │ OC4 │ OC3 │ OC1 │ Instruction       │
+├─────┼─────┼─────┼─────┼───────────────────┤
+│ 1   │ 0   │ 0   │ 0   │ DEPOSIT BIT FIELD │
+└─────┴─────┴─────┴─────┴───────────────────┘
+
+
+
+
+
+
+
+
+───────────────────────────────────────────────────────────────────────────
+4.3  0:OC1-4:SA(GPR)-10:IA-16:IB-22:SB(GPR)-28:OC3-31:OC4-34:OC2-44:DA(GPR)
+───────────────────────────────────────────────────────────────────────────
+
+
+┌───────┬──────┬──────────┐
+│ Field │ Size │ Position │
+├───────┼──────┼──────────┤
+│ OC1   │ 4    │ 0—3      │
+│ SA    │ 6    │ 4—9      │
+│ IA    │ 6    │ 10—15    │
+│ IB    │ 6    │ 16—21    │
+│ SB    │ 6    │ 22—27    │
+│ OC3   │ 3    │ 28—30    │
+│ OC4   │ 3    │ 31—33    │
+│ OC2   │ 10   │ 34—43    │
+│ DA    │ 6    │ 44—49    │
+└───────┴──────┴──────────┘
+
+
+┌─────┬─────┬─────┬─────┬───────────────────────────────────┐
+│ OC2 │ OC4 │ OC3 │ OC1 │ Instruction                       │
+├─────┼─────┼─────┼─────┼───────────────────────────────────┤
+│ 1   │ 0   │ 12  │ 0   │ DEPOSIT BIT FIELD IMMEDIATE       │
+│ 1   │ 1   │ 12  │ 0   │ DEPOSIT BIT FIELD IMMEDIATE IA 64 │
+│ 1   │ 2   │ 12  │ 0   │ DEPOSIT BIT FIELD IMMEDIATE IB 64 │
+│ 1   │ 3   │ 12  │ 0   │ DEPOSIT BIT FIELD IMMEDIATE 64    │
+└─────┴─────┴─────┴─────┴───────────────────────────────────┘
+
+
+
+
+
+
+
+
+──────────────────────────────────────────────────────────────────────────────
+4.4  0:OC1-4:SA(GPR)-10:SB(GPR)-16:SC(GPR)-22:SD(GPR)-28:OC3-31:O-32:T-34:OC2-
+     44:DA(GPR)
+──────────────────────────────────────────────────────────────────────────────
+
+
+┌───────┬──────┬──────────┐
+│ Field │ Size │ Position │
+├───────┼──────┼──────────┤
+│ OC1   │ 4    │ 0—3      │
+│ SA    │ 6    │ 4—9      │
+│ SB    │ 6    │ 10—15    │
+│ SC    │ 6    │ 16—21    │
+│ SD    │ 6    │ 22—27    │
+│ OC2   │ 3    │ 28—30    │
+│ O     │ 1    │ 31       │
+│ T     │ 2    │ 32—33    │
+│ OC3   │ 10   │ 34—43    │
+│ DA    │ 6    │ 44—49    │
+└───────┴──────┴──────────┘
+
+
+┌─────┬─────┬─────┬──────────────────────────┐
+│ OC2 │ OC3 │ OC1 │ Instruction              │
+├─────┼─────┼─────┼──────────────────────────┤
+│ 2   │ 0   │ 0   │ VECTOR DEPOSIT BIT FIELD │
+└─────┴─────┴─────┴──────────────────────────┘
+
+
+
+
+
+
+
+
+──────────────────────
+5  60-bit Instructions
+──────────────────────
+
+
+
+
+────────────────
+5.1  0:OC1-4:OC2
+────────────────
+
+
+┌───────┬──────┬──────────┐
+│ Field │ Size │ Position │
+├───────┼──────┼──────────┤
+│ OC1   │ 4    │ 0—3      │
+│ OC2   │ 56   │ 4—59     │
+└───────┴──────┴──────────┘
+
+
+┌─────┬─────┬─────────────┐
+│ OC2 │ OC1 │ Instruction │
+├─────┼─────┼─────────────┤
+│ 0   │ 0   │ NULL 60     │
+└─────┴─────┴─────────────┘
