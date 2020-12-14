@@ -3,12 +3,12 @@ The AVRA Computer Architecture
 Version 1.0
 
 
-Part I: Introduction
+Part I: Architectural Concepts
 
 
 
 
-Document Version: DRAFT 2020-07-31
+Document Version: DRAFT 2020-12-12
 
 
 
@@ -44,7 +44,7 @@ mariusdahl27@protonmail.com
 
 The AVRA Computer Architecture:
 
-• Part I: Introduction
+• Part I: Architectural Concepts
 • Part II: Instruction Descriptions
 • Part III: Instruction Encoding Tables
 
@@ -65,24 +65,39 @@ Contents
 ────────
 
 
-1  Introduction
-2  Versioning and Compatibility
-3  The Computer System
-4  Processors
-     4.1  Privilege Levels
-     4.2  Exceptions
-     4.3  Interrupts
-     4.4  Architectural State
-     4.5  Data Types
-     4.6  Instructions
-     4.7  Vector Processing
-5  Primary Memory
-6  Agents
-7  The Aura Memory Consistency Model
-     7.1  Characteristics
-     7.2  Instructions Requiring Special Consideration
-8  Extending Aura
-9  Derivative Computer Architectures
+ 1  Introduction
+ 2  Architectural Scope
+ 3  Versioning and Compatibility
+      3.1  Aura Version Identifiers
+ 4  Aura Computer Systems
+ 5  Units of Data
+ 6  Processors
+      6.1  Privilege Levels
+      6.2  Exceptions
+      6.3  Interrupts
+      6.4  Data Formats
+      6.5  Architectural State
+      6.6  Instructions
+      6.7  Vector Processing
+ 7  Primary Memory
+      7.1  Addressing Characteristics
+             7.1.1  The Word Addressing Scheme
+             7.1.2  The Octet Addressing Scheme
+             7.1.3  Instruction Package Addressing
+      7.2  Support for Smaller Address Spaces
+      7.3  Read and Write Side Effects
+      7.4  Backed and Unbacked Locations
+      7.5  Initial Value of Primary Memory Contents
+ 8  Agents
+ 9  The Aura Memory Consistency Model
+      9.1  Characteristics
+      9.2  Instructions Requiring Special Consideration
+10  Architecture Extensions
+      10.1  Identification Mechanisms
+      10.2  Instruction Encoding Issues
+      10.3  Promotion of Architecture Extensions
+11  Derivative Computer Architectures
+12  Miscellaneous Topics
 
 
 
@@ -96,36 +111,9 @@ Contents
 ───────────────
 
 
-Aura[N1] is an experimental computer architecture[N2] for exploring 128-bit computing. Aura is an open architecture. A license does not have to be obtained in order to design architecture extensions and implementations. Architecture extensions and implementations may be open or proprietary.
+Aura is an experimental computer architecture for exploring 128-bit computing.
 
-Aura has a minimal scope to maximize implementation freedom. It defines a base architecture that is missing most of the privileged architecture necessary for realizing a complete computer system. The missing features must be provided by implementation-specific or standardized architecture extensions in order to realize a functional implementation. There are a small number of restrictions on the design of these extensions, in order to ensure that an implementation's privileged architecture has can support the base architecture.
-
-
-[N1]: 'Aura' is the Classical Latin word for 'breeze'. 'Aura' should be pronounced as it is in Classical Latin to distinguish it from the English word, and it may be written in the Classical convention ('AVRA') if desired.
-
-[N2]: For brevity, this document also refers to 'computer architecture' as 'architecture'.
-
-
-
-
-
-
-
-
-───────────────────────────────
-2  Versioning and Compatibility
-───────────────────────────────
-
-
-The Architecture Version Number (AVN) is a unique 128-bit integer. The value '0' is reserved for private experimental use. The value '0' is shared by all experimental versions and is unsuitable for production implementations. AVNs are assigned in sequential order starting from '0'. AVN assignments are permanent. All unassigned AVNs are reserved.
-
-As of this document version, the following AVNs have been assigned:
-
-• 128'D0: Experimental
-• 128'D1: Aura Version 1.0
-
-
-Compatibility is not required between different versions of Aura. This allows Aura to avoid the complexity and cost that arises when very different versions must be compatible. It is expected, but not required, that a later version of Aura would be backwards compatible with the preceding version (at minimum), or the preceding n versions (at most), where n is a reasonable (small) number.
+Aura is an open architecture. A license does not have to be obtained in order to design architecture extensions and implementations. Architecture extensions and implementations may be open or proprietary.
 
 
 
@@ -135,11 +123,98 @@ Compatibility is not required between different versions of Aura. This allows Au
 
 
 ──────────────────────
-3  The Computer System
+2  Architectural Scope
 ──────────────────────
 
 
-Aura is a computer architecture for a digital, general-purpose, stored-program computer. An Aura computer system consists of one or more processors, the primary memory, and one or more agents. The architecture directly supports the multiple instruction, multiple data (MIMD) multiprocessing paradigm via the shared primary memory and memory consistency model.
+Aura has a minimal scope to maximize implementation freedom. It defines a base architecture that is missing most of the privileged architecture necessary for realizing a functioning computer system. The missing features must be provided by implementation-specific or standard architecture extensions in order to realize a functioning implementation. There are a small number of restrictions on the design of these extensions, in order to ensure that an implementation's privileged architecture can support the features in the base architecture.
+
+
+
+
+
+
+
+
+───────────────────────────────
+3  Versioning and Compatibility
+───────────────────────────────
+
+
+Aura is expected to evolve over time, resulting in a series of successive versions. Later versions may be incompatible with earlier versions. This allows Aura to evolve freely, without earlier versions restricting the design of later versions, and to avoid the complexity and cost that arises when compatibility must be maintained between many versions, dissimilar versions, or a combination of the two.
+
+The versioning convention used by Aura is a two-part version number composed of major and minor version numbers separated by a period. New versions that have significant consequences for compatibility increment the major version number; those that have little or no consequence for compatibility increment the minor version number. The first version is 1.0 (the major version number cannot be zero).
+
+The document, "The Aura Computer Architecture", uses an ISO 8601 date as the document version. The stated date is the date on which the document version was completed. Changes to the document that do not pertain to architectural flaws or change architectural intent are editorial, not architectural, issues. Thus, these changes are reflected in the document version, not the architecture version.
+
+Document versions that are prefixed with the term "DRAFT" are descriptions of the architecture while it is in a state of development, and thus, flux. In DRAFT versions of the document, changes that pertain to architectural flaws or architectural intent affect the document version, not the architecture version.
+
+
+
+
+─────────────────────────────
+3.1  Aura Version Identifiers
+─────────────────────────────
+
+
+Aura has an architectural mechanism, Aura Version Identifiers (AVIs), that enables software to identify which version of Aura is implemented by any given processor (see Section 6, Processors). AVIs are 64-bit unsigned integers that are permanently assigned to an Aura version. Aura provides an instruction that obtains the AVI of a processor. While different versions of Aura may have implications for agents (see Section 8, Agents), AVIs are not available for agents, as they are either hardware-based state machines or implementations of agent-specific architectures.
+
+AVIs are assigned in sequential order, starting from AVI 1. AVI 0 is reserved for public internal use by versions of the architecture that do not need to be identifiable to software. Reasons for creating such versions include development or experimentation. Unassigned AVIs are reserved for future use.
+
+As of this document version, the following AVIs have been assigned:
+
+• AVI 0: Reserved
+• AVI 1: Aura Version 1.0
+
+
+
+
+
+
+
+
+────────────────────────
+4  Aura Computer Systems
+────────────────────────
+
+
+Aura is a computer architecture for a binary, general-purpose, stored-program computer. An Aura computer system consists of one or more processors, the primary memory, and one or more agents. The architecture directly supports the multiple instruction, multiple data (MIMD) multiprocessing paradigm via the shared primary memory and Aura Memory Consistency Model.
+
+
+
+
+
+
+
+
+────────────────
+5  Units of Data
+────────────────
+
+
+Aura defines five units of data that pertain the size of a datum in bits:
+
+• The octet (OT), consisting of 8 continuous bits, 0—7.
+• The bi-octet (BO), consisting of 16 continuous bits, 0—15.
+• The quadrant-word (QW), consisting of 32 continuous bits, 0—31.
+• The semi-word (SW), consisting of 64 continuous bits, 0—63.
+• The word (WD), consisting of 128 continuous bits, 0—127.
+
+The bits in a unit of data are numbered starting from zero. The first bit is the leftmost bit.
+
+From the bi-octet onward, each unit of data can contain a multiple of one or more smaller units of data. These smaller units of data are laid out within a larger unit of data in little-endian order as follows:
+
+┌────────────────┬──┬──┬──┬──┬──┬──┬──┬──┬──┬──┬──┬──┬──┬──┬──┬──┐
+│         Octet: │15│14│13│12│11│10│ 9│ 8│ 7│ 6│ 5│ 4│ 3│ 2│ 1│ 0│
+│                ├──┴──┼──┴──┼──┴──┼──┴──┼──┴──┼──┴──┼──┴──┼──┴──┤
+│      Bi-octet: │    7│    6│    5│    4│    3│    2│    1│    0│
+│                ├─────┴─────┼─────┴─────┼─────┴─────┼─────┴─────┤
+│ Quadrant-word: │          3│          2│          1│          0│
+│                ├───────────┴───────────┼───────────┴───────────┤
+│     Semi-word: │                      1│                      0│
+│                ├───────────────────────┴───────────────────────┤
+│          Word: │                                              0│
+└────────────────┴───────────────────────────────────────────────┘
 
 
 
@@ -149,29 +224,29 @@ Aura is a computer architecture for a digital, general-purpose, stored-program c
 
 
 ─────────────
-4  Processors
+6  Processors
 ─────────────
 
 
-A processor is an abstract entity that has its own instruction and data streams. Each processor operates independently and concurrently with all other processors and agents in an Aura computer system. In the Aura computer architecture, the concept of a processor is unrelated to any physical entity that may be called a processor in another context.
+A processor is an abstract entity that has its own instruction and data streams. Each processor operates independently and concurrently with all other processors and agents in an Aura computer system. In the Aura computer architecture, the concept of a processor is unrelated to any physical entity that may be called a processor other contexts.
 
 The processors in an Aura computer system may implement different versions of the architecture if they are mutually compatible. Additionally, all of the implemented architecture extensions must be mutually compatible.
 
 When an Aura computer system is started, each processor begins performing the stored-program computer instruction cycle. This instruction cycle is repeats until the Aura computer system is stopped.
 
-A processor's instruction stream is not guaranteed to be coherent with the primary memory. If a processor implementation does not provide coherence between its instruction stream and the primary primary, it is required to provide a privileged mechanism for enforcing coherence via an architecture extension.
+A processor's instruction stream is not guaranteed to be coherent with the primary memory. If a processor implementation does not provide coherence between its instruction stream and the primary memory, it is required to provide a privileged mechanism for enforcing coherence via an architecture extension.
 
 Processors must implement an architecture extension that provides a privileged mechanism for interrupting other processors and agents. The privilege level of this mechanism must be the highest privilege level supported by the processor.
 
-Processors address other processors using a 128-bit processor address. A subset of the 128-bit processor address space may be supported by limiting the size of the processor address to some non-zero integral number of bits.
+Processors address other processors using a 128-bit processor address. A subset of the 128-bit processor address space may be supported by limiting the size of the processor address to N bits, where 0 < N < 128.
 
-Processors address agents using a 128-bit address. A subset of the 128-bit agent address space may be supported by limiting the size of the agent address to some non-zero integral number of bits.
+Processors address agents using a 128-bit address. A subset of the 128-bit agent address space may be supported by limiting the size of the agent address to N bits, where 0 < N < 128.
 
 
 
 
 ─────────────────────
-4.1  Privilege Levels
+6.1  Privilege Levels
 ─────────────────────
 
 
@@ -184,7 +259,7 @@ Attempting to execute an instruction that requires a higher operating privilege 
 The base architecture has two privilege levels:
 
 • 0: Unprivileged
-• 1: Environment
+• 1: Privileged
 
 The privilege level is specified as an unsigned integer. The privilege level specified corresponds to its magnitude; zero is unprivileged, and all values greater than zero are privileged. Architecture extensions may define additional privilege levels.
 
@@ -194,13 +269,13 @@ The base architecture does not define the architectural state and instructions f
 
 
 ───────────────
-4.2  Exceptions
+6.2  Exceptions
 ───────────────
 
 
 Exceptions are signals generated by instructions to indicate two facts:
 
-• The instruction has encountered an exceptional condition. In this context, "exceptional" means the opposite of common. In practice, this may be the ideal, not the reality.
+• The instruction has encountered an exceptional condition. In this context, "exceptional" means the opposite of common. In practice, this may only be true in the aspirational sense.
 • The exceptional condition can only be resolved by software that runs in a privilege level that is higher than the one the instruction ran in.
 
 An exception causes the processor to stop receiving external interrupts, elevate its operating privilege level to the one required by the exception, and to transfer control to the exceptional condition-resolving software (such as an operating system's exception handler).
@@ -249,36 +324,50 @@ Abstract Exception Identifiers
 • INSUFFICIENT PRIVILEGE
 
   Type: Precise
-  Description: See Section 4.1
+  Description: See Section 6.1, Privilege Levels
 
 
 • INVALID INSTRUCTION
 
   Type: Precise
-  Description: See Section 4.6
+  Description: See Section 6.6, Instructions
 
 
 • INVALID INSTRUCTION PACKAGE
 
   Type: Precise
-  Description: See Section 4.6
+  Description: See Section 6.6, Instructions
+
+
+• INVALID INSTRUCTION PACKAGE FORMAT
+
+  Type: Precise
+  Description: See Section 6.6, Instructions
 
 
 • INVALID SPANNED INSTRUCTION
 
   Type: Precise
-  Description: See Section 4.6
+  Description: See Section 6.6, Instructions
 
 
 • UNALIGNED ELEMENT SELECT
+
   Type: Precise
-  Description: See Part II, Section 23
+  Description: See Part II, Section 23 (Element Extraction Instructions)
+                   Part II, Section 24 (Element Deposition Instructions)
+
+
+• UNALIGNED PRIMARY MEMORY ADDRESS
+
+  Type: Precise
+  Description: See Section 7.1, Addressing Characteristics
 
 
 
 
 ───────────────
-4.3  Interrupts
+6.3  Interrupts
 ───────────────
 
 
@@ -296,7 +385,7 @@ External interrupts have the same privilege level as the instructions that gener
 
 Processors can disable the reception of external interrupts. The reception of internal interrupts cannot be disabled.
 
-An interrupt causes the processor to cease receiving other interrupts, change its operating privilege level to that of the interrupt (if it is not already in that level), and transfer control to the software handling the interrupt (such as an operating system's interrupt handler).
+An interrupt causes the processor to disable interrupts, change its operating privilege level to that of the interrupt (if it is not already in that level), and transfer control to the software handling the interrupt (such as an operating system's interrupt handler).
 
 After the interrupt has been serviced, the interrupt-handling software returns from the interrupt by restoring the processor's former operating privilege level (if necessary), and by transferring control to the appropriate instruction.
 
@@ -311,51 +400,22 @@ The base architecture defines interrupts as requirements that must be met by all
 
 
 
-────────────────────────
-4.4  Architectural State
-────────────────────────
+─────────────────
+6.4  Data Formats
+─────────────────
 
 
-Each processor has the following architectural state:
-
-• An instruction package memory address register (IPMAR)
-• A general-purpose register (GPR) set
-• A carry register (CR) set
-• A real number register (RNR) set
-
-The above architectural state has a privilege level of −1 (User).
-
-The IPMAR is 128 bits wide. It holds the 128-bit memory address of instruction package that contains the instruction being executed, or the trailing part of the instruction being executed.
-
-The GPR set contains 64 registers, each 128 bits wide. Each GPR is identified by its register index (GPR[0]—GPR[63]). These registers are primarily intended for holding integers for addressing and computation. Each GPR is associated with the CR that has same register index (for example, GPR[0] is associated with CR[0]).
-
-The CR set contains 64 registers, each 1 bit wide. Each CR is identified by its register index (CR[0]—CR[63]). These registers are used to accommodate the most-significant bit of the 129-bit results produced by some integer instructions. Each CR is associated with the GPR that the same register index (for example, CR[0] is associated with GPR[0]).
-
-The RNR set contains 64 registers, each 128 bits wide. Each RNR is identified by its register index (RNR[0]—RNR[63]). These registers are primarily intended for holding real numbers for computation, and the integer operands and results of instructions that consume or produce integers and real numbers.
-
-All registers have an unpredictable initial value, except for the IPMAR, which has an initial value of 128'B0.
-
-Bits in all registers are numbered starting from zero. The first bit is the least-significant bit.
+Aura conceptualizes data as being either scalars or vectors. Scalars are singular entities that represent a quantity; vectors are homogeneous collections of elements, each a scalar. Scalars and vectors are comprised of units of data: a scalar is some kind of unit of data; a vector is a continuous series of a given unit of data. What the bits in a unit of data represent collectively is determined by its data format. The fundamental data formats are bit sets and integers.
 
 
 
 
-───────────────
-4.5  Data Types
-───────────────
+────────
+Bit Sets
+────────
 
 
-Aura supports plain words, unsigned integers, and signed integers (with the two's complement representation). Aura has a 128-bit native word size. The native size of these data types is equal to the native word size. Aura supports 128-bit scalars and five types of vector.
-
-
-
-
-───────────
-Plain Words
-───────────
-
-
-The plain word data type does not interpret the bits in a word as a value. The bits are treated as a collection of bits where only the value of individual bits are considered. Plain words are supported as scalars and as elements in vectors.
+Bit sets are groups of continuous bits where the bits are treated individually, that is, only the value of each individual bit has meaning. Bit sets have five sizes: 8, 16, 32, 64, and 128 bits, corresponding to the five units of data, the octet, bi-octet, quadrant-word, semi-word, and word, respectively. Bit sets represent bitwise data or data formats that are not supported in Aura.
 
 
 
@@ -365,7 +425,7 @@ Integers
 ────────
 
 
-Unsigned integers and signed integers (with the two's complement representation) are supported as scalars and as elements in vectors.
+There are two forms of integer: unsigned and signed. Each form has five sizes: 8, 16, 32, 64, and 128 bits, corresponding to the five units of data: the octet, bi-octet, quadrant-word, semi-word, and word, respectively. For unsigned integers, bits increase in significance from left to right. Signed integers are represented with the two's complement representation. For signed integers, bits increase in significance from left to right, and the rightmost bit is the sign bit―and a value of zero indicates a positive integer, one indicates a negative integer. Both forms of integer wrap-around on overflow.
 
 
 Unsigned Integer Numerical Ranges:
@@ -414,7 +474,7 @@ Real Numbers
 ────────────
 
 
-Aura does not support any real number data types in the base architecture. All support for real numbers, both data types and instructions, must be provided by architecture extensions. Support for real numbers has been omitted because of the relative impermanence of real number representations compared to those for integers.
+Aura does not support any real number data formats in the base architecture. All support for real numbers, both data formats and instructions, must be provided by architecture extensions. The base architecture does not support real numbers because of the relative impermanence of real number representations compared to those for integers.
 
 
 
@@ -424,30 +484,73 @@ Vectors
 ───────
 
 
-There are four vector types: V8, V16, V32, and V64. The characteristics of these vectors are given in the following table:
+Aura vectors are collections of elements that have these characteristics:
+
+• All elements in a vector are independent of every other element.
+• Elements may be of the following units of data: the 8-bit octet, 16-bit bi-octet, 32-bit quadrant-word, 64-bit semi-word, and 128-bit word.
+• All elements in a vector must be of the same unit of data.
+• The length of a vector in bits must a positive integral multiple of 128. This ensures that vectors may be stored at any word address (see Section 7.1, Addressing Characteristics). The effect of this requirement is that the number of elements in a vector with elements that are sub-word units of data will be the multiple of the number of sub-word units that can fit within a word.
+
+Vectors conforming to the above definition are intended to be provided by architecture extensions and not featured in the base architecture. Instead, the base architecture features 128-bit vectors, which are sized identically to words, so they can be tightly coupled with scalar processing by fitting inside the 128-bit GPRs and RNRs. There are four vector types, V2, V4, V8, and V16, named for the number of elements they contain. The characteristics of these vectors are given in the following table:
 
 
-┌────────┬─────────┬────────────┐
-│ Vector │ Element │ Vector     │
-│ Type   │ Size    │ Length     │
-│        │ (Bits)  │ (Elements) │
-├────────┼─────────┼────────────┤
-│ V8     │ 8       │ 16         │
-├────────┼─────────┼────────────┤
-│ V16    │ 16      │ 8          │
-├────────┼─────────┼────────────┤
-│ V32    │ 32      │ 4          │
-├────────┼─────────┼────────────┤
-│ V64    │ 64      │ 2          │
-└────────┴─────────┴────────────┘
+┌────────┬────────────┬─────────┐
+│ Vector │ Vector     │ Element │
+│ Type   │ Length     │ Size    │
+│        │ (Elements) │ (Bits)  │
+├────────┼────────────┼─────────┤
+│ V2     │ 2          │ 64      │
+├────────┼────────────┼─────────┤
+│ V4     │ 4          │ 32      │
+├────────┼────────────┼─────────┤
+│ V8     │ 8          │ 16      │
+├────────┼────────────┼─────────┤
+│ V16    │ 16         │ 8       │
+└────────┴────────────┴─────────┘
 
 
-The vector length is the number of elements a vector contains.
+The layout of elements in a vector is given in the following tables:
 
-The layout of these vectors is given below:
+
+V2 Layout:
+
+┌─────────┬─────┬─────┐
+│ Element │ MSB │ LSB │
+├─────────┼─────┼─────┤
+│ 0       │  63 │   0 │
+│ 1       │ 127 │  64 │
+└─────────┴─────┴─────┘
+
+
+V4 Layout:
+
+┌─────────┬─────┬─────┐
+│ Element │ MSB │ LSB │
+├─────────┼─────┼─────┤
+│ 0       │  31 │   0 │
+│ 1       │  63 │  32 │
+│ 2       │  95 │  64 │
+│ 3       │ 127 │  96 │
+└─────────┴─────┴─────┘
 
 
 V8 Layout:
+
+┌─────────┬─────┬─────┐
+│ Element │ MSB │ LSB │
+├─────────┼─────┼─────┤
+│ 0       │  15 │   0 │
+│ 1       │  31 │  16 │
+│ 2       │  47 │  32 │
+│ 3       │  63 │  48 │
+│ 4       │  79 │  64 │
+│ 5       │  95 │  80 │
+│ 6       │ 111 │  96 │
+│ 7       │ 127 │ 112 │
+└─────────┴─────┴─────┘
+
+
+V16 Layout:
 
 ┌─────────┬─────┬─────┐
 │ Element │ MSB │ LSB │
@@ -471,76 +574,115 @@ V8 Layout:
 └─────────┴─────┴─────┘
 
 
-V16 Layout:
-
-┌─────────┬─────┬─────┐
-│ Element │ MSB │ LSB │
-├─────────┼─────┼─────┤
-│ 0       │  15 │   0 │
-│ 1       │  31 │  16 │
-│ 2       │  47 │  32 │
-│ 3       │  63 │  48 │
-│ 4       │  79 │  64 │
-│ 5       │  95 │  80 │
-│ 6       │ 111 │  96 │
-│ 7       │ 127 │ 112 │
-└─────────┴─────┴─────┘
 
 
-V32 Layout:
-
-┌─────────┬─────┬─────┐
-│ Element │ MSB │ LSB │
-├─────────┼─────┼─────┤
-│ 0       │  31 │   0 │
-│ 1       │  63 │  32 │
-│ 2       │  95 │  64 │
-│ 3       │ 127 │  96 │
-└─────────┴─────┴─────┘
 
 
-V64 Layout:
 
-┌─────────┬─────┬─────┐
-│ Element │ MSB │ LSB │
-├─────────┼─────┼─────┤
-│ 0       │  63 │   0 │
-│ 1       │ 127 │  64 │
-└─────────┴─────┴─────┘
+
+────────────────────────
+6.5  Architectural State
+────────────────────────
+
+
+Each processor has the following architectural state:
+
+• An instruction package memory address register (IPMAR)
+• A general-purpose register (GPR) set
+• A carry register (CR) set
+• A real number register (RNR) set
+
+Bits in all registers are numbered starting from zero. The first bit is the least-significant bit.
+
+The architectural state has a privilege level of 0 (Unprivileged).
+
+All registers have an unpredictable initial value, except for the IPMAR, which has an initial value of 128'B0.
+
+
+
+
+───────────────────────────────────────────────────
+Instruction Package Memory Address Register (IPMAR)
+───────────────────────────────────────────────────
+
+
+The IPMAR is a 128-bit register that holds the 128-bit memory address of an instruction package. This memory address is a word address―it addresses the primary memory as 128-bit words (for further details on memory addressing, see Section 7, Primary Memory).
+
+The memory address identifies the instruction package containing the instruction being executed. If the instruction spans two instruction packages, then the memory address identifies the instruction package that contains the leading part of the instruction being executed (for further details on instruction layout in instruction packages, see Section 6.6, Instructions).
+
+
+
+
+──────────────────────────────────
+General Purpose Register (GPR) Set
+──────────────────────────────────
+
+
+The GPR set contains sixty-four 128-bit registers, which are identified by the register numbers GPR[0]—GPR[63]. Each GPR can be divided into two 64-bit halves called semi-GPRs (SGPRs) that function independently. Thus, an alternative view of the GPR set is as a SGPR set containing one hundred and twenty-eight 64-bit registers, which are identified by the register numbers SGPR[0]—SGPR[127].
+
+A SGPR is mapped to the GPR whose register number is the integer quotient of the SGPR's register number and '2'. The modulo of the SGPR's register number and '2' determines which half of the GPR the SGPR is mapped to: '0' corresponds to the low-order half, and '1' to the high-order half.
+
+GPRs are mainly intended to hold scalar and vector bit sets and integers for memory addressing and computation. SGPRs are mainly intended to hold scalar and vector bit sets and integers for computation.
+
+
+
+
+───────────────────────
+Carry Register (CR) Set
+───────────────────────
+
+
+The CR set contains one hundred and twenty-eight 1-bit registers, which are identified by the register numbers CR[0]—CR[127]. Each GPR and SGPR is associated with the CR that the same register number.
+
+The CRs are used to accommodate the most-significant bit of the 65- or 129-bit results produced by some integer instructions. Since there are 64 GPRs and 128 SGPRs, CR[0]—CR[63] are associated with both GPR[0]—GPR[63] and SGPR[0]—SGPR[63], while CR[64]—CR[127] are exclusively associated with SGPRs. Because the SGPRs are mapped onto GPRs, when an instruction writes to a GPR, two SGPRs are overwritten. The two CRs that are associated with the two SGPRs mapped to a GPR are written to: the CR that is associated with the GPR receives the valid CR value; while the CR that is exclusively associated with the SGPR is zeroed.
+
+
+
+
+──────────────────────────────
+Real Number Register (RNR) Set
+──────────────────────────────
+
+
+The RNR set contains sixty-four 128-bit registers, which are identified by its register number RNR[0]—RNR[63]. Each RNR can be divided into two 64-bit halves called semi-RNRs (SRNRs) that function independently. Thus, an alternative view of the RNR set is as a SRNR set containing one hundred and twenty-eight 64-bit registers, which are identified by the register numbers SRNR[0]—SRNR[127].
+
+A SRNR is mapped to the RNR whose register number is the integer quotient of the SRNR's register number and '2'. The modulo of the SRNR's register number and '2' determines which half of the RNR the SRNR is mapped to: '0' corresponds to the low-order half, and '1' to the high-order half.
+
+RNRs and SRNRs are mainly intended for holding real numbers for scalar and vector computation, and the integer operands and results of instructions that consume or produce integers.
 
 
 
 
 ─────────────────
-4.6  Instructions
+6.6  Instructions
 ─────────────────
 
 
-Instructions are 30, 40, 50, or 60 bits long. Multiple instructions are packaged into 128-bit words called 'instruction packages' because they are smaller than the smallest addressable unit of memory (a 128-bit word). Consequently, instructions are generally addressed indirectly at the instruction package level, and the architecture does not expose the addressing of instructions within an instruction package in most cases. 
+Instructions are 30, 40, 50, or 60 bits long. Multiple instructions are packaged into 128-bit words called 'instruction packages' because they do not correspond to any unit of data and are not addressable. Consequently, instructions are generally addressed indirectly at the instruction package level, and the architecture does not expose the addressing of instructions within an instruction package in most cases.
 
 To improve code density, instructions that cannot fit into an instruction package are split into two parts: the low-order part is the 'leading part' and the high-order part is the 'trailing part'. These parts are placed into two adjacent instruction packages. The leading part resides in the instruction package with the smaller memory address; the trailing part resides in the instruction package with the larger memory address (this convention is reversed if the instruction package containing the low-order part of the instruction is stored in the last word in the primary memory because of memory address warp-around).
 
-The first instruction in an instruction package is the first wholly contained instruction. An instruction's trailing part is considered to belong to the instruction package containing its leading part. The memory address of such an instruction is the memory address of the instruction package containing its leading part part.
+The first instruction in an instruction package is the first wholly contained instruction. An instruction's trailing part is considered to belong to the instruction package containing its leading part. The memory address of such an instruction is the memory address of the instruction package containing its leading part.
 
 Instruction packages consists of two parts: an 8-bit 'Format' field that occupies bits 0—7, and a 120-bit 'Payload' field that occupies bits 8—127.
 
 The Format field is an 8-bit unsigned integer that specifies the format of the Payload field. The format determines the number of instructions in the Payload field, the sizes of these instructions, the positions of these instructions in the Payload field, whether or not there is a leading part of instruction from the previous instruction package, whether or not the last instruction in the instruction package crosses instruction packages, and whether or not there is a 'Zero' field.
 
-There are 157 formats that permit the instruction package to accommodate all combinations of the aforementioned features. The Format field has 256 possible values, of which 157 are assigned to the defined formats. All unused values are reserved. An instruction package with a Format field that contains an unused value causes a precise exception (INVALID INSTRUCTION PACKAGE) to be generated. This exception has a privilege level of 0 (Environment).
+There are 157 formats that permit the instruction package to accommodate all combinations of the aforementioned features. The Format field has 256 possible values, of which 157 are assigned to the defined formats. All unused values are reserved. An instruction package with a Format field that contains an unused value causes a precise exception (INVALID INSTRUCTION PACKAGE FORMAT) to be generated. This exception has a privilege level of 1 (Privileged).
 
 The length of an instruction that crosses instruction packages is determined by the Format fields of the two instruction packages that contains its parts. The Format fields of instruction package pairs must be in agreement in regards to whether or not there is an instruction crossing their boundary, and the length of this instruction if one exists. Otherwise, a precise exception (INVALID SPANNED INSTRUCTION) is generated.
 
 To elaborate, if the first instruction package in a pair has a 40-bit leading part of an instruction in bits 80—119 of its Payload field, then the second instruction package must have either a 10- or 20-bit trailing part of an instruction in bits 0—9 or 0—19, respectively.
 
-The later instruction package cannot lack a trailing part of an instruction because the earlier instruction package has a leading part of an instruction. Also, the second instruction package cannot have a trailing part of an instruction greater than 20 bits in length because an instruction's maximum length is 60 bits.
+The later instruction package cannot lack a trailing part of an instruction because the earlier instruction package has a leading part of an instruction. Also, the second instruction package cannot have a trailing part of an instruction greater than 50 bits in length because an instruction's maximum length is 60 bits.
 
-The requirement for the Format fields of the current and previous instruction packages to agree is waived at initialization and when there is a transfer of control (such as branch to another instruction package), since it would not make sense for there to be spanned instructions in these cases. The requirement is not enforced until execution has advanced sufficiently to caused the IPMAR to be incremented.
+The requirement for the Format fields of the current and previous instruction packages to agree is waived at initialization and when there is a transfer of control (such as branch to another instruction package), since it would not make sense for there to be spanned instructions in these cases. The requirement is not enforced until execution has advanced sufficiently to have caused the IPMAR to be incremented.
 
 Some instruction package formats have a 'Zero' sub-field in the high-order 10 or 20 bits of the Payload field. This sub-field does not contain any part of an instruction and is filled with zeros. If this invariant does not hold, an INVALID INSTRUCTION PACKAGE is generated.
 
 The primary purpose of the 'Zero' field is to terminate basic blocks that cannot fill the last instruction package's Payload field with an instruction due to insufficient space. This ensures maximum instruction density by not requiring an unnecessary NULL instruction (that would cross instruction packages). The secondary purpose is to improve performance by prevent an instruction from crossing instruction packages if doing so will cause a reduction in performance.
 
-Instructions in an instruction package are executed sequentially (unless there is a control flow instruction or some kind of event such as an exception or interrupt). Execution begins at the first instruction in an instruction package. A precise exception (INVALID INSTRUCTION) is generated when an unrecognized instruction is encountered. This exception has a privilege level of 0 (Environment).
+Instructions in an instruction package are executed sequentially (unless there is a control flow instruction or some kind of event such as an exception or interrupt). Execution begins at the first instruction in an instruction package. A precise exception (INVALID INSTRUCTION) is generated when an unrecognized instruction is encountered. This exception has a privilege level of 1 (Privileged).
 
 
 
@@ -559,15 +701,15 @@ Legend:
     • T: Trailing Part (of an instruction)
     • Z: Zero Sub-field
 • The number in parentheses is the number of bits in the sub-field.
-• The number after the colon of 'I' sub-fields identifies whether the instruction is the first, second, third, or fourth instruction in the instruction package.
-• Some 'I' sub-fields have an 'L' after the colon and number. This indicates that the sub-field is the leading part of an instruction that crosses instruction packages.
+• The number after the colon of 'I' subfields identifies whether the instruction is the first, second, third, or fourth instruction in the instruction package.
+• Some 'I' sub-fields have an 'L' after the colon and number. This indicates that the subfield is the leading part of an instruction that crosses instruction packages.
 
 
 ┌───────────┬─────────────────┬─────────────────┬─────────────────┬─────┐
 │    Z (20) │        I:2 (30) │        I:1 (30) │        I:0 (30) │   T │   0
 │           │                 │                 │                 │ (10)│
 ├───────────┼─────────────────┼─────────────────┼─────────────────┼─────┤
-│ I:2L (20) │        I:2 (30) │        I:1 (30) │        I:0 (30) │   T │   1
+│ I:3L (20) │        I:2 (30) │        I:1 (30) │        I:0 (30) │   T │   1
 │           │                 │                 │                 │ (10)│
 ├─────┬─────┴─────────────────┼─────────────────┼─────────────────┼─────┤
 │   Z │              I:2 (40) │        I:1 (30) │        I:0 (30) │   T │   2
@@ -960,8 +1102,11 @@ Legend:
 
 
 ──────────────────────
-4.7  Vector Processing
+6.7  Vector Processing
 ──────────────────────
+
+
+Aura features general-purpose vector processing capability in the base architecture. This capability is intended to serve applications that have tightly coupled scalar and vector processing (on 8-, 16-, 32-, and 64-bit elements) by permitting the GPR and RNR sets to contain both scalar and vector operands. The vector processing capability consists of instructions that operate on vector—vector and vector—scalar operands. More advanced vector processing capabilities must be provided by architecture extensions.
 
 
 
@@ -971,7 +1116,7 @@ Scalar Operands
 ───────────────
 
 
-Scalar operands in vector instructions have a value that is constant. That is, for every iteration of the vector operation, the value of the scalar operands is the same. The scalar operands are consumed when they are read for the first iteration. Afterwards, their registers are no longer a part of the vector instruction, and can be reused by a subsequent instruction.
+Scalar operands in vector instructions have a value that is constant. That is, for every iteration of the vector operation, the value of the scalar operands are the same. The scalar operands are consumed when they are read for the first iteration. Afterwards, their registers are no longer a part of the vector instruction, and can be reused by a subsequent instruction.
 
 
 
@@ -983,56 +1128,223 @@ The 'T' Field
 
 Some vector instructions contain a 2-bit 'T' field that specifies the vector type of the operands and result. The value of the 'T' field identifies the vector type. The values and their definitions are as follows:
 
-• 2'B00: V64
-• 2'B01: V32
-• 2'B10: V16
-• 2'B11: V8
+• 2'B00: V2
+• 2'B01: V4
+• 2'B10: V8
+• 2'B11: V16
 
 Some vector instructions may define an alternative use, or additional uses, for the 'T' field.
 
 
 
 
-───────────
-The 'O' Bit
-───────────
-
-
-Some vector instructions can mix scalar operands with vector operands. Instructions that have this capability generally specify the operand types involved via the 'O' bit. Generally, one or more operands are 128-bit scalars if the value of the 'O' bit is 1'B0; and all operands are vectors if the value of the 'O' bit is 1'B1. Some vector instructions may define an alternative interpretation for the 'O' bit.
-
-
-
-
 
 
 
 
 ─────────────────
-5  Primary Memory
+7  Primary Memory
 ─────────────────
 
 
-The primary memory is an abstract entity consisting of architectural state that is shared by all processors and agents in the computer system. The architectural state is a random-access memory (RAM) with a 128-bit flat address space. The addressable unit is a 128-bit word. The address space and addressable unit combined permits the primary memory to have a maximum capacity of 2**135 bits (2**132 octets).
+The primary memory is an abstract entity that provides all processors and agents in the computer system with a shared random-access memory (RAM). The primary memory can be read and written by all processors and agents in the computer system.
 
-The primary memory's abstract nature permits implementations to choose the organization that is most suitable for the implementations' role. For example, the primary memory does not have to be a physically monolithic entity, it may instead be composed out of multiple physical entities.
+The abstraction of primary memory as a singular entity does not imply it must be physically homogeneous and monolithic, it may, as an example, be composed of multiple physically distributed and heterogeneous parts. Additionally, the term 'RAM' refers to the ability of a memory to address and access arbitrary locations efficiently. It does not imply the primary memory is realized by any specific technology.
 
-Implementations may support a subset of the 128-bit primary memory address space by computing primary memory addresses to the desired number of bits and sign-extending it to 128 bits. For example, for a 64-bit address space, the implementation computes 64-bit memory addresses, and sign-extends them to 128 bits by using bit 63 as the sign bit.
 
-Accessing words outside of the supported primary memory address space causes a precise exception (PRIMARY MEMORY ADDRESS OUT OF RANGE) to be generated. This exception has a privilege level of 0 (Environment).
 
-For convenience, the descriptions of instructions that compute memory addresses in The Aura Computer Architecture document are written as if the full 128-bit addresses are always computed.
 
-The primary memory can be read and written by all processors and agents in the computer system. Reads and writes do not have any side effects. A side effect is any effect other than the effect or effects prescribed by the mechanism that caused the read or write.
+───────────────────────────────
+7.1  Addressing Characteristics
+───────────────────────────────
 
-The primary memory is required to have a word at the first address (address zero), because the initial value of the instruction package memory address register is zero. The primary memory is not required to have a word at every other address in the address space, and whether an address has a word or not can vary over time. It is guaranteed that each address either has or does not have a word. There cannot be an intermediate position where some bits of a 128-bit word are non-existent.
 
-Reads of addresses with a non-existent word return an unpredictable value. Writes to such addresses do not perform any action, and STORE ATOMIC instructions always fail. Implementations can define additional effects for accesses to non-existent words. If additional effects have been defined, they are not considered to be side effects.
+The primary memory's contents are addressed with a 128-bit memory address. These are 128-bit unsigned integers whose value identifies a corresponding location. The two basic addressable units of memory are the 8-bit octet and 128-bit word. The sizes of the memory address and word combined permits the primary memory to have a maximum capacity of 2**135 bits (2**132 octets or 2**128 words).
 
-Architecture extensions can impose additional restrictions on the characteristics of non-existent words. The architecture does not provide any specific mechanism for querying which addresses have words and which do not, or for notifying software when the addresses containing existent and non-existent words have changed.
+The first location in the primary memory is identified by the value zero (128'D0). All memory addressing-related arithmetic is modular―when the 128-bit unsigned integer overflows, its value is the modulo of the true value and 2**128.
 
-The architecture conceptualizes there being existent and non-existent words in order to provide architectural clarity when an implementation is configured or operated with a primary memory whose capacity is less than that supported by its implemented address space. This effort should not be construed as condoning the haphazard implementation or configuration of non-existent words throughout the address space. Implementations and configurations are expected to be sensible.
+The primary memory is addressed with two 'addressing schemes': the 'octet addressing scheme' and the 'word addressing scheme'. These schemes are based around the respective basic addressable units; and differ in the type of location identified by a memory address, and range of memory a memory address can identify.
 
-The initial value of the existent word at each address is unpredictable from the perspective of the architecture. In order to realize practical implementations that are capable of running software, there must be deterministic behavior after the Aura computer system is started. This deterministic behavior is the effect of an implementation-specific mechanism that "initializes" some of the primary memory with data from storage when an Aura computer system is started.
+
+
+
+─────────────────────────────────
+7.1.1  The Word Addressing Scheme
+─────────────────────────────────
+
+
+The word addressing scheme (word addressing) treats the primary memory as 2**128 locations, each containing a 128-bit word, called 'word locations'. The memory addresses for this scheme are called 'word addresses', and the maximally sized 128-bit word address permits any word to be addressed. Word-sized loads and stores permit every sub-word unit of data to be accessed indirectly via the use of an additional "index" for identifying the sub-word unit of data, and additional instructions to extract and deposit the identified sub-word unit of data.
+
+Word addresses that are less than 2**124 in value have a corresponding octet address (see Section 7.1.2, The Octet Addressing Scheme); the product of the word address and 16. The word addresses at 2**124 through to (2**128) -1 (inclusive) do not have a corresponding octet address because there are only 2**128 octet addresses (see Section 7.1.2, The Octet Addressing Scheme).
+
+
+
+
+──────────────────────────────────
+7.1.2  The Octet Addressing Scheme
+──────────────────────────────────
+
+
+The octet addressing scheme (octet addressing) treats the primary memory as 2**132 locations, each containing an 8-bit octet, called 'octet locations'. The memory addresses for this scheme are called 'octet addresses', and the maximally sized 128-bit octet address permits any octet at locations 0 through to (2**128) - 1 (inclusive) to be addressed, but not those at locations 2**128 through to (2**132) - 1, inclusive.
+
+Units of data that are larger than octets (bi-octets, quadrant-words, semi-words, and words) can also be addressed under this scheme. These units of data are laid out in the primary memory in little-endian order, and take the memory address (octet address) of the first octet in the unit of data. The octet address must be an integral multiple of 2 for bi-octets, 4 for quadrant-words, 8 for semi-words, and 16 for words. Octet addresses that meet these requirements are described as 'aligned'; those that are not, as 'unaligned'.
+
+Attempting to reference the primary memory using unaligned octet addresses will fail―a precise exception (UNALIGNED PRIMARY MEMORY ADDRESS) is generated and no memory operation will be performed. This exception has a privilege level of 1 (Privileged).
+
+The following diagram illustrates these requirements. The octet address is given as a base address plus an offset. Each of the five units of data are laid out in the memory as if they were elements in a linear array. Each element is identified by an integer prefixed by "#", and its octet address is given as an offset from the base address.
+
+
+┌───────────┬───────────┬───────────┬───────────┬───────────┬───────────┐
+│ Base      │ Octet     │ Bi-octet  │ Quadrant- │ Semi-word │ Word      │
+│ Address   │           │           │ word      │           │           │
+├───────────┼───────────┼───────────┼───────────┼───────────┼───────────┤
+│ +0        │  #0 @ +0  │  #0 @ +0  │  #0 @ +0  │  #0 @ +0  │  #0 @ +0  │
+├───────────┼───────────┤           │           │           │           │
+│ +1        │  #1 @ +1  │           │           │           │           │
+├───────────┼───────────┼───────────┤           │           │           │
+│ +2        │  #2 @ +2  │  #1 @ +2  │           │           │           │
+├───────────┼───────────┤           │           │           │           │
+│ +3        │  #3 @ +3  │           │           │           │           │
+├───────────┼───────────┼───────────┼───────────┤           │           │
+│ +4        │  #4 @ +4  │  #2 @ +4  │  #1 @ +4  │           │           │
+├───────────┼───────────┤           │           │           │           │
+│ +5        │  #5 @ +5  │           │           │           │           │
+├───────────┼───────────┼───────────┤           │           │           │
+│ +6        │  #6 @ +6  │  #3 @ +6  │           │           │           │
+├───────────┼───────────┤           │           │           │           │
+│ +7        │  #7 @ +7  │           │           │           │           │
+├───────────┼───────────┼───────────┼───────────┼───────────┤           │
+│ +8        │  #8 @ +8  │  #4 @ +8  │  #2 @ +8  │  #1 @ +8  │           │
+├───────────┼───────────┤           │           │           │           │
+│ +9        │  #9 @ +9  │           │           │           │           │
+├───────────┼───────────┼───────────┤           │           │           │
+│ +10       │ #10 @ +10 │  #5 @ +10 │           │           │           │
+├───────────┼───────────┤           │           │           │           │
+│ +11       │ #11 @ +11 │           │           │           │           │
+├───────────┼───────────┼───────────┼───────────┤           │           │
+│ +12       │ #12 @ +12 │  #6 @ +12 │  #3 @ +12 │           │           │
+├───────────┼───────────┤           │           │           │           │
+│ +13       │ #13 @ +13 │           │           │           │           │
+├───────────┼───────────┼───────────┤           │           │           │
+│ +14       │ #14 @ +14 │  #7 @ +14 │           │           │           │
+├───────────┼───────────┤           │           │           │           │
+│ +15       │ #15 @ +15 │           │           │           │           │
+├───────────┼───────────┼───────────┼───────────┼───────────┼───────────┤
+│ +16       │ #16 @ +16 │  #8 @ +16 │  #4 @ +16 │  #2 @ +16 │  #1 @ +16 │
+├───────────┼───────────┤           │           │           │           │
+│ +17       │ #17 @ +17 │           │           │           │           │
+├───────────┼───────────┼───────────┤           │           │           │
+│ +18       │ #18 @ +18 │  #9 @ +18 │           │           │           │
+├───────────┼───────────┤           │           │           │           │
+│ +19       │ #19 @ +19 │           │           │           │           │
+├───────────┼───────────┼───────────┼───────────┤           │           │
+│ +20       │ #20 @ +20 │ #10 @ +20 │  #5 @ +20 │           │           │
+├───────────┼───────────┤           │           │           │           │
+│ +21       │ #21 @ +21 │           │           │           │           │
+├───────────┼───────────┼───────────┤           │           │           │
+│ +22       │ #22 @ +22 │ #11 @ +22 │           │           │           │
+├───────────┼───────────┤           │           │           │           │
+│ +23       │ #23 @ +23 │           │           │           │           │
+├───────────┼───────────┼───────────┼───────────┼───────────┤           │
+│ +24       │ #24 @ +24 │ #12 @ +24 │  #6 @ +24 │  #3 @ +24 │           │
+├───────────┼───────────┤           │           │           │           │
+│ +25       │ #25 @ +25 │           │           │           │           │
+├───────────┼───────────┼───────────┤           │           │           │
+│ +26       │ #26 @ +26 │ #13 @ +26 │           │           │           │
+├───────────┼───────────┤           │           │           │           │
+│ +27       │ #27 @ +27 │           │           │           │           │
+├───────────┼───────────┼───────────┼───────────┤           │           │
+│ +28       │ #28 @ +28 │ #14 @ +28 │  #7 @ +28 │           │           │
+├───────────┼───────────┤           │           │           │           │
+│ +29       │ #29 @ +29 │           │           │           │           │
+├───────────┼───────────┼───────────┤           │           │           │
+│ +30       │ #30 @ +30 │ #15 @ +30 │           │           │           │
+├───────────┼───────────┤           │           │           │           │
+│ +31       │ #31 @ +31 │           │           │           │           │
+└───────────┴───────────┴───────────┴───────────┴───────────┴───────────┘
+
+
+Octet addresses that are multiples of 16 have a corresponding word address―the quotient of the octet address divided by 16.
+
+
+
+
+─────────────────────────────────────
+7.1.3  Instruction Package Addressing
+─────────────────────────────────────
+
+
+Processors fetching or prefetching instruction packages always use the word addressing scheme in order to be able to address every one of the 2**128 possible word locations. Software should preferably read and write instruction packages using only the word addressing scheme for the same reason, but software may use the octet-addressing scheme if it is not necessary to access the word locations at 2**124 through to (2**128) - 1, inclusive.
+
+
+
+
+──────────────────────────────────────────────────
+7.1.4  Conversion Between Octet and Word Addresses
+──────────────────────────────────────────────────
+
+
+Octet and word addresses are incompatible, but there are locations that can be addressed by both types of addresses. In these cases, one type of address can be converted into the other by software. After conversion, it may be possible to access those locations that are not addressable in the original type of address with additional instructions.
+
+Octet addresses are converted into word addresses by dividing the octet address by 16. This can be easily accomplished by a right shift. Word addresses are converted into octet addresses by multiplying the word address by 16. This can be easily accomplished by a left shift.
+
+
+
+
+───────────────────────────────────────
+7.2  Support for Smaller Address Spaces
+───────────────────────────────────────
+
+
+Implementations may support a subset of the locations in the 128-bit address space. This is accomplished by having N-bit memory addresses, where 0 < N < 128. If N-bit memory addresses are utilized, then both octet and word addresses have the same size.
+
+The octet and word locations in the 128-bit address space that cannot be identified by an N-bit memory address do not exist. M-bit memory addresses, where N < M ≤ 128, are converted into N-bit addresses by taking the modulo of its value and 2**N.
+
+For convenience, the descriptions of instructions that compute memory addresses in The Aura Computer Architecture Part II are written as if the full 128-bit addresses are always computed.
+
+
+
+
+────────────────────────────────
+7.3  Read and Write Side Effects
+────────────────────────────────
+
+
+Reads and writes do not have any side effects. A side effect is any effect other than the effect or effects prescribed by the mechanism that caused the read or write.
+
+
+
+
+──────────────────────────────────
+7.4  Unbacked and Backed Locations
+──────────────────────────────────
+
+
+Every octet and word location in the primary memory address space exists. However, a word location is not required to be backed by the means for storing data, and it is possible for a word location to alternate between not being backed and being backed by the means for storing data over time (with one exception, see below).
+
+A word location that is not backed by a means for storing data is referred to as an 'unbacked location', and one that is, as a 'backed location'. A word location is guaranteed to be either a backed or unbacked location. There cannot exist an intermediate condition where some of the bits in a word are backed, but the rest are not. Thus, octet locations that are mapped onto word locations inherit the property of being backed or unbacked. The same applies to those units of data that are larger than an octet, but smaller than a word.
+
+The first word location in the primary memory must be a backed location. This requirement is because the initial value of the instruction package memory address register is zero, and control is transferred to an instruction in the instruction package stored at this word location when the computer system is started.
+
+Reads of unbacked locations return an unpredictable value. Writes to such locations do not perform any action, and STORE ATOMIC instructions fail unconditionally.
+
+The base architecture does not provide any mechanism for querying which word locations are backed or unbacked, or for notifying software when word locations have changed into the opposing status.
+
+Implementations may define additional effects for accesses to unbacked locations. If additional effects are defined, they are not considered to be side effects, as defined by Section 7.3, Read and Write Side Effects.
+
+Architecture extensions may define additional characteristics and effects for unbacked locations.
+
+The architectural concept of backed and unbacked locations exists so that implementations may be designed, configured, and operated with a primary memory whose capacity is less than that supported by its implemented address space. This effort should not be construed as condoning the haphazard placement of unbacked locations throughout the word address space. Implementations and configurations are expected to treat this concept sensibly.
+
+
+
+
+─────────────────────────────────────────────────
+7.5  The Initial Value of Primary Memory Contents
+─────────────────────────────────────────────────
+
+
+The initial value of a backed location when the Aura computer system is started, and when a word location has changed from being an unbacked location to a backed location, is unpredictable from the perspective of the architecture. In order to realize practical implementations that are capable of running software, there must be deterministic behavior after the Aura computer system is started. This deterministic behavior is the effect of some non-architectural mechanism that "initializes" some of the primary memory's contents with "data" (actually instruction packages) from storage when the Aura computer system is started.
 
 
 
@@ -1042,7 +1354,7 @@ The initial value of the existent word at each address is unpredictable from the
 
 
 ─────────
-6  Agents
+8  Agents
 ─────────
 
 
@@ -1052,9 +1364,9 @@ Agents are abstract entities that do not imply any concrete mapping to physical 
 
 Agents are heterogeneous with respect to processors. Each agent may have its own architecture, implementation, or both; thus, agents may be heterogeneous to other agents by any degree. The architecture and implementation of agents is mostly outside the scope of the Aura computer architecture. Aura merely requires the architectures of agents to have certain characteristics in order to inter-operate with processors and the primary memory.
 
-Agents are identified and addressed by a 128-bit agent address. Agents can support a subset of the 128-bit agent address space by limiting the size of the agent address to some number of bits.
+Agents are identified and addressed by a 128-bit agent address. Agents can support a subset of the 128-bit agent address space by limiting the size of the agent address to N bits, where 0 < N < 128.
 
-Agents address processors using a 128-bit processor address. Agents may support a subset of the 128-bit processor address space by limiting the size of the processor address to some number of bits.
+Agents address processors using a 128-bit processor address. Agents may support a subset of the 128-bit processor address space by limiting the size of the processor address to N bits, where 0 < N < 128.
 
 Agents must be able to send and receive interrupts to and from processors. Additionally, agents can optionally send and receive interrupts to and from other agents. Interrupts sent by an agent to a processor or another agent are unordered, but cannot be speculative. The interrupts received by a processor or agent do not have to be in the same order in which they were sent. An agent may have mechanisms to enforce interrupt ordering.
 
@@ -1070,13 +1382,13 @@ Agents are not required to support the entire primary memory address space. If a
 
 
 ────────────────────────────────────
-7  The Aura Memory Consistency Model
+9  The Aura Memory Consistency Model
 ────────────────────────────────────
 
 
 The Aura Memory Consistency Model (AMCM) is a set of rules that define which values a read of the primary memory may return. The AMCM is a weak memory consistency model (MCM). It has few implicitly enforced orderings between memory accesses, which enables efficient, high-performance implementations. The majority of enforced orderings must be explicitly stated.
 
-For processors, software explicitly states which orderings are enforced by inserting appropriately specified MEMORY BARRIER instructions into the static instruction stream where necessary. For agents, the equivalent is accomplished by an agent-defined mechanism that is equivalent or similar to the functionality of the MEMORY BARRIER instruction.
+For processors, software explicitly states which orderings are enforced by inserting appropriately specified Memory Barrier instructions into the static instruction stream where necessary. For agents, the equivalent is accomplished by an agent-defined mechanism that is equivalent or similar to the functionality of the Memory Barrier instruction.
 
 Processors and agents may implement an MCM that is stronger than the AMCM if its weak nature is undesirable. This stronger MCM must be compatible with all processors and agents in the computer system.
 
@@ -1086,8 +1398,11 @@ NOTE: This description of the AMCM should be treated as a rough outline of inten
 
 
 ────────────────────
-7.1  Characteristics
+9.1  Characteristics
 ────────────────────
+
+
+The AMCM conceptualizes the primary memory as consisting of 2**128 words. References using octet addresses and references to sub-word units of data are treated by the AMCM as if they are using word addresses and references to words. This is accomplished by converting octet addresses into word addresses (if they are used to reference words); otherwise, by aliasing octet addresses that reference sub-word units of data into the word addresses of the words the sub-word units of data reside in, and "promoting" the sub-word accesses into word accesses.
 
 
 
@@ -1097,7 +1412,11 @@ The Definition of 'Program Order' and 'Operation Order'
 ───────────────────────────────────────────────────────
 
 
-The AMCM pertains to memory accesses (reads and writes) and memory ordering mechanisms. The cause of these events (an instruction in a program, or a hardware state machine) is irrelevant. The order in which events are initiated is related to the order of the mechanisms that initiate them. For processors, this order is the 'program order', which is the order in which events are relevant instructions (such as those that initiate memory accesses) appear in a processor's dynamic instruction stream. The equivalent of this concept for agents is called the 'operation order', since agents are not required to be stored-program computers, and may be, for example, hardware state machines. The event order is the order in which relevant events (such as those that initiate memory accesses) appear in an agent's operation sequence.
+The AMCM pertains to memory accesses (reads and writes) and memory ordering mechanisms. The cause of these events (an instruction in a program, or a hardware state machine) is irrelevant. The order in which events are initiated is related to the order of the mechanisms that initiate them.
+
+For processors, this order is the 'program order', which is the order in which events are relevant instructions (such as those that initiate memory accesses) appear in a processor's dynamic instruction stream.
+
+The equivalent of this concept for agents is called the 'operation order', since agents are not required to be stored-program computers, and may be, for example, hardware-based state machines. The operation order is the order in which relevant events (such as those that initiate memory accesses) appear in an agent's operation sequence.
 
 
 
@@ -1117,7 +1436,7 @@ The AMCM enforces the following memory accesses and memory ordering mechanisms:
 • A write precedes a read in program or operation order, if their addresses are identical. This ordering is enforced only on the processor or agent that initiated the write and read, not between writes and reads from different processors or agents.
 • A write precedes another write in program or operation order, if their addresses are identical.
 
-The instructions in a processor's dynamic instruction stream or the events in an agent's event sequence may be related by dependencies. Some of these dependencies have implications for memory ordering. There are three types of dependencies:
+The instructions in a processor's dynamic instruction stream or the events in an agent's event sequence may be related by dependences. Some of these dependences have implications for memory ordering. There are three types of dependences:
 
 • Address dependence: A read value is consumed to produced the memory address for a memory access.
 • Control dependence: A read value is consumed by a control flow instruction or an equivalent mechanism that decides whether a memory access is initiated or not.
@@ -1187,7 +1506,7 @@ The MEMORY BARRIER instruction and the equivalent mechanism in agents are 'cumul
 
 
 ─────────────────────────────────────────────────
-7.2  Instructions Requiring Special Consideration
+9.2  Instructions Requiring Special Consideration
 ─────────────────────────────────────────────────
 
 
@@ -1196,12 +1515,21 @@ Some instructions in the architecture have characteristics that require special 
 
 
 
+──────────────────────────────────────────
+Octet-Addressed Memory Access Instructions
+──────────────────────────────────────────
+
+Octet-addressed memory access instructions generate UNALIGNED PRIMARY MEMORY ADDRESS exceptions (see Section 7.1, Addressing Characteristics). If this exception is generated by an instruction, the memory operation is not initiated, and consequently, the instruction is invisible to the AMCM.
+
+
+
+
 ────────────────────────────────────────
-STORE ATOMIC Instructions and Operations
+Store Atomic Instructions and Operations
 ────────────────────────────────────────
 
 
-STORE ATOMIC instructions that do not write to the primary memory (because they did not meet the necessary conditions) do not initiate a write. STORE ATOMIC instructions that do not initiate a write are consequently invisible to the AMCM.
+Store Atomic instructions that do not write to the primary memory (because they did not meet the necessary conditions) do not initiate a write. Store Atomic instructions that do not initiate a write are consequently invisible to the AMCM.
 
 
 
@@ -1210,69 +1538,80 @@ STORE ATOMIC instructions that do not write to the primary memory (because they 
 
 
 
-──────────────────────────
-8  Architecture Extensions
-──────────────────────────
+───────────────────────────
+10  Architecture Extensions
+───────────────────────────
 
 
-Aura can be extended by Architecture Extensions (AEs). These can extend the architecture in any manner, but cannot redefine the base architecture (redefining the base architecture is exclusive to new versions).
+Aura is designed to be extended by architecture extensions (AEs). These can extend the base architecture in any manner, but cannot redefine existing features in the base architecture (redefining the base architecture is exclusive to new versions).
 
-For example, adding support for virtual memory to the base architecture is permitted because it does not contradict the base architecture (which does not have any conception of virtual and physical addresses); the virtual-to-physical address translation that is performed is invisible to the base architecture, and the supporting architectural state and instructions added are clearly extensions of the base architecture. Contrarily, redefining the primary memory so that it is octet-addressed instead of word-addressed is forbidden because it contradicts the base architecture.
+For example, adding support for virtual memory to the base architecture is permitted because it does not contradict the base architecture (which does not have any concept of virtual and physical addresses); the virtual-to-physical address translation that is performed is invisible to the base architecture, and the architectural state and instructions added are clearly extensions to the base architecture.
 
-AEs are uniquely identified by the combination of two 128-bit unsigned integers: an Architecture Extension Namespace (AEN) and Architecture Extension Identifier (AEI).
 
-Every instruction format across all instruction sizes have a 4-bit primary operation code field in bits 0—3. Primary operation codes in the range of 4'D8 through to 4'D15, inclusive, are reserved for use by AEs in AENs greater than AEN 0. AEs generally cannot use any other primary operation codes.
 
-AEs are not guaranteed to be free of instruction encoding collisions. It is the responsibility of the implementer to ensure that they do not implement AEs with instruction encoding conflicts.
 
-An AE can be promoted into the base architecture in a future version of Aura. If the AEN of the AE is AEN 0, promotion is straightforward. The AEI of the AE is reported as supported by the implementation, even though the AE is now a part of the base architecture, and not an optional AE.
+───────────────────────────────
+10.1  Identification Mechanisms
+───────────────────────────────
 
-If the AEN of the AE is not AEN 0, promotion requires all the instructions defined by the AE to be re-encoded so that their primary operation codes lie within the appropriate range (4'D0 through to 4'D7, inclusive).
 
-The original instruction encoding of AE may be supported by the implementation. If this is the case, the AEI of the AE is reported by supported by the implementation. If this is not the case, then binary compatibility is lost, and the AEI of promoted AE must be reported as unsupported by the implementation.
+Aura has an architectural mechanism for providing AEs with an identity. This enables Aura to provide an instruction that queries if an AE is supported by a processor (see Part II, Section 2, Architecture Version and Extension Instructions). While AEs may have implications for agents, Aura does not have a similar mechanism for agents, as they are either hardware-based state machines or implementations of agent-specific architectures.
 
-The ability to have two instruction encodings of a promoted AE is intended to give time to software to migrate from the older encoding to the newer. This allows the encoding space used by the older encoding to be reused at a later time.
+AEs are identified by Architecture Extension Identifiers (AEIs) in combination with Architecture Extension Namespaces (AENs). There are 2**64 AENs, which are assigned to AE creators; and each AEN contains 2**64 AEIs, which are assigned to AEs. The number of AENs and AEIs permits them to be expressed as 64-bit unsigned integers.
+
+Aura uses a two-stage mechanism to identify AEs in order to provide AE creators with autonomy. By delegating AEI assignments within an AEN to its holder, AEs do not have to be assigned from a global pool of identifiers managed by Aura's architects. AENs disambiguate AEs from different creators with identical AEIs by providing information that identifies the creator.
+
+AENs are assigned to AE creators by Aura's architect upon request. Each AE creator may only receive one AEN. AEN assignments are usually permanent, but the assignment can be updated upon request if warranted; unwarranted requests are rejected. Assigned AENs can be retired by Aura's architect if it is deemed necessary. One natural use of this prerogative is if an assigned AEN becomes abandoned. The AEIs in retired AENs cannot be assigned to new AEs.
+
+An AEN holder may obtain multiple AENs by subsuming other AEN holders. The AENs assigned to the subsumed holder are reassigned to the subsuming holder. The subsuming holder may use the subsumed AENs for any purpose, but the subsuming holder is expected to continued the established usage mode of the subsumed AENs (unless it decides to discontinue their continued usage).
+
+It is important to note that obtaining multiple AENs by setting up AEN holders to subsume at a later time is an abuse of the identification mechanisms. AEN holders that perpetrate such activity will have all their AENs retired.
+
+AENs are assigned in sequential order starting from AEN 1. Unassigned AENs are reserved for future use. The base architecture contains the following preassigned AENs:
+
+• AEN 0: Reserved
+• AEN 1: Aura
+• AEN 2: Marius Dahl
+
+AEN 0 is reserved for internal use by the public. Because AEN 0 is not managed by a single entity, one entity's usage of this AEN's AEIs are expected to conflict with those made by another. Thus, AEs inside AEN 0 are not externally identifiable. The purpose of AEN 0 is to provide an AEN for development and experimentation without requiring an AEN to be obtained.
+
+AEN 1 is assigned to the Aura computer architecture. It contains standard AEs that provide features that should remain optional and outside the base architecture. Since AEN 0 contains standard AEs, some AEs might use primary operation code values that are reserved by the base architecture for future use.
+
+AEN 2 is assigned to Marius Dahl.
+
+All other AEN assignments are documented separately.
+
+AEIs inside an AEN are assigned to AEs by the AEN's holder at their discretion subject to the following restrictions: AEIs are assigned in sequential order starting from AEI 0; AEI assignments are permanent. AEN holders are responsible for documenting AEI assignments inside their AENs, and for, optionally, publishing their AEI assignments.
+
+
+
+
+─────────────────────────────────
+10.2  Instruction Encoding Issues
+─────────────────────────────────
+
+
+Every instruction format across all instruction sizes have a 3-bit primary operation code field in bits 0—2. In 30- and 40-bit instructions, three primary operation codes (5—7) are reserved for use by AEs in AENs greater than AEN 0; in 50- and 60-bit instructions, four primary operation codes (4—7) are reserved. AEs generally cannot use any other primary operation codes.
+
+AEs are not required to be free of instruction encoding conflicts. It is the responsibility of the implementer to ensure that they do not implement AEs with conflicting instruction encodings.
 
 Future versions of Aura may reuse instruction encodings used by some AEs for other purposes. If this occurs, those AEs must be reported as unsupported by the implementations of the future version of Aura.
 
 
 
 
-─────────────────────────────────
-Architecture Extension Namespaces
-─────────────────────────────────
+──────────────────────────────────────────
+10.3  Promotion of Architecture Extensions
+──────────────────────────────────────────
 
 
-AENs disambiguate identical AEIs by providing information that identifies the creator of an AE. AENs are assigned to AE creators by Aura's architect upon request. There are 2**128 AENs, which are assigned in sequential order starting from 128'B0.
+An AE can be promoted into the base architecture in a future version of Aura, after which the AE's features become mandatory parts of the base architecture. If the AEN of the AE is AEN 0, promotion is straightforward. Versions featuring the promoted AE always report the AEI of the AE as supported, even though the AE is now a part of the base architecture, and is no longer an optional AE.
 
-Under normal circumstances, an entity may only be assigned one AEN (Aura's architect is exempt from restriction). AEN assignments are permanent, however, if warranted, the AEN assignment can be updated upon request. These requests must not be for trivial reasons; requests deemed to be unwarranted will be rejected.
+If the AEN of the AE is not AEN 0, promotion requires all the instructions defined by the AE to be re-encoded so that their primary operation codes lie within the appropriate range for the instruction size.
 
-An AEN assigned to an entity that has been subsumed by another entity is reassigned to the subsuming entity. The subsuming entity may already have an AEN, and it may gain multiple AENs through subsuming other entities. The subsuming entity may use the AEN assigned to the subsumed entity for any purpose, but it is expected that the usual usage of the AEN be continued. 
+The original instruction encoding of AE may be supported by the implementation. If this is the case, the AEI of the AE is reported by supported. If this is not the case, then binary compatibility is lost, and the AEI of promoted AE must be reported as unsupported.
 
-Subsuming an entity with an AEN warrants an update of the subsumed entity's AEN.
-
-Of the 2**128 AENs, two are assigned in the base architecture:
-
-• 128'D0, AEN 0: The Aura computer architecture
-• 128'D1, AEN 1: The Aura computer architecture
-
-AEN 0 is intended to contain AEs that provide unprivileged, processing-related functionality (such as floating-point arithmetic instructions). These AEs are open, optional, and are intended to be implemented widely. The AEs in this AEN can be viewed as "official" AEs. As such, the instructions belonging to these AEs may have instruction encodings with primary operation codes that are in the range of 4'D0 through to 4'D7, inclusive. It is not guaranteed these AEs are compatible with each other (since instructions in different AEs may have the same instruction encoding).
-
-AEN 1 is intended to contain AEs that provide privileged, system-related functionality (such as virtual memory). These AEs are open and optional, but are not intended to be implemented widely; it is expected that most implementers will design the most appropriate system-related functionality for their application. These AEs can be viewed as the equivalent of those AEs created by other implementers.
-
-AEN 0 and 1 are ultimately assigned to Aura's architect.
-
-All other AEN assignments are documented separately.
-
-
-
-
-──────────────────────────────────
-Architecture Extension Identifiers
-──────────────────────────────────
-
-
-AEIs uniquely identify an AE within an AEN. Each AEN contains 2**128 AEIs, which are assigned in sequential order starting from 128'B0. AEI assignments are permanent. Entities that have AEN(s) are responsible for assigning the AEIs contained within their AEN(s), and for documenting and publishing their AEI assignments (the publishing of AEIs is optional).
+The ability to have two instruction encodings of a promoted AE is intended to give time to software to migrate from the older encoding to the newer. This allows the encoding space used by the older encoding to be reused at a later time.
 
 
 
@@ -1281,9 +1620,40 @@ AEIs uniquely identify an AE within an AEN. Each AEN contains 2**128 AEIs, which
 
 
 
-────────────────────────────────────
-9  Derivative Computer Architectures
-────────────────────────────────────
+─────────────────────────────────────
+11  Derivative Computer Architectures
+─────────────────────────────────────
 
 
-Aura is an open computer architecture from which separate architectures can be derived (or forked). Derivatives of Aura are by definition, not Aura. Thus, if any Aura versioning and architecture extension identification features are retained, these are reset: no assigned Architecture Version Numbers, Architecture Extension Namespaces, and Architecture Extension Identifiers are carried over to the derived architecture.
+Aura is an open computer architecture from which new architectures can be derived (or forked). Derivatives of Aura are by definition, not Aura. Thus, if any Aura versioning and architecture extension identification features are retained, these are reset: no assigned Architecture Version Identifiers, Architecture Extension Namespaces, and Architecture Extension Identifiers are carried over to the derived architecture.
+
+
+
+
+
+
+
+
+────────────────────────
+12  Miscellaneous Topics
+────────────────────────
+
+
+
+
+─────────────────
+Naming Background
+─────────────────
+
+
+Aura takes its name from the Classical Latin word for 'breeze'. To distinguish it from English, Aura should be pronounced as it is in Classical Latin, and it may be written in the Classical Latin convention (as 'AVRA').
+
+
+
+
+───────────────────
+Development History
+───────────────────
+
+
+Work on Aura began in April 2019. The first publicly released version (a draft for Aura Version 1.0, dated 2020-07-31) was made available in August 2020.

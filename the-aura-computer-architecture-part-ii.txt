@@ -8,7 +8,7 @@ Part II: Instruction Descriptions
 
 
 
-Document Version: DRAFT 2020-07-31
+Document Version: DRAFT 2020-12-12
 
 
 
@@ -44,7 +44,7 @@ mariusdahl27@protonmail.com
 
 The AVRA Computer Architecture:
 
-• Part I: Introduction
+• Part I: Architectural Concepts
 • Part II: Instruction Descriptions
 • Part III: Instruction Encoding Tables
 
@@ -84,7 +84,7 @@ Contents
 17  Bit Field Extraction and Deposition Instructions
 18  Bit Scatter and Gather Instructions
 19  Bit Count Instructions
-20  Select Instructions
+20  Register Selection Instructions
 21  Atomic Memory Access Primitive Instructions
 22  Memory Ordering Instructions
 23  Element Extraction Instructions
@@ -101,9 +101,9 @@ Contents
 34  Vector Integer Comparison Instructions
 35  Vector Bitwise Logic Instructions
 36  Vector Shift Instructions
-37  Vector Bit Count Instructions
-38  Vector Bit Field Extraction and Deposition Instructions
-39  Vector Selection Mask Instructions
+37  Vector Bit Field Extraction and Deposition Instructions
+38  Vector Bit Count Instructions
+39  References
 
 
 
@@ -117,9 +117,19 @@ Conventions
 ───────────
 
 
-Each section contains one or more instruction descriptions. Each of these describes instructions with similar functionality. An instruction description consists of a list of instruction names, which are given in uppercase. Under each instruction name is a comma-separated list of instruction fields prefixed by a colon. When the instruction field is used as a register index, the register set that is referenced is given. The instruction field list is followed by the privilege level of the instructions, and a detailed description of the instructions' effects.
+Each section describes one or more instructions of similar function or purpose. An instruction may have its own description, or it may share a description with other instructions if they are sufficiently similar in function.
 
-Aura does not define an assembly language. The instruction names and instruction field list does not define any assembly language feature.
+An instruction description consists of a list of instruction names, a list of instruction fields, the privilege level required to execute the instructions, and a detailed description of the instructions' effects.
+
+There are two forms of instruction name―a mnemonic form in uppercase; and a descriptive form in title case. The instruction descriptions give the instruction name in mnemonic form, followed by the descriptive form.
+
+An instruction field list is a comma-separated list of instruction fields. A list is shared between multiple instructions if the instructions share the same instruction fields.
+
+Instruction fields that are register numbers state the register set that is referenced.
+
+Instruction fields that are immediates or 'X' fields give the length of the field in bits as a number enclosed by parentheses.
+
+Aura does not define any assembly language feature. The instruction names and instruction fields given in the instruction descriptions do not define any assembly language feature. It is expected that assembly languages will define their own mnemonics for the canonical instruction names listed in this document, and their own syntax for specifying the contents of instruction fields.
 
 
 
@@ -133,17 +143,21 @@ Aura does not define an assembly language. The instruction names and instruction
 ────────────────────
 
 
-• NULL 30
-• NULL 40
-• NULL 50
-• NULL 60
+• NULL30    Null 30
+• NULL40    Null 40
+• NULL50    Null 50
+• NULL60    Null 60
+
+  Fields: None
 
 
 Privilege Level: 0 (Unprivileged)
 
+Exceptions: None
+
 Description:
 
-The stored-program computer instruction cycle is continued. There is a variant of this instruction for each of the 30-, 40-, 50-, and 60-bit instruction sizes. These instructions are intended to be used as padding in instruction packages, for filling some or all unused bits; and for patching machine code.
+The stored-program computer instruction cycle is continued. There is a variant of this instruction for each of the 30-, 40-, 50-, and 60-bit instruction sizes. These instructions are intended to be used for padding instruction packages (filling some or all unused bits), and for patching machine code.
 
 
 
@@ -157,30 +171,36 @@ The stored-program computer instruction cycle is continued. There is a variant o
 ──────────────────────────────────────────────────
 
 
-• ARCHITECTURE VERSION
-      : GPR[DA]
+• ARCHVER    Architecture Version
+
+  Fields: SGPR[DA]
 
 
 Privilege Level: Highest Privilege, See Description
 
+Exceptions: INSUFFICIENT PRIVILEGE
+
 Description:
 
-Obtain the Aura version implemented by the processor. The Aura Version Number (AVN) is written to GPR[DA], and 1'B0 to CR[DA].
+Obtain the Aura version implemented by the processor. The Aura Version Identifier (AVI) is written to SGPR[DA], and '0' to CR[DA]. (Part I, Section 3.1, Aura Version Identifiers contains details on versioning.)
 
 This instruction is privileged. Its privilege level is equal to the highest privilege level supported by a processor. This allows the Aura computer system to be virtualized.
 
 
 
 
-• ARCHITECTURE EXTENSION
-      : GPR[DA], GPR[SA], GPR[SB]
+• ARCHEXT    Architecture Extension
+
+  Fields: SGPR[DA], GPR[SA]
 
 
 Privilege Level: Highest Privilege, See Description
 
+Exceptions: INSUFFICIENT PRIVILEGE
+
 Description:
 
-Check if the specified architecture extension is supported. The architecture to be checked is specified by the architecture extension namespace (AEN) in GPR[SA] and architecture extension identifier (AEI) in GPR[SB]. If the AEN or AEI is supported, '1' is written to GPR[DA], else '0' is written instead. 1'B0 is written to CR[DA].
+Check if the specified architecture extension is supported by the processor. A V2 vector in GPR[SA] specifies the architecture extension. The first element contains the Architecture Extension Namespace (AEN), the second element, the Architecture Extension Identifier (AEI). If the AEN and AEI are supported, '1' is written to SGPR[DA], otherwise '0' is written instead. '0' is always written to CR[DA].
 
 This instruction is privileged. Its privilege level is equal to the highest privilege level supported by a processor. This allows the Aura computer system to be virtualized.
 
@@ -192,28 +212,185 @@ This instruction is privileged. Its privilege level is equal to the highest priv
 
 
 ─────────────────────────────
-3  Data Prefetch Instructions
+3  Memory Access Instructions
 ─────────────────────────────
 
 
-• PREFETCH
-      : GPR[SA], IA, XA
+• LDWGW     Load Word Addressed GPR Word
+• LDOGW     Load Octet Addressed GPR Word
+• LDOGS     Load Octet Addressed GPR Semi-Word
+• LDOGSS    Load Octet Addressed GPR Semi-Word and Sign-Extend
+• LDOGQ     Load Octet Addressed GPR Quadrant-Word
+• LDOGQS    Load Octet Addressed GPR Quadrant-Word and Sign-Extend
+• LDOGB     Load Octet Addressed GPR Bi-Octet
+• LDOGBS    Load Octet Addressed GPR Bi-Octet and Sign-Extend
+• LDOGO     Load Octet Addressed GPR Octet
+• LDOGOS    Load Octet Addressed GPR Octet and Sign-Extend
 
-• PREFETCH INDIRECT HINT
-      : GPR[SA], GPR[SB], IA
+  Fields: GPR[DA], GPR[SA], IA (16)
+
+
+• LDWRW     Load Word Addressed RNR Word
+• LDORW     Load Octet Addressed RNR Word
+• LDORS     Load Octet Addressed RNR Semi-Word
+• LDORQ     Load Octet Addressed RNR Quadrant-Word
+• LDORB     Load Octet Addressed RNR Bi-Octet
+• LDORO     Load Octet Addressed RNR Octet
+
+  Fields: RNR[DA], GPR[SA], IA (16)
 
 
 Privilege Level: 0 (Unprivileged)
+
+Exceptions: UNALIGNED PRIMARY MEMORY ADDRESS
+
+Description:
+
+A 128-bit memory address is computed: GPR[SA] contains a 128-bit base memory address, and the immediate IA, a 16-bit offset. A 128-bit offset is created by copying IA into bits 0—15, and IA[15] into bits 16—127. The base address and 128-bit offset are added, and the 128 low-order bits of the 129-bit sum are taken as the memory address.
+
+The memory address is interpreted as a word address or an octet address, based on whether the instruction has the "Word Addressed" or "Octet Addressed" modifier, respectively.
+
+If the memory address is interpreted as an octet address, it must be aligned according to the unit of data loaded by the instruction. If the memory address is unaligned, the primary memory is not read, and a precise exception (UNALIGNED PRIMARY MEMORY ADDRESS) is generated. This exception has a privilege level of 1 (Privileged).
+
+The contents of the unit of data at the primary memory location identified by the memory address are read. If the unit of data is smaller than a word, it is zero-extended to 128 bits, or sign-extended, if the instruction has the "Sign-Extend" modifier. The result is written to GPR[DA] or RNR[DA]. If writing to a GPR, '0' is written to CR[DA].
+
+
+
+
+• STWGW    Store Word Addressed GPR Word
+• STOGW    Store Octet Addressed GPR Word
+
+  Fields: GPR[SA], GPR[SB], IA (16)
+
+
+• STWRW    Store Word Addressed RNR Word
+• STORW    Store Octet Addressed RNR Word
+
+  Fields: GPR[SA], RNR[SB], IA (16)
+
+
+Privilege Level: 0 (Unprivileged)
+
+Exceptions: UNALIGNED PRIMARY MEMORY ADDRESS
+
+Description:
+
+A 128-bit memory address is computed: GPR[SA] contains a 128-bit base memory address, and the immediate IA, a 16-bit offset. A 128-bit offset is created by copying IA into bits 0—15, and IA[15] into bits 16—127. The base address and 128-bit offset are added, and the 128 low-order bits of the 129-bit sum are taken as the memory address.
+
+The memory address is interpreted as a word address or an octet address, based on whether the instruction has the "Word Addressed" or "Octet Addressed" modifier, respectively.
+
+If the memory address is interpreted as an octet address, it must be aligned according to the word. If the memory address is unaligned, the primary memory is not written, and a precise exception (UNALIGNED PRIMARY MEMORY ADDRESS) is generated. This exception has a privilege level of 1 (Privileged).
+
+The contents of GPR[SB] or RNR[SB] are written to the word at the primary memory location identified by the memory address.
+
+
+
+
+• LDOSGS     Load Octet Addressed SGPR Semi-Word
+• LDOSGQ     Load Octet Addressed SGPR Quadrant-Word
+• LDOSGQS    Load Octet Addressed SGPR Quadrant-Word and Sign-Extend
+• LDOSGB     Load Octet Addressed SGPR Bi-Octet
+• LDOSGBS    Load Octet Addressed SGPR Bi-Octet and Sign-Extend
+• LDOSGO     Load Octet Addressed SGPR Octet
+• LDOSGOS    Load Octet Addressed SGPR Octet and Sign-Extend
+
+  Fields: SGPR[DA], GPR[SA], IA (16)
+
+
+• LDOSRS     Load Octet Addressed SRNR Semi-Word
+• LDOSRQ     Load Octet Addressed SRNR Quadrant-Word
+• LDOSRB     Load Octet Addressed SRNR Bi-Octet
+• LDOSRO     Load Octet Addressed SRNR Octet
+
+  Fields: SRNR[DA], GPR[SA], IA (16)
+
+
+Privilege Level: 0 (Unprivileged)
+
+Exceptions: UNALIGNED PRIMARY MEMORY ADDRESS
+
+Description:
+
+A 128-bit memory address is computed: GPR[SA] contains a 128-bit base memory address, and the immediate IA, a 16-bit offset. A 128-bit offset is created by copying IA into bits 0—15, and IA[15] into bits 16—127. The base address and 128-bit offset are added, and the 128 low-order bits of the 129-bit sum are taken as the memory address.
+
+The memory address is interpreted as an octet address. It must be aligned according to the unit of data loaded by the instruction. If the memory address is unaligned, the primary memory is not read, and a precise exception (UNALIGNED PRIMARY MEMORY ADDRESS) is generated. This exception has a privilege level of 1 (Privileged).
+
+The contents of the unit of data at the primary memory location identified by the memory address are read. If the unit of data is smaller than a word, it is zero-extended to 64 bits, or sign-extended, if the instruction the "Sign-Extend" modifier. The result is written to SGPR[DA] or SRNR[DA]. If writing to an SGPR, '0' is written to CR[DA].
+
+
+
+
+• STOSGS    Store Octet Addressed SGPR Semi-Word
+• STOSGQ    Store Octet Addressed SGPR Quadrant-Word
+• STOSGB    Store Octet Addressed SGPR Bi-Octet
+• STOSGO    Store Octet Addressed SGPR Octet
+
+  Fields: GPR[SA], IA (16), SGPR[SB]
+
+
+• STOSRS    Store Octet Addressed SRNR Semi-Word
+• STOSRQ    Store Octet Addressed SRNR Quadrant-Word
+• STOSRB    Store Octet Addressed SRNR Bi-Octet
+• STOSRO    Store Octet Addressed SRNR Octet
+
+  Fields: GPR[SA], IA (16), SRNR[SB]
+
+
+Privilege Level: 0 (Unprivileged)
+
+Exceptions: UNALIGNED PRIMARY MEMORY ADDRESS
+
+Description:
+
+A 128-bit memory address is computed: GPR[SA] contains a 128-bit base memory address, and the immediate IA, a 16-bit offset. A 128-bit offset is created by copying IA into bits 0—15, and IA[15] into bits 16―127. The base address and 128-bit offset are added, and the 128 low-order bits of the 129-bit sum are taken as the memory address.
+
+The memory address is interpreted as an octet address. It must be aligned according to the unit of data stored by the instruction. If the memory address is unaligned, the primary memory is not written, and a precise exception (UNALIGNED PRIMARY MEMORY ADDRESS) is generated. This exception has a privilege level of 1 (Privileged).
+
+The 8, 16, 32, or 64 low-order bits from SGPR[SB] or SRNR[SB] (based on whether the instruction has an "Octet", "Bi-Octet", "Quadrant-Word", or "Semi-Word" modifier, respectively) are written to the primary memory location identified by the memory address.
+
+
+
+
+
+
+
+
+─────────────────────────────
+4  Data Prefetch Instructions
+─────────────────────────────
+
+
+• PFW     Prefetch Word Addressed
+• PFO     Prefetch Octet Addressed
+
+  Fields: GPR[SA], IA (16), XA (7)
+
+
+• PFWI    Prefetch Word Addressed Indirect Hint
+• PFOI    Prefetch Octet Addressed Indirect Hint
+
+  Fields: GPR[SA], IA (16), SGPR[SB]
+
+
+Privilege Level: 0 (Unprivileged)
+
+Exceptions: None
 
 Description:
 
 Attempt to prefetch the data from the primary memory in the manner specified by the prefetch hint. Whether or not the prefetch hint is acted upon, and what action(s) are performed in response to the prefetch hint if it is acted upon, is dependent on the processor implementation.
 
-The 16-bit immediate IA is sign-extended to 128 bits and added to the contents of GPR[SA]. The 128 low-order bits of the 129-bit sum is the 128-bit memory address.
+A 128-bit memory address is computed: GPR[SA] contains a 128-bit base memory address, and the immediate IA, a 16-bit offset. A 128-bit offset is created by copying IA into bits 0—15, and IA[15] into bits 16—127. The base address and 128-bit offset are added, and the 128 low-order bits of the 129-bit sum are taken as the memory address.
 
-The memory address identifies the data that is to be prefetched. The amount of data prefetched is, at minimum, one word, the word identified by the memory address. The instruction stream implementation may also prefetch any number of additional words at continuous memory addresses before, after, or before and after the computed memory address.
+The memory address is interpreted as a word address or an octet address, based on whether the instruction has the "Word Addressed" or "Octet Addressed" modifier, respectively.
 
-The prefetch hint is specified by the 7-bit 'XA' field. If the instruction has the INDIRECT HINT modifier, the contents of GPR[SB] provides the prefetch hint. The interpretation of the contents of GPR[SB] is dependent on the processor implementation.
+If the memory address is an octet address, it is assumed to reference a word―the four low-order bits in the memory address are always ignored.
+
+The memory address identifies the word that must be prefetched if there is to be a prefetch. There is a prefetch if the prefetch hint states there should be a prefetch, and if the processor decides there should be a prefetch.
+
+If any data is prefetched, the minimum amount of data that is prefetched is one word, the word identified by the memory address. The processor implementation may also prefetch any number of additional words at memory addresses before, after, or before and after the computed memory address.
+
+The prefetch hint is specified by the 7-bit 'XA' field. If the instruction has the "Indirect Hint" modifier, the contents of SGPR[SB] provides the prefetch hint. The interpretation of the prefetch hint in SGPR[SB] depends on the processor implementation.
 
 The definition of the 'XA' field is as follows:
 
@@ -222,154 +399,11 @@ The definition of the 'XA' field is as follows:
 • 2: Write once
 • 3: Access many
 
-All other values are reserved and undefined.
+All listed values are decimal numbers.
 
-If a reserved and undefined value is used, no action is taken.
+All other values are undefined and reserved. If a reserved and undefined value is used, no action is taken.
 
-The INDIRECT HINT modifier is a mechanism that provides the means to exploit the specific data prefetch mechanisms of different processor implementations without modifying the program.
-
-
-
-
-
-
-
-
-─────────────────────────────
-4  Memory Access Instructions
-─────────────────────────────
-
-
-• LOAD GPR
-      : GPR[DA], GPR[SA], IA
-
-• LOAD RNR
-      : RNR[DA], GPR[SA], IA
-
-
-Privilege Level: 0 (Unprivileged)
-
-Description:
-
-The 16-bit immediate IA is sign-extended to 128 bits and added to the contents of GPR[SA]. The 128 low-order bits of the 129-bit sum is the 128-bit memory address. The word in the primary memory identified by the memory address is written to GPR[DA] or RNR[DA]. If writing to a GPR, 1'B0 is written to CR[DA].
-
-
-
-
-• LOAD GPR 8 ZERO-EXTEND
-      : GPR[DA], GPR[SA], IA, IB
-
-• LOAD GPR 8 SIGN-EXTEND
-      : GPR[DA], GPR[SA], IA, IB
-
-• LOAD GPR 16 ZERO-EXTEND
-      : GPR[DA], GPR[SA], IA, IB
-
-• LOAD GPR 16 SIGN-EXTEND
-      : GPR[DA], GPR[SA], IA, IB
-
-• LOAD GPR 32 ZERO-EXTEND
-      : GPR[DA], GPR[SA], IA, IB
-
-• LOAD GPR 32 SIGN-EXTEND
-      : GPR[DA], GPR[SA], IA, IB
-
-• LOAD GPR 64 ZERO-EXTEND
-      : GPR[DA], GPR[SA], IA, IB
-
-• LOAD GPR 64 SIGN-EXTEND
-      : GPR[DA], GPR[SA], IA, IB
-
-• LOAD RNR 8
-      : RNR[DA], GPR[SA], IA, IB
-
-• LOAD RNR 16
-      : RNR[DA], GPR[SA], IA, IB
-
-• LOAD RNR 32
-      : RNR[DA], GPR[SA], IA, IB
-
-• LOAD RNR 64
-      : RNR[DA], GPR[SA], IA, IB
-
-
-Privilege Level: 0 (Unprivileged)
-
-Description:
-
-The 12-bit immediate IA is sign-extended to 128 bits and added to the contents of GPR[SA]. The 128 low-order bits of the 129-bit sum is the memory address.
-
-The word in the primary memory identified by the memory address is read. This word is interpreted as a V8, V16, V32, or V64 vector, based on whether the instruction has an 8, 16, 32, or 64 modifier, respectively. The immediate IB is used as an index to select one of the elements in the vector. The size of IB depends on what modifier the instruction has:
-
-• 8: 4 bits
-• 16: 3 bits
-• 32: 2 bits
-• 64: 1 bit
-
-If the instruction loads a GPR, the selected element is zero- or sign-extended to 128 bits, based on whether the instruction has a ZERO-EXTEND or SIGN-EXTEND modifier, respectively. The result is written to GPR[DA], and 1'B0 is written to CR[DA].
-
-If the instruction loads an RNR, the selected element is zero-extended to 128 bits. The result is written to RNR[DA].
-
-
-
-
-• STORE GPR
-      : GPR[SA], GPR[SB], IA
-
-• STORE RNR
-      : GPR[SA], RNR[SB], IA
-
-
-Privilege Level: 0 (Unprivileged)
-
-Description:
-
-The 16-bit immediate IA is sign-extended to 128 bits and added to the contents of GPR[SA]. The 128 low-order bits of the 129-bit sum is the memory address. GPR[SB] or RNR[SB] is written to the word in the primary memory identified by the memory address.
-
-
-
-
-• STORE GPR 8
-      : GPR[SA], GPR[SB], IA
-
-• STORE GPR 16
-      : GPR[SA], GPR[SB], IA
-
-• STORE GPR 32
-      : GPR[SA], GPR[SB], IA
-
-• STORE GPR 64
-      : GPR[SA], GPR[SB], IA
-
-• STORE RNR 8
-      : GPR[SA], RNR[SB], IA
-
-• STORE RNR 16
-      : GPR[SA], RNR[SB], IA
-
-• STORE RNR 32
-      : GPR[SA], RNR[SB], IA
-
-• STORE RNR 64
-      : GPR[SA], RNR[SB], IA
-
-
-Privilege Level: 0 (Unprivileged)
-
-Description:
-
-The 12-bit immediate IA is sign-extended to 128 bits and added to the contents of GPR[SA]. The 128 low-order bits of the 129-bit sum is the memory address.
-
-The contents of GPR[SB] or RNR[SB] are interpreted as a V8, V16, V32, or V64 vector, based on whether the instruction has an 8, 16, 32, or 64 modifier, respectively. The first element is written to the word in the primary memory identified by the memory address.
-
-This word is treated as if it were a V8, V16, V32, or V64 vector, based on whether the instruction has an 8, 16, 32, or 64 modifier, respectively. The element that receives the written element is identified by the immediate IB. The size of IB depends on what modifier the instruction has:
-
-• 8: 4 bits
-• 16: 3 bits
-• 32: 2 bits
-• 64: 1 bit
-
-The contents of the other elements are not modified.
+The "Indirect Hint" modifier is a mechanism that provides the means to exploit the specific data prefetch mechanisms of different processor implementations without requiring the program be modified.
 
 
 
@@ -383,200 +417,199 @@ The contents of the other elements are not modified.
 ────────────────────────────
 
 
-• JUMP INDIRECT
-      : GPR[SA]
+• JI         Jump Indirect
+• JIPO       Jump Indirect with Pop
 
-• JUMP INDIRECT WITH POP
-      : GPR[SA]
+  Fields: GPR[SA]
 
-• JUMP INDIRECT AND LINK
-      : GPR[DA], GPR[SA]
 
-• JUMP INDIRECT AND LINK WITH POP
-      : GPR[DA], GPR[SA]
+• JIL        Jump Indirect and Link
+• JILPO      Jump Indirect and Link with Pop
+• JILPU      Jump Indirect and Link with Push
+• JILPOPU    Jump Indirect and Link with Pop and Push
 
-• JUMP INDIRECT AND LINK WITH PUSH
-      : GPR[DA], GPR[SA]
-
-• JUMP INDIRECT AND LINK WITH POP AND PUSH
-      : GPR[DA], GPR[SA]
+  Fields: GPR[DA], GPR[SA]
 
 
 Privilege Level: 0 (Unprivileged)
 
+Exceptions: None
+
 Description:
 
-GPR[SA] is written to the IPMAR.
+GPR[SA] contains a 128-bit memory address that is written to the IPMAR. This memory address specifies the instruction package containing the instruction to be executed after the Jump Indirect instruction, and is interpreted as a word address. The instruction that will be executed after the Jump Indirect instruction is the first wholly contained instruction in the instruction package pointed to by the memory address in the IPMAR.
 
-If there is a LINK modifier, the return address is written to GPR[DA], and 1'B0 is to CR[DA]. The return address is the 128 low-order bits of the 129-bit sum of the memory address of the instruction package containing the JUMP instruction and 1'B1.
+If the instruction has the "Link" modifier, the return address is written to GPR[DA], and '0' to CR[DA]. The return address is the memory address (a word address) of the instruction package following the instruction package that contains the Jump Indirect instruction.
 
-If there is a POP or PUSH hint, the processor is expected, but not required, to behave in the manner hinted. The POP hint communicates to the processor that the software is returning from an earlier jump. The return address is likely to be in the return address stack (RAS). The PUSH hint communicates to the processor that the software intends to return from the current jump in the future. The return address should be pushed onto the RAS. These hints cause architecturally invisible and processor implementation-dependent behavior.
-
-
+If there is a "Pop", "Push", or "Pop and Push" hint, the processor is expected, but not required, to behave in the manner hinted. The "Pop" hint communicates to the processor that the software is returning from a previous jump. The return address is likely to be in the return address stack (RAS). The "Push" hint communicates to the processor that the software intends to return from the current jump in the future. The return address should be pushed onto the RAS. The "Pop and Push" hint communicates to the processor that both the "Pop" and "Push" are intended. These hints cause architecturally invisible and processor implementation-dependent behavior.
 
 
-• JUMP DIRECT BACKWARD
-      : IA
 
-• JUMP DIRECT BACKWARD AND LINK
-      : GPR[DA], IA
 
-• JUMP DIRECT BACKWARD AND LINK WITH PUSH
-      : GPR[DA], IA
+• JDB       Jump Direct Backward
+• JDF       Jump Direct Forward
 
-• JUMP DIRECT FORWARD
-      : IA
+  Fields: IA (16)
 
-• JUMP DIRECT FORWARD AND LINK
-      : GPR[DA], IA
 
-• JUMP DIRECT FORWARD AND LINK WITH PUSH
-      : GPR[DA], IA
+• JDLB      Jump Direct and Link Backward
+• JDLBPU    Jump Direct and Link Backward With Push
+• JDLF      Jump Direct and Link Forward
+• JDLFPU    Jump Direct and Link Forward With Push
+
+  Fields: GPR[DA], IA (16)
 
 
 Privilege Level: 0 (Unprivileged)
 
+Exceptions: None
+
 Description:
 
-A new instruction package memory address is written to the IPMAR. It is computed as follows:
+A 128-bit memory address called the 'jump address' is computed: The IPMAR contains a 128-bit base memory address, which specifies the location of the instruction package containing the Jump Direct instruction in the primary memory. A 128-bit offset is created by copying IA, a 16-bit immediate, into bits 0—15, and '0' into bits 16—127.
 
-If the jump direction is backward, the 16-bit immediate IA is one-extended to 128 bits (this implies IA is a negative value) and added to the next instruction package address (the 128 low-order bits of the 129-bit sum of the memory address of the instruction package containing the JUMP instruction and 1'B1). If the jump direction is forward, IA is zero-extended to 128 bits (this implies IA is a positive value) and added to the next instruction package address. The jump address is the 128 low-order bits of the 129-bit sum.
+If the jump direction is backward, the 128-bit offset is subtracted from the base address. If the jump direction is forward, the 128-bit offset is incremented by '1', then added to the base address. The 128 low-order bits of the 129-bit difference or sum are taken as the jump address.
 
-If there is a LINK modifier, the next instruction package address is written to GPR[DA], and 1'B0 to CR[DA].
+The jump address is a word address that specifies which instruction package contains the instruction to be executed after the Jump Indirect instruction.
 
-If there is a PUSH hint, the processor is expected, but not required, to behave in the manner hinted. The PUSH hint communicates to the processor that the software intends to return from the current jump in the future. The return address should be pushed onto the return address stack. This hint causes architecturally invisible and processor implementation-dependent behavior.
+The jump address is written to the IPMAR. The instruction that will be executed after the Jump Direct instruction is the first wholly contained instruction in the instruction package pointed to by the jump address.
+
+If the instruction has the "Link" modifier, the return address is written to GPR[DA], and '0' to CR[DA]. The return address is the memory address (a word address) of the instruction package following the instruction package that contains the Jump Direct instruction.
+
+If there is a "Push" hint, the processor is expected, but not required, to behave in the manner hinted. The "Push" hint communicates to the processor that the software intends to return from the current jump in the future. The return address should be pushed onto the return address stack. This hint causes architecturally invisible and processor implementation-dependent behavior.
 
 
 
 
-• BRANCH BACKWARD ON LESS THAN TO ZERO
-      : GPR[SA], IA
+• BBEZ      Branch Backward on Equal To Zero
+• BBNEZ     Branch Backward on Not Equal To Zero
+• BBLZ      Branch Backward on Less Than To Zero
+• BBLEZ     Branch Backward on Less Than Or Equal To Zero
+• BBGZ      Branch Backward on Greater Than Zero
+• BBGEZ     Branch Backward on Greater Than Or Equal To Zero
+• BFEZ      Branch Forward on Equal To Zero
+• BFNEZ     Branch Forward on Not Equal To Zero
+• BFLZ      Branch Forward on Less Than To Zero
+• BFLEZ     Branch Forward on Less Than Or Equal To Zero
+• BFGZ      Branch Forward on Greater Than Zero
+• BFGEZ     Branch Forward on Greater Than Or Equal To Zero
 
-• BRANCH BACKWARD ON LESS THAN OR EQUAL TO ZERO
-      : GPR[SA], IA
+  Fields: GPR[SA], IA (16)
 
-• BRANCH BACKWARD ON EQUAL TO ZERO
-      : GPR[SA], IA
 
-• BRANCH BACKWARD ON GREATER THAN OR EQUAL TO ZERO
-      : GPR[SA], IA
+• BBEVNS    SGPR Branch Backward on Even
+• BBODDS    SGPR Branch Backward on Odd
+• BBEZS     SGPR Branch Backward on Equal To Zero
+• BBNEZS    SGPR Branch Backward on Not Equal To Zero
+• BBLZS     SGPR Branch Backward on Less Than To Zero
+• BBLEZS    SGPR Branch Backward on Less Than Or Equal To Zero
+• BBGZS     SGPR Branch Backward on Greater Than Zero
+• BBGEZS    SGPR Branch Backward on Greater Than Or Equal To Zero
+• BFEVNS    SGPR Branch Forward on Even
+• BFODDS    SGPR Branch Forward on Odd
+• BFEZS     SGPR Branch Forward on Equal To Zero
+• BFNEZS    SGPR Branch Forward on Not Equal To Zero
+• BFLZS     SGPR Branch Forward on Less Than To Zero
+• BFLEZS    SGPR Branch Forward on Less Than Or Equal To Zero
+• BFGZS     SGPR Branch Forward on Greater Than Zero
+• BFGEZS    SGPR Branch Forward on Greater Than Or Equal To Zero
 
-• BRANCH BACKWARD ON GREATER THAN ZERO
-      : GPR[SA], IA
-
-• BRANCH BACKWARD ON NOT EQUAL TO ZERO
-      : GPR[SA], IA
-
-• BRANCH FORWARD ON LESS THAN TO ZERO
-      : GPR[SA], IA
-
-• BRANCH FORWARD ON LESS THAN OR EQUAL TO ZERO
-      : GPR[SA], IA
-
-• BRANCH FORWARD ON EQUAL TO ZERO
-      : GPR[SA], IA
-
-• BRANCH FORWARD ON GREATER THAN OR EQUAL TO ZERO
-      : GPR[SA], IA
-
-• BRANCH FORWARD ON GREATER THAN ZERO
-      : GPR[SA], IA
-
-• BRANCH FORWARD ON NOT EQUAL TO ZERO
-      : GPR[SA], IA
+  Fields: SGPR[SA], IA (16)
 
 
 Privilege Level: 0 (Unprivileged)
 
+Exceptions: None
+
 Description:
 
-The branch target address is written into the IPMAR if the branch is taken.
+The branch is taken (the 'branch target address' is written to the IPMAR) if the condition specified by the instruction is true. If the branch is taken, the instruction that will be executed after the Branch instruction is the first wholly contained instruction in the instruction package pointed to by the branch target address. If the branch is not taken, the stored-program computer instruction cycle continues.
 
-The branch is taken if the specified condition of GPR[SA] to 128'B0 is true. The contents of GPR[SA] are interpreted as a 128-bit signed integer. If the branch is not taken, the stored-program computer instruction cycle continues.
+The even and odd conditions test whether the least-significant bit of SGPR[SA] is '0' or '1', respectively.
 
-The branch target address is computed as follows:
+The remaining conditions perform a comparison between GPR[SA] and '0'. The contents of GPR[SA] are interpreted as a 128-bit signed integer. For those instructions that operate on a SGPR, the comparison is between SGPR[SA] and '0'. The contents of SGPR[SA] are interpreted as a 64-bit signed integer.
 
-If the branch direction is backward, the 16-bit immediate IA is one-extended to 128 bits (this implies IA is a negative value) and added to the next instruction package address (the 128 low-order bits of the 129-bit sum of the memory address of the instruction package containing the BRANCH instruction and 1'B1). If the branch direction is forward, IA is zero-extended to 128 bits (this implies IA is a positive value) and added to the next instruction package address. The branch target address is the 128 low-order bits of the 129-bit sum.
+The branch target address is computed: The IPMAR contains a 128-bit base memory address, which specifies the location of the instruction package containing the Branch instruction in the primary memory. A 128-bit offset is created by copying IA, a 16-bit immediate, into bits 0—15, and '0' into bits 16—127.
+
+If the branch direction is backward, the 128-bit offset is subtracted from the base address. If the branch direction is forward, the 128-bit offset is incremented by '1', then added to the base address. The 128 low-order bits of the 129-bit difference or sum are taken as the branch target address.
+
+The branch target address is a word address that specifies which instruction package contains the instruction that is executed after the Jump Indirect instruction.
 
 
 
 
-• BRANCH BACKWARD ON EQUAL TO
-      : GPR[SA], GPR[SB], IA
+• BBE       Branch Backward on Equal To
+• BBNE      Branch Backward on Not Equal To
+• BBUL      Branch Backward on Unsigned Less Than
+• BBULE     Branch Backward on Unsigned Less Than or Equal To
+• BBSL      Branch Backward on Signed Less Than
+• BBSLE     Branch Backward on Signed Less Than or Equal To
+• BFE       Branch Forward on Equal To
+• BFNE      Branch Forward on Not Equal To
+• BFUL      Branch Forward on Unsigned Less Than
+• BFULE     Branch Forward on Unsigned Less Than or Equal To
+• BFSL      Branch Forward on Signed Less Than
+• BFSLE     Branch Forward on Signed Less Than or Equal To
 
-• BRANCH BACKWARD ON NOT EQUAL TO
-      : GPR[SA], GPR[SB], IA
+  Fields: GPR[SA], GPR[SB], IA (16)
 
-• BRANCH BACKWARD ON LESS THAN UNSIGNED
-      : GPR[SA], GPR[SB], IA
 
-• BRANCH BACKWARD ON LESS THAN SIGNED
-      : GPR[SA], GPR[SB], IA
+• BBES      SGPR Branch Backward on Equal To
+• BBNES     SGPR Branch Backward on Not Equal To
+• BBULS     SGPR Branch Backward on Unsigned Less Than
+• BBULES    SGPR Branch Backward on Unsigned Less Than or Equal To
+• BBSLS     SGPR Branch Backward on Signed Less Than
+• BBSLES    SGPR Branch Backward on Signed Less Than or Equal To
+• BFES      SGPR Branch Forward on Equal To
+• BFNES     SGPR Branch Forward on Not Equal To
+• BFULS     SGPR Branch Forward on Unsigned Less Than
+• BFULES    SGPR Branch Forward on Unsigned Less Than or Equal To
+• BFSLS     SGPR Branch Forward on Signed Less Than
+• BFSLES    SGPR Branch Forward on Signed Less Than or Equal To
 
-• BRANCH BACKWARD ON LESS THAN OR EQUAL TO UNSIGNED
-      : GPR[SA], GPR[SB], IA
-
-• BRANCH BACKWARD ON LESS THAN OR EQUAL TO SIGNED
-      : GPR[SA], GPR[SB], IA
-
-• BRANCH FORWARD ON EQUAL TO
-      : GPR[SA], GPR[SB], IA
-
-• BRANCH FORWARD ON NOT EQUAL TO
-      : GPR[SA], GPR[SB], IA
-
-• BRANCH FORWARD ON LESS THAN UNSIGNED
-      : GPR[SA], GPR[SB], IA
-
-• BRANCH FORWARD ON LESS THAN SIGNED
-      : GPR[SA], GPR[SB], IA
-
-• BRANCH FORWARD ON LESS THAN OR EQUAL TO UNSIGNED
-      : GPR[SA], GPR[SB], IA
-
-• BRANCH FORWARD ON LESS THAN OR EQUAL TO SIGNED
-      : GPR[SA], GPR[SB], IA
+  Fields: SGPR[SA], SGPR[SB], IA (16)
 
 
 Privilege Level: 0 (Unprivileged)
 
+Exceptions: None
+
 Description:
 
-The branch target address is written to the IPMAR if the branch is taken.
+The branch is taken (the 'branch target address' is written to the IPMAR) if the condition specified by the instruction is true. If the branch is taken, the instruction that will be executed after the Branch instruction is the first wholly contained instruction in the instruction package pointed to by the branch target address. If the branch is not taken, the stored-program computer instruction cycle continues.
 
-The branch is taken if the specified comparison of GPR[SA] and GPR[SB] is true. The contents of GPR[SA] and GPR[SB] are interpreted as 128-bit unsigned or signed integers, based on whether the instruction has an UNSIGNED or SIGNED modifier, respectively. If the branch is not taken, the stored-program computer instruction cycle continues.
+The comparison is performed between the contents of GPR[SA] and GPR[SB], which are interpreted as 128-bit unsigned or signed integers, based on whether the instruction has the "Unsigned" or "Signed" modifier, respectively. For those instructions that operate on SGPRs, the comparison is performed between SGPR[SA] and SGPR[SB] instead, and likewise, their contents are interpreted as 64-bit unsigned or signed integers.
 
-The branch target address is computed as follows:
+The branch target address is computed: The IPMAR contains a 128-bit base memory address, which specifies the location of the instruction package containing the Branch instruction in the primary memory. A 128-bit offset is created by copying IA, a 16-bit immediate, into bits 0—15, and '0' into bits 16—127.
 
-If the branch direction is backward, the 16-bit immediate IA is sign-extended to 128 bits (this implies IA is a negative value) and added to the next instruction package address (the 128 low-order bits of the 129-bit sum of the memory address of the instruction package containing the BRANCH instruction and 1'B1). If the branch direction is forward, IA is zero-extended to 128 bits (this implies IA is a positive value) and added to the next instruction package address. The branch target address is the 128 low-order bits of the 129-bit sum.
+If the branch direction is backward, the 128-bit offset is subtracted from the base address. If the branch direction is forward, the 128-bit offset is incremented by '1', then added to the base address. The 128 low-order bits of the 129-bit difference or sum are taken as the branch target address.
+
+The branch target address is a word address that specifies which instruction package contains the instruction that is executed after the Branch instruction.
 
 
 
 
-• BRANCH BACKWARD ON CARRY REGISTER FALSE
-      : CR[SA], IA
+• BBCRF    Branch Backward on Carry Register False
+• BBCRT    Branch Backward on Carry Register True
+• BFCRF    Branch Forward on Carry Register False
+• BFCRT    Branch Forward on Carry Register True
 
-• BRANCH BACKWARD ON CARRY REGISTER TRUE
-      : CR[SA], IA
-
-• BRANCH FORWARD ON CARRY REGISTER FALSE
-      : CR[SA], IA
-
-• BRANCH FORWARD ON CARRY REGISTER TRUE
-      : CR[SA], IA
+  Fields: CR[SA], IA (16)
 
 
 Privilege Level: 0 (Unprivileged)
 
+Exceptions: None
+
 Description:
 
-The branch target address is written to the IPMAR if the branch is taken.
+The branch is taken (the 'branch target address' is written to the IPMAR) if the value in CR[SA] is '0' or '1', based on whether the instruction has the "False" or "True" modifier, respectively. Any of the 128 CRs may be referenced. If the branch is taken, the instruction that will be executed after the Branch instruction is the first wholly containing instruction in the instruction package pointed to by the branch target address. If the branch is not taken, the stored-program computer instruction cycle continues.
 
-The branch is taken if the value in CR[SA] is 1'B0 or 1'B1, based on whether the instruction has a FALSE or TRUE modifier, respectively. If the branch is not taken, the stored-program computer instruction cycle continues.
+The branch target address is computed: The IPMAR contains a 128-bit base memory address, which specifies the location of the instruction package containing the Branch instruction in the primary memory. A 128-bit offset is created by copying IA, a 16-bit immediate, into bits 0—15, and '0' into bits 16—127.
 
-The branch target address is computed as follows:
+If the branch direction is backward, the 128-bit offset is subtracted from the base address. If the branch direction is forward, the 128-bit offset is incremented by '1', then added to the base address. The 128 low-order bits of the 129-bit difference or sum are taken as the branch target address.
 
-If the branch direction is backward, the 16-bit immediate IA is sign-extended to 128 bits (this implies IA is a negative value) and added to the next instruction package address (the 128 low-order bits of the 129-bit sum of the memory address of the instruction package containing the BRANCH instruction and 1'B1). If the branch direction is forward, IA is zero-extended to 128 bits (this implies IA is a positive value) and added to the next instruction package address. The branch target address is the 128 low-order bits of the 129-bit sum.
+The branch target address is a word address that specifies which instruction package contains the instruction that is executed after the Branch instruction.
 
 
 
@@ -590,15 +623,19 @@ If the branch direction is backward, the 16-bit immediate IA is sign-extended to
 ──────────────────────────────────
 
 
-• CALL
-• BREAK
+• CALL     Call
+• BREAK    Break
+
+  Fields: None
 
 
 Privilege Level: 0 (Unprivileged)
 
+Exceptions: None
+
 Description:
 
-An internal interrupt with a privilege level of 0 (Environment) is generated. Both instructions are identical in function. The CALL instruction is intended to be used  by User software to signal intervention by Environment software. The BREAK is intended to be used by software to return to a debugger. Implementations may override the intention of these instructions.
+An internal interrupt with a privilege level of 1 (Privileged) is generated. Both instructions are identical in function. CALL is intended to be used by unprivileged software to signal intervention from privileged software. BREAK is intended to be used by software to return to a debugger. Processor implementations may override the default intention of these instructions.
 
 
 
@@ -612,14 +649,18 @@ An internal interrupt with a privilege level of 0 (Environment) is generated. Bo
 ──────────────────────────────────────────────
 
 
-• IMPRECISE EXCEPTION BARRIER
+• IEB    Imprecise Exception Barrier
+
+  Fields: None
 
 
 Privilege Level: 0 (Unprivileged)
 
+Exceptions: None
+
 Description:
 
-All instructions after the IMPRECISE EXCEPTION BARRIER instruction do not modify architectural state until it is known that all instructions before the IMPRECISE EXCEPTION BARRIER instruction will not generate any imprecise exceptions.
+All instructions succeeding the IEB instruction will not modify any architectural state until it is known that all instructions preceding the IEB instruction will not generate any imprecise exceptions.
 
 
 
@@ -633,103 +674,205 @@ All instructions after the IMPRECISE EXCEPTION BARRIER instruction do not modify
 ────────────────────
 
 
-• COPY IMMEDIATE TO GPR ZERO-EXTEND
-      : GPR[DA], IA
+• CPYGZ    Copy Immediate to GPR Zero-Extend
+• CPYGO    Copy Immediate to GPR One-Extend
 
-• COPY IMMEDIATE TO GPR ONE-EXTEND
-      : GPR[DA], IA
-
-
-Privilege Level: 0 (Unprivileged)
-
-Description:
-
-The 16-bit immediate IA is zero- or one-extended to 128 bits, based on whether the instruction has a ZERO-EXTEND or ONE-EXTEND modifier, respectively. The result is written to GPR[DA], and 1'B0 to CR[DA].
-
-
-
-
-• COPY 0 TO CR
-      : CR[DA]
-
-• COPY 1 TO CR
-      : CR[DA]
+  Fields: GPR[DA], IA (16)
 
 
 Privilege Level: 0 (Unprivileged)
 
+Exceptions: None
+
 Description:
 
-1'B0 or 1'B1 is written to CR[DA].
+The 16-bit immediate IA is zero- or one-extended to 128 bits. The result is written to GPR[DA], and '0' to CR[DA].
 
 
 
 
+• CPYSGZ    Copy Immediate to SGPR Zero-Extend
+• CPYSGO    Copy Immediate to SGPR One-Extend
 
-• COPY GPR TO GPR
-      : GPR[DA], GPR[SA]
+  Fields: SGPR[DA], IA (16)
 
 
 Privilege Level: 0 (Unprivileged)
 
+Exceptions: None
+
 Description:
 
-GPR[SA] and CR[SA] are written to GPR[DA] and CR[DA], respectively.
+The 16-bit immediate IA is zero- or one-extended to 64 bits. The result is written to SGPR[DA], and '0' to CR[DA].
 
 
 
 
-• COPY GPR TO CR
-      : CR[DA], GPR[SA]
+• CPYCZ    Copy Zero to CR
+• CPYCO    Copy One to CR
+
+  Fields: CR[DA]
 
 
 Privilege Level: 0 (Unprivileged)
 
+Exceptions: None
+
 Description:
 
-The first bit in GPR[SA] is written to CR[DA].
+'0' or '1' is written to CR[DA]. Any of the 128 CRs can be referenced.
 
 
 
 
-• COPY GPR TO RNR
-      : RNR[DA], GPR[SA]
+• CPYGG      Copy GPR to GPR
+
+  Fields: GPR[DA], GPR[SA]
+
+
+• CPYSGSG    Copy SGPR to SGPR
+
+  Fields: SGPR[DA], SGPR[SA]
 
 
 Privilege Level: 0 (Unprivileged)
 
+Exceptions: None
+
 Description:
 
-GPR[SA] is written to RNR[DA].
+The contents of GPR[SA] and CR[SA], or SGPR[SA] and CR[SA], are written to GPR[DA] and CR[DA], or SGPR[DA] and CR[DA] (respectively).
 
 
 
 
-• COPY CR TO GPR
-      : GPR[DA], CR[SA]
+• CPYSGGZ    Copy SGPR to GPR Zero-Extend
+
+  Fields: GPR[DA], SGPR[SA]
+
+
+• CPYSGGS    Copy SGPR to GPR Sign-Extend
+
+  Fields: GPR[DA], SGPR[SA]
 
 
 Privilege Level: 0 (Unprivileged)
 
+Exceptions: None
+
 Description:
 
-CR[SA] is zero-extended to 128 bits. The result is written to GPR[DA], and 1'B0 to CR[DA].
+The contents of SGPR[SA] are zero- or sign-extended to 128 bits. The result is written to GPR[DA], and '0' to CR[DA].
 
 
 
 
-• COPY RNR TO RNR
-      : RNR[DA], RNR[SA]
+• CPYSGC    Copy SGPR to CR
 
-• COPY RNR TO GPR
-      : GPR[DA], RNR[SA]
+  Fields: CR[DA], SGPR[SA]
 
 
 Privilege Level: 0 (Unprivileged)
 
+Exceptions: None
+
 Description:
 
-RNR[SA] is written to RNR[DA] or GPR[DA]. If the instruction writes to a GPR, 1'B0 is written to CR[DA].
+The least-significant bit of SGPR[SA] is written to CR[DA]. Any of the 128 CRs can be referenced.
+
+
+
+
+• CPYGR      Copy GPR to RNR
+
+  Fields: RNR[DA], GPR[SA]
+
+
+• CPYSGSR    Copy SGPR to SRNR
+
+  Fields: SRNR[DA], SGPR[SA]
+
+
+Privilege Level: 0 (Unprivileged)
+
+Exceptions: None
+
+Description:
+
+The contents of GPR[SA] or SGPR[SA] are written to RNR[DA] or SRNR[DA], respectively.
+
+
+
+
+• CPYCG     Copy CR to GPR
+
+  Fields: GPR[DA], CR[SA]
+
+
+Privilege Level: 0 (Unprivileged)
+
+Exceptions: None
+
+Description:
+
+CR[SA] is zero-extended to 128 bits. The result is written to GPR[DA], and '0' to CR[DA]. Only the 64 CRs associated with the 64 GPRs can be referenced.
+
+
+
+
+• CPYCSG    Copy CR to SGPR
+
+  Fields: SGPR[DA], CR[SA]
+
+
+Privilege Level: 0 (Unprivileged)
+
+Exceptions: None
+
+Description:
+
+CR[SA] is zero-extended to 64 bits. The result is written to SGPR[DA], and '0' to CR[DA]. Any of the 128 CRs can be referenced.
+
+
+
+
+• CPYRG      Copy RNR to GPR
+
+  Fields: GPR[DA], RNR[SA]
+
+• CPYSRSG    Copy SRNR to SGPR
+
+  Fields: SGPR[DA], SRNR[SA]
+
+
+Privilege Level: 0 (Unprivileged)
+
+Exceptions: None
+
+Description:
+
+RNR[SA] or SRNR[SA] is written to GPR[DA] or SGPR[DA], respectively. '0' is written to CR[DA].
+
+
+
+
+• CPYRR      Copy RNR to RNR
+
+  Fields: RNR[DA], RNR[SA]
+
+
+• CPYSRSR    Copy SRNR to SRNR
+
+  Fields: SRNR[DA], SRNR[SA]
+
+
+Privilege Level: 0 (Unprivileged)
+
+Exceptions: None
+
+Description:
+
+RNR[SA] or SRNR[SA] is written to RNR[DA] or SRNR[DA], respectively.
 
 
 
@@ -743,28 +886,52 @@ RNR[SA] is written to RNR[DA] or GPR[DA]. If the instruction writes to a GPR, 1'
 ───────────────────────────────
 
 
-• PACK CR TO GPR
-      : GPR[DA]
+• PKCG    Pack CR to GPR
+
+  Fields: GPR[DA]
 
 
 Privilege Level: 0 (Unprivileged)
 
+Exceptions: None
+
 Description:
 
-The 64 CRs are packed into a 64-bit bit vector. Each CR is mapped to the bit whose bit index has the same magnitude as its register number. The 64-bit vector is written to the 64 low-order bits of GPR[DA]. {64{1'B0} is written to the 64 high-order bits of GPR[DA].
+The 128 CRs are packed into a 128-bit bit vector. Each CR is mapped to the bit whose bit index has the same magnitude as its register number. The 128-bit vector is written to GPR[DA], and '0' to CR[DA].
 
 
 
 
-• UNPACK GPR TO CR
-      : GPR[SA]
+• UNPKIGVM    Unpack Immediate to GPR as Vector Mask
+
+  Fields: GPR[DA], IA (16)
 
 
 Privilege Level: 0 (Unprivileged)
 
+Exceptions: None
+
 Description:
 
-The 64 low-order bits GPR[SA] is unpacked. Each bit is mapped to the CR whose register number has the same magnitude as its bit index. The unpacked bits are written to their respective CRs.
+Unpack a vector mask from the 16-bit immediate IA into a GPR. The i-th bit from IA is copied to bit i * 8 in GPR[DA]. The bits in GPR[DA] that did not receive a bit from IA are zeroed. 1'B0 is written to CR[DA].
+
+UNPKIGVM is intended to be used with the VSELG and VSELR instructions. It is suitable for V2, V4, V8, and V16 vectors. If the vector type has few elements than there are bits in IA, any bits in IA that do not correspond to an element's least-significant bit have no effect, since the Vector Select instructions only examine the least-significant bit in each element to control the selection. These bits can be set to '0' when IA is specified for greater clarity.
+
+
+
+
+• UNPKGC    Unpack GPR to CR
+
+  Fields: GPR[SA]
+
+
+Privilege Level: 0 (Unprivileged)
+
+Exceptions: None
+
+Description:
+
+The 128-bit bit vector in GPR[SA] is unpacked. Each bit is mapped to the CR whose register number has the same magnitude as its bit index. The unpacked bits are written to their respective CRs.
 
 
 
@@ -778,18 +945,25 @@ The 64 low-order bits GPR[SA] is unpacked. Each bit is mapped to the CR whose re
 ──────────────────────────────────────────
 
 
-• ABSOLUTE VALUE
-      : GPR[DA], GPR[SA]
+• ABS     Absolute Value
+• NEG     Negate
 
-• NEGATE
-      : GPR[DA], GPR[SA]
+  Fields: GPR[DA], GPR[SA]
+
+
+• ABSS    SGPR Absolute Value
+• NEGS    SGPR Negate
+
+  Fields: SGPR[DA], SGPR[SA]
 
 
 Privilege Level: 0 (Unprivileged)
 
+Exceptions: None
+
 Description:
 
-The contents of GPR[SA] are interpreted as a signed integer. The absolute value of GPR[SA], or its negation, is written to GPR[DA]. 1'B0 is written to CR[DA].
+The contents of GPR[SA] or SGPR[SA] are interpreted as a signed integer. The absolute value of GPR[SA] or SGPR[SA], or its negation, is written to GPR[DA] or SGPR[DA]. '0' is written to CR[DA].
 
 
 
@@ -803,34 +977,68 @@ The contents of GPR[SA] are interpreted as a signed integer. The absolute value 
 ─────────────────────────────────────────────────
 
 
-• ADD
-      : GPR[DA], GPR[SA], GPR[SB]
+• ADD     Add
+• SUB     Subtract
 
-• ADD IMMEDIATE ZERO-EXTEND
-      : GPR[DA], GPR[SA], IA
+  Fields: GPR[DA], GPR[SA], GPR[SB]
 
-• ADD IMMEDIATE ONE-EXTEND
-      : GPR[DA], GPR[SA], IA
 
-• ADD WITH CARRY
-      : GPR[DA], GPR[SA], GPR[SB], CR[SC]
+• ADDZ    Add Immediate Zero-Extend
+• ADDO    Add Immediate One-Extend
 
-• SUBTRACT
-      : GPR[DA], GPR[SA], GPR[SB]
+  Fields: GPR[DA], GPR[SA], IA (16)
 
-• SUBTRACT WITH BORROW
-      : GPR[DA], GPR[SA], GPR[SB], CR[SC]
+
+• ADDC    Add With Carry
+• SUBB    Subtract With Borrow
+
+  Fields: GPR[DA], GPR[SA], GPR[SB], CR[SC]
 
 
 Privilege Level: 0 (Unprivileged)
 
+Exceptions: None
+
 Description:
 
-GPR[SB] is added to or subtracted from GPR[SA]. The result is written to GPR[DA]. The carry-out or borrow-out is written to CR[DA]. A value of 1'B0 indicates there is borrow-out, a value of 1'B1 indicates there is not.
+GPR[SB] is added to or subtracted from GPR[SA]. The result is written to GPR[DA], and the carry-out or borrow-out to CR[DA]. A value of '0' indicates there is a borrow-out, a value of '1' indicates there is not.
 
-If the instruction has a WITH CARRY or WITH BORROW modifier, CR[SC] is used as the carry-in or borrow-in, respectively.
+If the instruction has the "With Carry" or "With Borrow" modifier, CR[SC] is used as the carry-in or borrow-in, respectively.
 
-If the instruction has an IMMEDIATE modifier, the 16-bit immediate IA replaces GPR[SB]. IA is zero- or one-extended before it is used, based on whether the instruction has a ZERO-EXTEND or ONE-EXTEND modifier.
+If the instruction has the "Immediate" modifier, the 16-bit immediate IA replaces GPR[SB]. IA is zero- or one-extended before it is used, based on whether the instruction has the "Zero-Extend" or "One-Extend" modifier.
+
+
+
+
+• ADDS     SGPR Add
+• SUBS     SGPR Subtract
+
+  Fields: SGPR[DA], SGPR[SA], SGPR[SB]
+
+
+• ADDZS    SGPR Add Immediate Zero-Extend
+• ADDOS    SGPR Add Immediate One-Extend
+
+  Fields: SGPR[DA], SGPR[SA], IA (16)
+
+
+• ADDCS    SGPR Add With Carry
+• SUBBS    SGPR Subtract With Borrow
+
+  Fields: SGPR[DA], SGPR[SA], SGPR[SB], CR[SC]
+
+
+Privilege Level: 0 (Unprivileged)
+
+Exceptions: None
+
+Description:
+
+SGPR[SB] is added to or subtracted from SGPR[SA]. The result is written to SGPR[DA], and the carry-out or borrow-out to CR[DA]. A value of '0' indicates there is a borrow-out, a value of '1' indicates there is not.
+
+If the instruction has the "With Carry" or "With Borrow" modifier, CR[SC] is used as the carry-in or borrow-in, respectively.
+
+If the instruction has the "Immediate" modifier, the 16-bit immediate IA replaces SGPR[SB]. IA is zero- or one-extended before it is used, based on whether the instruction has the "Zero-Extend" or "One-Extend" modifier.
 
 
 
@@ -844,46 +1052,66 @@ If the instruction has an IMMEDIATE modifier, the 16-bit immediate IA replaces G
 ───────────────────────────────────────
 
 
-• MULTIPLY UNSIGNED HIGH
-      : GPR[DA], GPR[SA], GPR[SB]
+• MULUH      Multiply Unsigned High
+• MULSUH     Multiply Signed by Unsigned High
+• MULSL      Multiply Signed Low
+• MULSH      Multiply Signed High
 
-• MULTIPLY UNSIGNED HIGH IMMEDIATE
-      : GPR[DA], GPR[SA], IA
+  Fields: GPR[DA], GPR[SA], GPR[SB]
 
-• MULTIPLY SIGNED BY UNSIGNED HIGH
-      : GPR[DA], GPR[SA], GPR[SB]
 
-• MULTIPLY SIGNED BY UNSIGNED HIGH IMMEDIATE
-      : GPR[DA], GPR[SA], IA
+• MULUHI     Multiply Unsigned High Immediate
+• MULSLZ     Multiply Signed Low Immediate Zero-Extend
+• MULSLO     Multiply Signed Low Immediate One-Extend
+• MULSHZ     Multiply Signed High Immediate Zero-Extend
+• MULSHO     Multiply Signed High Immediate One-Extend
 
-• MULTIPLY SIGNED LOW
-      : GPR[DA], GPR[SA], GPR[SB]
-
-• MULTIPLY SIGNED LOW IMMEDIATE ZERO-EXTEND
-      : GPR[DA], GPR[SA], IA
-
-• MULTIPLY SIGNED LOW IMMEDIATE ONE-EXTEND
-      : GPR[DA], GPR[SA], IA
-
-• MULTIPLY SIGNED HIGH
-      : GPR[DA], GPR[SA], GPR[SB]
-
-• MULTIPLY SIGNED HIGH IMMEDIATE ZERO-EXTEND
-      : GPR[DA], GPR[SA], IA
-
-• MULTIPLY SIGNED HIGH IMMEDIATE ONE-EXTEND
-      : GPR[DA], GPR[SA], IA
+  Fields: GPR[DA], GPR[SA], IA (16)
 
 
 Privilege Level: 0 (Unprivileged)
 
+Exceptions: None
+
 Description:
 
-The multiplicand is multiplied by the multiplier, producing a 256-bit product. The low- or high-order half of the product is written to GPR[DA], based on whether the instruction has a LOW or HIGH modifier, respectively. 1'B0 is written to CR[DA].
+The multiplicand is multiplied by the multiplier, producing a 256-bit product. The low- or high-order half of the product is written to GPR[DA], based on whether the instruction has the "Low" or "High" modifier, respectively. '0' is written to CR[DA].
 
-GPR[SA] contains the multiplicand, and GPR[SB] contains the multiplier. These are interpreted as unsigned or signed integers, based on whether the instruction has an UNSIGNED or SIGNED modifier, respectively. If the instruction has a SIGNED BY UNSIGNED modifier, the multiplicand is interpreted as a signed integer, and the multiplier as an unsigned integer.
+GPR[SA] contains the multiplicand, and GPR[SB] contains the multiplier. These are interpreted as unsigned or signed integers, based on whether the instruction has the "Unsigned" or "Signed" modifier, respectively. If the instruction has the "Signed by Unsigned" modifier, the multiplicand is interpreted as a signed integer, and the multiplier as an unsigned integer.
 
-If the instruction has an IMMEDIATE modifier, the 16-bit immediate IA is the multiplier. It is zero- or one-extended to 128 bits before it is consumed, based on whether the instruction has a ZERO-EXTEND or ONE-EXTEND modifier.
+If the instruction has the "Immediate" modifier, the 16-bit immediate IA is the multiplier. For instructions that have the "Unsigned" or "Signed by Unsigned" modifier, IA is zero-extended to 128 bits before it is consumed. For instructions that have the "Signed" modifier, IA is zero- or one-extended to 128 bits before it is consumed, based on whether the instruction has the "Zero-Extend" or "One-Extend" modifier.
+
+
+
+
+• MULUHS      SGPR Multiply Unsigned High
+• MULSUHS     SGPR Multiply Signed by Unsigned High
+• MULSLS      SGPR Multiply Signed Low
+• MULSHS      SGPR Multiply Signed High
+
+  Fields: SGPR[DA], SGPR[SA], SGPR[SB]
+
+
+• MULUHIS     SGPR Multiply Unsigned High Immediate
+• MULSLZS     SGPR Multiply Signed Low Immediate Zero-Extend
+• MULSLOS     SGPR Multiply Signed Low Immediate One-Extend
+• MULSHZS     SGPR Multiply Signed High Immediate Zero-Extend
+• MULSHOS     SGPR Multiply Signed High Immediate One-Extend
+
+  Fields: SGPR[DA], SGPR[SA], IA (16)
+
+
+Privilege Level: 0 (Unprivileged)
+
+Exceptions: None
+
+Description:
+
+The multiplicand is multiplied by the multiplier, producing a 128-bit product. The low- or high-order half of the product is written to SGPR[DA], based on whether the instruction has the "Low" or "High" modifier, respectively. '0' is written to CR[DA].
+
+SGPR[SA] contains the multiplicand, and SGPR[SB] contains the multiplier. These are interpreted as unsigned or signed integers, based on whether the instruction has the "Unsigned" or "Signed" modifier, respectively. If the instruction has the "Signed by Unsigned" modifier, the multiplicand is interpreted as a signed integer, and the multiplier as an unsigned integer.
+
+If the instruction has the "Immediate" modifier, the 16-bit immediate IA is the multiplier. It is zero- or one-extended to 64 bits before it is consumed, based on whether the instruction has the "Zero-Extend" or "One-Extend" modifier.
 
 
 
@@ -897,44 +1125,72 @@ If the instruction has an IMMEDIATE modifier, the 16-bit immediate IA is the mul
 ─────────────────────────────────
 
 
-• DIVIDE UNSIGNED QUOTIENT
-      : GPR[DA], GPR[SA], GPR[SB]
+• DIVUQ     Divide Unsigned Quotient
+• DIVUR     Divide Unsigned Remainder
+• DIVSQ     Divide Signed Quotient
+• DIVSR     Divide Signed Remainder
 
-• DIVIDE UNSIGNED QUOTIENT IMMEDIATE
-      : GPR[DA], GPR[SA], IA
+  Fields: GPR[DA], GPR[SA], GPR[SB]
 
-• DIVIDE UNSIGNED REMAINDER
-      : GPR[DA], GPR[SA], GPR[SB]
 
-• DIVIDE UNSIGNED REMAINDER IMMEDIATE
-      : GPR[DA], GPR[SA], IA
+• DIVUQI    Divide Unsigned Quotient Immediate
+• DIVURI    Divide Unsigned Remainder Immediate
+• DIVSQZ    Divide Signed Quotient Immediate Zero-Extend
+• DIVSQO    Divide Signed Quotient Immediate One-Extend
+• DIVSRZ    Divide Signed Remainder Immediate Zero-Extend
+• DIVSRO    Divide Signed Remainder Immediate One-Extend
 
-• DIVIDE SIGNED QUOTIENT
-      : GPR[DA], GPR[SA], GPR[SB]
-
-• DIVIDE SIGNED QUOTIENT IMMEDIATE
-      : GPR[DA], GPR[SA], IA
-
-• DIVIDE SIGNED REMAINDER
-      : GPR[DA], GPR[SA], GPR[SB]
-
-• DIVIDE SIGNED REMAINDER IMMEDIATE
-      : GPR[DA], GPR[SA], IA
+  Fields: GPR[DA], GPR[SA], IA (16)
 
 
 Privilege Level: 0 (Unprivileged)
 
+Exceptions: None
+
 Description:
 
-The dividend is divided by the divisor. The quotient or remainder is written to GPR[DA], based on whether the instruction has a QUOTIENT or REMAINDER modifier, respectively. 1'B0 is written to CR[DA], but if the division is signed and the quotient is returned, then most-significant bit of the 129-bit quotient is written to CR[DA].
+The dividend is divided by the divisor. The quotient or remainder is written to GPR[DA], based on whether the instruction has the "Quotient" or "Remainder" modifier, respectively. '0' is written to CR[DA], but if the division is signed and the quotient is returned, then the most-significant bit of the 129-bit quotient is written to CR[DA].
 
-GPR[SA] contains the dividend; and GPR[SB] contains the divisor. These are interpreted as unsigned or signed integers, based on whether the instruction has an UNSIGNED or SIGNED modifier, respectively.
+GPR[SA] contains the dividend; and GPR[SB] contains the divisor. These are interpreted as unsigned or signed integers, based on whether the instruction has the "Unsigned" or "Signed" modifier, respectively.
 
-If the instruction has an IMMEDIATE modifier, the 16-bit immediate IA is the divisor. It is zero- or one-extended to 128 bits before it is consumed, based on whether the instruction has a ZERO-EXTEND or ONE-EXTEND modifier.
+If the instruction has the "Immediate" modifier, the 16-bit immediate IA is the divisor. For instructions with the "Unsigned" modifier, IA is zero-extended to 128 bits before it is consumed. For instructions with the "Signed" modifier, IA is zero- or one-extended to 128 bits before it is consumed, based on whether the instruction has the "Zero-Extend" or "One-Extend" modifier, respectively.
 
-Division is not performed if the divisor is zero. The value {128{1'B1}} or the remainder is written to GPR[DA], and 1'B1 or 1'B0 is written to CR[DA], based on whether the instruction has a QUOTIENT or REMAINDER modifier, respectively. This convention originated from RISC-V.[1]
+Division is not performed if the divisor is '0'. The quotient has the value 2**128 − 1 or −1, based on whether the instruction has the "Unsigned" or "Signed" modifier, respectively. The remainder has the same value as the dividend. This convention originated from RISC-V.[1] '1' or '0' is written to CR[DA], based on whether the instruction has the "Quotient" or "Remainder" modifier, respectively.
 
-[1]: Andrew Waterman, Krste Asanovic (Editors). The RISC-V Instruction Set Manual, Volume I: User-Level ISA. Document Version 20190608-Base-Ratified (8 June 2019).
+
+
+
+• DIVUQS     SGPR Divide Unsigned Quotient
+• DIVURS     SGPR Divide Unsigned Remainder
+• DIVSQS     SGPR Divide Signed Quotient
+• DIVSRS     SGPR Divide Signed Remainder
+
+  Fields: SGPR[DA], SGPR[SA], SGPR[SB]
+
+
+• DIVUQIS    SGPR Divide Unsigned Quotient Immediate
+• DIVURIS    SGPR Divide Unsigned Remainder Immediate
+• DIVSQZS    SGPR Divide Signed Quotient Immediate Zero-Extend
+• DIVSQOS    SGPR Divide Signed Quotient Immediate One-Extend
+• DIVSRZS    SGPR Divide Signed Remainder Immediate Zero-Extend
+• DIVSROS    SGPR Divide Signed Remainder Immediate One-Extend
+
+  Fields: SGPR[DA], SGPR[DA], IA (16)
+
+
+Privilege Level: 0 (Unprivileged)
+
+Exceptions: None
+
+Description:
+
+The dividend is divided by the divisor. The quotient or remainder is written to SGPR[DA], based on whether the instruction has the "Quotient" or "Remainder" modifier, respectively. '0' is written to CR[DA], but if the division is signed and the quotient is returned, then the most-significant bit of the 65-bit quotient is written to CR[DA].
+
+SGPR[SA] contains the dividend; and SGPR[SB] contains the divisor. These are interpreted as unsigned or signed integers, based on whether the instruction has the "Unsigned" or "Signed" modifier, respectively.
+
+If the instruction has the "Immediate" modifier, the 16-bit immediate IA is the divisor. For instructions with the "Unsigned" modifier, IA is zero-extended to 128 bits before it is consumed. For instructions with the "Signed" modifier, IA is zero- or one-extended to 128 bits before it is consumed, based on whether the instruction has the "Zero-Extend" or "One-Extend" modifier.
+
+Division is not performed if the divisor is zero. The quotient has the value 2**64− 1 or −1, based on whether the instruction has the "Unsigned" or "Signed" modifier, respectively. The remainder has the same value as the dividend. '1' or '0' is written to CR[DA], based on whether the instruction has the "Quotient" or "Remainder" modifier, respectively.
 
 
 
@@ -948,189 +1204,198 @@ Division is not performed if the divisor is zero. The value {128{1'B1}} or the r
 ───────────────────────────────────
 
 
-• COMPARE EQUAL TO
-      : GPR[DA], GPR[SA], GPR[SB]
+• CMPE      Compare Equal To
+• CMPNE     Compare Not Equal To
+• CMPUL     Compare Unsigned Less Than
+• CMPULE    Compare Unsigned Less Than or Equal To
+• CMPSL     Compare Signed Less Than
+• CMPSLE    Compare Signed Less Than or Equal To
 
-• COMPARE NOT EQUAL TO
-      : GPR[DA], GPR[SA], GPR[SB]
-
-• COMPARE LESS THAN
-      : GPR[DA], GPR[SA], GPR[SB]
-
-• COMPARE LESS THAN OR EQUAL TO
-      : GPR[DA], GPR[SA], GPR[SB]
-
-• COMPARE SIGNED LESS THAN
-      : GPR[DA], GPR[SA], GPR[SB]
-
-• COMPARE SIGNED LESS THAN OR EQUAL TO
-      : GPR[DA], GPR[SA], GPR[SB]
+  Fields: GPR[DA], GPR[SA], GPR[SB]
 
 
 Privilege Level: 0 (Unprivileged)
 
+Exceptions: None
+
 Description:
 
-GPR[SA] and GPR[SB] are compared in the manner specified by the instruction. The result is a 1-bit truth value of the specified relationship that is zero-extended to 128 bits and written to GPR[DA]. 1'B0 is written to CR[DA].
-
-The contents of GPR[SA] and GPR[SB] are interpreted as unsigned integers unless the instruction has a SIGNED modifier, otherwise they are interpreted as signed integers.
+The contents of GPR[SA] and GPR[SB] are compared in the manner specified by the instruction. The contents of GPR[SA] and GPR[SB] are interpreted as bit sets if the comparison tests for the "Equal To" or "Not Equal To" conditions; or as unsigned or signed integers, based on whether the instruction has the "Unsigned" or "Signed" modifier, respectively. The comparison produces a 1-bit value indicating whether the specified relationship is true or false, which is zero-extended to 128 bits. The result is written to GPR[DA], and '0' to CR[DA].
 
 
 
 
-• COMPARE EQUAL TO IMMEDIATE ZERO-EXTEND
-      : GPR[DA], GPR[SA], IA
+• CMPES      SGPR Compare Equal To
+• CMPNES     SGPR Compare Not Equal To
+• CMPULS     SGPR Compare Unsigned Less Than
+• CMPULES    SGPR Compare Unsigned Less Than or Equal To
+• CMPSLS     SGPR Compare Signed Less Than
+• CMPSLES    SGPR Compare Signed Less Than or Equal To
 
-• COMPARE EQUAL TO IMMEDIATE ONE-EXTEND
-      : GPR[DA], GPR[SA], IA
-
-• COMPARE NOT EQUAL TO IMMEDIATE ZERO-EXTEND
-      : GPR[DA], GPR[SA], IA
-
-• COMPARE NOT EQUAL TO IMMEDIATE ONE-EXTEND
-      : GPR[DA], GPR[SA], IA
-
-• COMPARE UNSIGNED LESS THAN IMMEDIATE
-      : GPR[DA], GPR[SA], IA
-
-• COMPARE UNSIGNED LESS THAN OR EQUAL TO IMMEDIATE
-      : GPR[DA], GPR[SA], IA
-
-• COMPARE UNSIGNED GREATER THAN IMMEDIATE
-      : GPR[DA], GPR[SA], IA
-
-• COMPARE UNSIGNED GREATER THAN OR EQUAL TO IMMEDIATE
-      : GPR[DA], GPR[SA], IA
-
-• COMPARE SIGNED LESS THAN IMMEDIATE ZERO-EXTEND
-      : GPR[DA], GPR[SA], IA
-
-• COMPARE SIGNED LESS THAN IMMEDIATE ONE-EXTEND
-      : GPR[DA], GPR[SA], IA
-
-• COMPARE SIGNED LESS THAN OR EQUAL TO IMMEDIATE ZERO-EXTEND
-      : GPR[DA], GPR[SA], IA
-
-• COMPARE SIGNED LESS THAN OR EQUAL TO IMMEDIATE ONE-EXTEND
-      : GPR[DA], GPR[SA], IA
-
-• COMPARE SIGNED GREATER THAN IMMEDIATE ZERO-EXTEND
-      : GPR[DA], GPR[SA], IA
-
-• COMPARE SIGNED GREATER THAN IMMEDIATE ONE-EXTEND
-      : GPR[DA], GPR[SA], IA
-
-• COMPARE SIGNED GREATER THAN OR EQUAL TO IMMEDIATE ZERO-EXTEND
-      : GPR[DA], GPR[SA], IA
-
-• COMPARE SIGNED GREATER THAN OR EQUAL TO IMMEDIATE ONE-EXTEND
-      : GPR[DA], GPR[SA], IA
+  Fields: SGPR[DA], GPR[SA], GPR[SB]
 
 
 Privilege Level: 0 (Unprivileged)
 
+Exceptions: None
+
 Description:
 
-GPR[SA] and the 16-bit immediate IA is compared in the manner specified by the instruction. The result is a 1-bit truth value of the specified relationship that is zero-extended to 128 bits and written to GPR[DA]. 1'B0 is written to CR[DA].
-
-The contents of GPR[SA] is interpreted as an unsigned integer unless the instruction has a SIGNED modifier, otherwise it is interpreted as a signed integer.
-
-IA is zero- or one-extended to 128 bits before it is consumed, based on whether the instruction has a ZERO-EXTEND or ONE-EXTEND modifier.
+The contents of SGPR[SA] and SGPR[SB] are compared in the manner specified by the instruction. The contents of SGPR[SA] and SGPR[SB] are interpreted as bit sets if the comparison tests for the "Equal To" or "Not Equal To" conditions; or as unsigned or signed integers, based on whether the instruction has the "Unsigned" or "Signed" modifier, respectively. The comparison produces a 1-bit value indicating whether the specified relationship is true or false, which is zero-extended to 64 bits. The result is written to SGPR[DA], and '0' to CR[DA].
 
 
 
 
+• CMPEZ      Compare Equal To Immediate Zero-Extend
+• CMPEO      Compare Equal To Immediate One-Extend
+• CMPNEZ     Compare Not Equal To Immediate Zero-Extend
+• CMPNEO     Compare Not Equal To Immediate One-Extend
+• CMPULI     Compare Unsigned Less Than Immediate
+• CMPULEI    Compare Unsigned Less Than or Equal To Immediate
+• CMPUGI     Compare Unsigned Greater Than Immediate
+• CMPUGEI    Compare Unsigned Greater Than or Equal To Immediate
+• CMPSLZ     Compare Signed Less Than Immediate Zero-Extend
+• CMPSLO     Compare Signed Less Than Immediate One-Extend
+• CMPSLEZ    Compare Signed Less Than or Equal To Immediate Zero-Extend
+• CMPSLEO    Compare Signed Less Than or Equal To Immediate One-Extend
+• CMPSGZ     Compare Signed Greater Than Immediate Zero-Extend
+• CMPSGO     Compare Signed Greater Than Immediate One-Extend
+• CMPSGEZ    Compare Signed Greater Than or Equal To Immediate Zero-Extend
+• CMPSGEO    Compare Signed Greater Than or Equal To Immediate One-Extend
 
-
-
-
-────────────────────────────────
-15  Bitwise Logical Instructions
-────────────────────────────────
-
-
-• AND
-      : GPR[DA], GPR[SA], GPR[SB]
-
-• NOT-OR COMPLEMENT
-      : GPR[DA], GPR[SA], GPR[SB]
-
-• AND COMPLEMENT
-      : GPR[DA], GPR[SA], GPR[SB]
-
-• EXCLUSIVE-OR
-      : GPR[DA], GPR[SA], GPR[SB]
-
-• OR
-      : GPR[DA], GPR[SA], GPR[SB]
-
-• NOT-OR
-      : GPR[DA], GPR[SA], GPR[SB]
-
-• EXCLUSIVE-NOT-OR
-      : GPR[DA], GPR[SA], GPR[SB]
-
-• NOT-AND COMPLEMENT
-      : GPR[DA], GPR[SA], GPR[SB]
-
-• OR COMPLEMENT
-      : GPR[DA], GPR[SA], GPR[SB]
-
-• NOT-AND
-      : GPR[DA], GPR[SA], GPR[SB]
+  Fields: GPR[DA], GPR[SA], IA (16)
 
 
 Privilege Level: 0 (Unprivileged)
 
+Exceptions: None
+
 Description:
 
-The bitwise logical operation specified by the instruction is performed between GPR[SA] and GPR[SB]. If the instruction has a COMPLEMENT modifier, a bitwise NOT is performed on GPR[SB] before it is used. The result is written to GPR[DA], and 1'B0 to CR[DA].
+The contents of GPR[SA] and the 16-bit immediate IA are compared in the manner specified by the instruction. IA is zero- or one-extended to 128 bits before it is consumed, based on whether the instruction has the "Zero-Extend" or "Sign-Extend" modifier, respectively. The contents of GPR[SA], and the zero- or sign-extension of IA, are interpreted as bit sets if the comparison tests for the "Equal To" or "Not Equal To" conditions; or as unsigned or signed integers, based on whether the instruction has the "Unsigned" or "Signed" modifier, respectively. The comparison produces a 1-bit value indicating whether the specified relationship is true or false, which is zero-extended to 128 bits. The result is written to GPR[DA], and '0' to CR[DA].
 
 
 
 
-• AND IMMEDIATE ZERO-EXTEND
-      : GPR[DA], GPR[SA], IA
+• CMPEZS      SGPR Compare Equal To Immediate Zero-Extend
+• CMPEOS      SGPR Compare Equal To Immediate One-Extend
+• CMPNEZS     SGPR Compare Not Equal To Immediate Zero-Extend
+• CMPNEOS     SGPR Compare Not Equal To Immediate One-Extend
+• CMPULIS     SGPR Compare Unsigned Less Than Immediate
+• CMPULEIS    SGPR Compare Unsigned Less Than or Equal To Immediate
+• CMPUGIS     SGPR Compare Unsigned Greater Than Immediate
+• CMPUGEIS    SGPR Compare Unsigned Greater Than or Equal To Immediate
+• CMPSLZS     SGPR Compare Signed Less Than Immediate Zero-Extend
+• CMPSLOS     SGPR Compare Signed Less Than Immediate One-Extend
+• CMPSLEZS    SGPR Compare Signed Less Than or Equal To Immediate Zero-Extend
+• CMPSLEOS    SGPR Compare Signed Less Than or Equal To Immediate One-Extend
+• CMPSGZS     SGPR Compare Signed Greater Than Immediate Zero-Extend
+• CMPSGOS     SGPR Compare Signed Greater Than Immediate One-Extend
+• CMPSGEZS    SGPR Compare Signed Greater Than or Equal To Immediate
+              Zero-Extend
+• CMPSGEOS    SGPR Compare Signed Greater Than or Equal To Immediate One-Extend
 
-• AND IMMEDIATE ONE-EXTEND
-      : GPR[DA], GPR[SA], IA
-
-• EXCLUSIVE-OR IMMEDIATE ZERO-EXTEND
-      : GPR[DA], GPR[SA], IA
-
-• EXCLUSIVE-OR IMMEDIATE ONE-EXTEND
-      : GPR[DA], GPR[SA], IA
-
-• OR IMMEDIATE ZERO-EXTEND
-      : GPR[DA], GPR[SA], IA
-
-• OR IMMEDIATE ONE-EXTEND
-      : GPR[DA], GPR[SA], IA
-
-• NOT-OR IMMEDIATE ZERO-EXTEND
-      : GPR[DA], GPR[SA], IA
-
-• NOT-OR IMMEDIATE ONE-EXTEND
-      : GPR[DA], GPR[SA], IA
-
-• EXCLUSIVE NOT-OR IMMEDIATE ZERO-EXTEND
-      : GPR[DA], GPR[SA], IA
-
-• EXCLUSIVE NOT-OR IMMEDIATE ONE-EXTEND
-      : GPR[DA], GPR[SA], IA
-
-• NOT-AND IMMEDIATE ZERO-EXTEND
-      : GPR[DA], GPR[SA], IA
-
-• NOT-AND IMMEDIATE ONE-EXTEND
-      : GPR[DA], GPR[SA], IA
+  Fields: SGPR[DA], SGPR[SA], IA (16)
 
 
 Privilege Level: 0 (Unprivileged)
 
+Exceptions: None
+
 Description:
 
-The bitwise logical operation specified by the instruction is performed between GPR[SA] and the 16-bit immediate IA. IA is zero- or one-extended to 128 bits before it is used, based on whether the instruction has a ZERO-EXTEND or ONE-EXTEND modifier. The result is written to GPR[DA], and 1'B0 to CR[DA].
+The contents of SGPR[SA] and the 16-bit immediate IA are compared in the manner specified by the instruction. IA is zero- or one-extended to 64 bits before it is consumed, based on whether the instruction has the "Zero-Extend" or "Sign-Extend" modifier, respectively. The contents of SGPR[SA], and the zero- or sign-extension of IA, are interpreted as bit sets if the comparison test for the "Equal To" or "Not Equal To" conditions; or as unsigned or signed integers, based on whether the instruction has the "Unsigned" or "Signed" modifier, respectively. The comparison produces a 1-bit value indicating whether the specified relationship is true or false, which is zero-extended to 64 bits. The result is written to SGPR[DA], and '0' to CR[DA].
+
+
+
+
+
+
+
+
+──────────────────────────────
+15  Bitwise Logic Instructions
+──────────────────────────────
+
+
+• AND       Bitwise AND
+• NORC      Bitwise NOT-OR Complement
+• ANDC      Bitwise AND Complement
+• EOR       Bitwise Exclusive-OR
+• OR        Bitwise OR
+• NOR       Bitwise NOT-OR
+• ENOR      Bitwise Exclusive-NOT-OR
+• NANDC     Bitwise NOT-AND Complement
+• ORC       Bitwise OR Complement
+• NAND      Bitwise NOT-AND
+
+  Fields: GPR[DA], GPR[SA], GPR[SB]
+
+
+• ANDS      SGPR Bitwise AND
+• NORCS     SGPR Bitwise NOT-OR Complement
+• ANDCS     SGPR Bitwise AND Complement
+• EORS      SGPR Bitwise Exclusive-OR
+• ORS       SGPR Bitwise OR
+• NORS      SGPR Bitwise NOT-OR
+• ENORS     SGPR Bitwise Exclusive-NOT-OR
+• NANDCS    SGPR Bitwise NOT-AND Complement
+• ORCS      SGPR Bitwise OR Complement
+• NANDS     SGPR Bitwise NOT-AND
+
+  Fields: SGPR[DA], SGPR[SA], SGPR[SB]
+
+
+Privilege Level: 0 (Unprivileged)
+
+Exceptions: None
+
+Description:
+
+The named bitwise logic operation is performed between the contents of GPR[SA] and GPR[SB], or SGPR[SA] and SGPR[SB]. If the instruction has the "Complement" modifier, a bitwise NOT is performed on the contents of GPR[SB] or SGPR[SB] before they are consumed by the bitwise logic operation. The result is written to GPR[DA] or SGPR[DA], and '0' to CR[DA].
+
+
+
+
+• ANDZ      Bitwise AND Immediate Zero-Extend
+• ANDO      Bitwise AND Immediate One-Extend
+• EORZ      Bitwise Exclusive-OR Immediate Zero-Extend
+• EORO      Bitwise Exclusive-OR Immediate One-Extend
+• ORZ       Bitwise OR Immediate Zero-Extend
+• ORO       Bitwise OR Immediate One-Extend
+• NORZ      Bitwise NOT-OR Immediate Zero-Extend
+• NORO      Bitwise NOT-OR Immediate One-Extend
+• ENORZ     Bitwise Exclusive NOT-OR Immediate Zero-Extend
+• ENORO     Bitwise Exclusive NOT-OR Immediate One-Extend
+• NANDZ     Bitwise NOT-AND Immediate Zero-Extend
+• NANDO     Bitwise NOT-AND Immediate One-Extend
+
+  Fields: GPR[DA], GPR[SA], IA (16)
+
+
+• ANDZS     SGPR Bitwise AND Immediate Zero-Extend
+• ANDOS     SGPR Bitwise AND Immediate One-Extend
+• EORZS     SGPR Bitwise Exclusive-OR Immediate Zero-Extend
+• EOROS     SGPR Bitwise Exclusive-OR Immediate One-Extend
+• ORZS      SGPR Bitwise OR Immediate Zero-Extend
+• OROS      SGPR Bitwise OR Immediate One-Extend
+• NORZS     SGPR Bitwise NOT-OR Immediate Zero-Extend
+• NOROS     SGPR Bitwise NOT-OR Immediate One-Extend
+• ENORZS    SGPR Bitwise Exclusive NOT-OR Immediate Zero-Extend
+• ENOROS    SGPR Bitwise Exclusive NOT-OR Immediate One-Extend
+• NANDZS    SGPR Bitwise NOT-AND Immediate Zero-Extend
+• NANDOS    SGPR Bitwise NOT-AND Immediate One-Extend
+
+  Fields: SGPR[DA], SGPR[SA], IA (16)
+
+
+Privilege Level: 0 (Unprivileged)
+
+Exceptions: None
+
+Description:
+
+The named bitwise logic operation is performed between the contents of GPR[SA] and IA, or SGPR[SA] and IA. The 16-bit immediate IA is zero- or one-extended to 128 bits (64 bits for those instructions that are prefixed by "SGPR") before it is consumed by the bitwise logic operation. The result is written to GPR[DA] or SGPR[DA], and '0' to CR[DA].
 
 
 
@@ -1144,63 +1409,60 @@ The bitwise logical operation specified by the instruction is performed between 
 ──────────────────────
 
 
-• SHIFT LOGICAL RIGHT
-      : GPR[DA], GPR[SA], GPR[SB]
+• SLR     Shift Logical Right
+• SLL     Shift Logical Left
+• SCR     Shift Circular Right
+• SCL     Shift Circular Left
+• SAR     Shift Arithmetic Right
 
-• SHIFT LOGICAL RIGHT IMMEDIATE
-      : GPR[DA], GPR[SA], IA
+  Fields: GPR[DA], GPR[SA], GPR[SB]
 
-• SHIFT LOGICAL RIGHT IMMEDIATE 64
-      : GPR[DA], GPR[SA], IA
 
-• SHIFT LOGICAL LEFT
-      : GPR[DA], GPR[SA], GPR[SB]
+• SLRI    Shift Logical Right Immediate
+• SLLI    Shift Logical Left Immediate
+• SCRI    Shift Circular Right Immediate
+• SCLI    Shift Circular Left Immediate
+• SARI    Shift Arithmetic Right Immediate
 
-• SHIFT LOGICAL LEFT IMMEDIATE
-      : GPR[DA], GPR[SA], IA
-
-• SHIFT LOGICAL LEFT IMMEDIATE 64
-      : GPR[DA], GPR[SA], IA
-
-• SHIFT CIRCULAR RIGHT
-      : GPR[DA], GPR[SA], GPR[SB]
-
-• SHIFT CIRCULAR RIGHT IMMEDIATE
-      : GPR[DA], GPR[SA], IA
-
-• SHIFT CIRCULAR RIGHT IMMEDIATE 64
-      : GPR[DA], GPR[SA], IA
-
-• SHIFT CIRCULAR LEFT
-      : GPR[DA], GPR[SA], GPR[SB]
-
-• SHIFT CIRCULAR LEFT IMMEDIATE
-      : GPR[DA], GPR[SA], IA
-
-• SHIFT CIRCULAR LEFT IMMEDIATE 64
-      : GPR[DA], GPR[SA], IA
-
-• SHIFT ARITHMETIC RIGHT
-      : GPR[DA], GPR[SA], GPR[SB]
-
-• SHIFT ARITHMETIC RIGHT IMMEDIATE
-      : GPR[DA], GPR[SA], IA
-
-• SHIFT ARITHMETIC RIGHT IMMEDIATE 64
-      : GPR[DA], GPR[SA], IA
+  Fields: GPR[DA], GPR[SA], IA (7)
 
 
 Privilege Level: 0 (Unprivileged)
 
+Exceptions: None
+
 Description:
 
-GPR[SA] is shifted in the manner and direction named by the instruction.
+The contents of GPR[SA] are shifted in the manner and direction named by the instruction. The shift distance is contained in GPR[SB], or the 7-bit immediate IA, if the instruction has the "Immediate" modifier. The shift distance is a 128-bit unsigned integer if it is contained in GPR[SB]. If its value exceeds 127, the result is '0' for logical shifts, the contents of GPR[SA] shifted by the modulo of GPR[SB] and '128' for circular shifts, and {128{GPR[SA][127]}} for arithmetic shifts. The result is written to GPR[DA], and '0' to CR[DA].
 
-The shift distance is contained in GPR[SB], or the 6-bit immediate IA, if the instruction has an IMMEDIATE or IMMEDIATE 64 modifier. IA contains the 6 low-order bits of the 7-bit shift distance. The most-significant bit of the shift distance is 1'B0 unless the instruction has an IMMEDIATE 64 modifier, in which case it is 1'B1.
 
-The shift distance is a 128-bit unsigned integer if it is contained in GPR[SB]. If its value exceeds 127, the result is zero for logical shifts, GPR[SA] shifted by the modulo of GPR[SB] and 128 for circular shifts, and {128{GPR[SA][127]}} for arithmetic shifts.
 
-The result is written to GPR[DA], and 1'B0 to CR[DA].
+
+• SLRS     SGPR Shift Logical Right
+• SLLS     SGPR Shift Logical Left
+• SCRS     SGPR Shift Circular Right
+• SCLS     SGPR Shift Circular Left
+• SARS     SGPR Shift Arithmetic Right
+
+  Fields: SGPR[DA], SGPR[SA], SGPR[SB]
+
+
+• SLRIS    SGPR Shift Logical Right Immediate
+• SLLIS    SGPR Shift Logical Left Immediate
+• SCRIS    SGPR Shift Circular Right Immediate
+• SCLIS    SGPR Shift Circular Left Immediate
+• SARIS    SGPR Shift Arithmetic Right Immediate
+
+  Fields: SGPR[DA], SGPR[SA], IA (6)
+
+
+Privilege Level: 0 (Unprivileged)
+
+Exceptions: None
+
+Description:
+
+The contents of SGPR[SA] are shifted in the manner and direction named by the instruction. The shift distance is contained in SGPR[SB], or the 6-bit immediate IA, if the instruction has the "Immediate" modifier. The shift distance is a 64-bit unsigned integer if it is contained in SGPR[SB]. If its value exceeds 63, the result is '0' for logical shifts, the contents of SGPR[SA] shifted by the modulo of SGPR[SB] and '64' for circular shifts, and {64{SGPR[SA][63]}} for arithmetic shifts. The result is written to SGPR[DA], and '0' to CR[DA].
 
 
 
@@ -1214,89 +1476,86 @@ The result is written to GPR[DA], and 1'B0 to CR[DA].
 ────────────────────────────────────────────────────
 
 
-• EXTRACT BIT FIELD ZERO-EXTEND
-      : GPR[DA], GPR[SA], GPR[SB], GPR[SC]
+• EXTBFZ      Extract Bit Field Zero-Extend
+• EXTBFS      Extract Bit Field Sign-Extend
 
-• EXTRACT BIT FIELD ZERO-EXTEND IMMEDIATE
-      : GPR[DA], GPR[SA], IA, IB
+  Fields: GPR[DA], GPR[SA], SGPR[SB], SGPR[SC]
 
-• EXTRACT BIT FIELD ZERO-EXTEND IMMEDIATE IA 64
-      : GPR[DA], GPR[SA], IA, IB
 
-• EXTRACT BIT FIELD ZERO-EXTEND IMMEDIATE IB 64
-      : GPR[DA], GPR[SA], IA, IB
+• EXTBFZI     Extract Bit Field Zero-Extend Immediate
+• EXTBFSI     Extract Bit Field Sign-Extend Immediate
 
-• EXTRACT BIT FIELD ZERO-EXTEND IMMEDIATE 64
-      : GPR[DA], GPR[SA], IA, IB
+  Fields: GPR[DA], GPR[SA], IA (7), IB (7)
 
-• EXTRACT BIT FIELD SIGN-EXTEND
-      : GPR[DA], GPR[SA], GPR[SB], GPR[SC]
 
-• EXTRACT BIT FIELD SIGN-EXTEND IMMEDIATE
-      : GPR[DA], GPR[SA], IA, IB
+• EXTBFZS     SGPR Extract Bit Field Zero-Extend
+• EXTBFSS     SGPR Extract Bit Field Sign-Extend
 
-• EXTRACT BIT FIELD SIGN-EXTEND IMMEDIATE IA 64
-      : GPR[DA], GPR[SA], IA, IB
+  Fields: SGPR[DA], SGPR[SA], SGPR[SB], SGPR[SC]
 
-• EXTRACT BIT FIELD SIGN-EXTEND IMMEDIATE IB 64
-      : GPR[DA], GPR[SA], IA, IB
 
-• EXTRACT BIT FIELD SIGN-EXTEND IMMEDIATE 64
-      : GPR[DA], GPR[SA], IA, IB
+• EXTBFZIS    SGPR Extract Bit Field Zero-Extend Immediate
+• EXTBFSIS    SGPR Extract Bit Field Sign-Extend Immediate
+
+  Fields: SGPR[DA], SGPR[SA], IA (6), IB (6)
 
 
 Privilege Level: 0 (Unprivileged)
 
+Exceptions: None
+
 Description:
 
-A bit field is extracted from GPR[SA]. The bit field in GPR[SA] is specified with two unsigned integer parameters: the starting position and length. The starting position specifies which bit in GPR[SA] is the bit field's least-significant bit. The length specifies how many bits there are in the bit field.
+A bit field is extracted from GPR[SA] or SGPR[SA]. The bit field in GPR[SA] is specified with two unsigned integer parameters: the starting position and length. The starting position specifies which bit in GPR[SA] is the bit field's least-significant bit. The length specifies how many bits there are in the bit field.
 
-The sum of the starting position and length cannot exceed 128. If it does, the length is clamped to the value that results in the sum equaling 128.
+The starting position is given by the 7 or 6 low-order bits in GPR[SB] or SGPR[SB], respectively; valid values are 0—127 and 0—63, respectively. If the instruction has the "Immediate" modifier, the starting position is instead given by the 7- or 6-bit immediate IA.
 
-The starting position and length are given by the 7 low-order bits in GPR[SB] and GPR[SC], respectively. If the instruction has an IMMEDIATE modifier, the starting position and length are given by the 6-bit immediates IA and IB, respectively. The value 64 is added to one or both of these immediates if the instruction has one of the following modifiers:
+The length is given by the 8 or 7 low-order bits in GPR[SC] and SGPR[SC], respectively; valid values are 0—128 and 0—64, respectively. If the instruction has the "Immediate" modifier, the length is instead given by the 7- or 6-bit immediate IB, which is always incremented by '1' before it is consumed so that its value is always in the range of 1—128 or 1—64, respectively.
 
-• IMMEDIATE IA 64: The value 64 is added to IA
-• IMMEDIATE IB 64: The value 64 is added to IB
-• IMMEDIATE 64: The value 64 is added to both IA and IB
+The sum of the starting position and length cannot exceed 128 or 64 (if the instruction has the "SGPR" modifier). If it does, the length is clamped to the value that results in the sum equaling 128 or 64 (if the instruction has the "SGPR" modifier).
 
-The extracted bit field is shifted right so that its least-significant bit is aligned with the least-significant bit of GPR[DA]. The bit field is zero- or sign-extended to 128 bits, based on whether the instruction lacks or has a SIGN-EXTEND modifier. The result is written to GPR[DA], and 1'B0 to CR[DA].
+The extracted bit field is shifted right so that its least-significant bit is aligned with the least-significant bit of GPR[DA] or SGPR[DA]. The bit field is zero- or sign-extended (based on whether the instruction has the "Zero-Extend" or "Sign-Extend" modifier, respectively) to 128 or 64 bits (if the instruction has the SGPR modifier). The result is written to GPR[DA] or SGPR[DA], and '0' to CR[DA].
 
 
 
 
-• DEPOSIT BIT FIELD
-      : GPR[DA], GPR[SA], GPR[SB], GPR[SC], GPR[D]
+• DEPBF      Deposit Bit Field
 
-• DEPOSIT BIT FIELD IMMEDIATE
-      : GPR[DA], GPR[SA], IA, IB, GPR[D]
+  Fields: GPR[DA], GPR[SA], SGPR[SB], SGPR[SC], GPR[SD]
 
-• DEPOSIT BIT FIELD IMMEDIATE IA 64
-      : GPR[DA], GPR[SA], IA, IB, GPR[D]
 
-• DEPOSIT BIT FIELD IMMEDIATE IB 64
-      : GPR[DA], GPR[SA], IA, IB, GPR[D]
+• DEPBFI     Deposit Bit Field Immediate
 
-• DEPOSIT BIT FIELD IMMEDIATE 64
-      : GPR[DA], GPR[SA], IA, IB, GPR[D]
+  Fields: GPR[DA], GPR[SA], IA (7), IB (7), GPR[SD]
+
+
+• DEPBFS     SGPR Deposit Bit Field
+
+  Fields: SGPR[DA], SGPR[SA], SGPR[SB], SGPR[SC], SGPR[SD]
+
+
+• DEPBFIS    SGPR Deposit Bit Field Immediate
+
+  Fields: SGPR[DA], SGPR[SA], IA (6), IB (6), SGPR[SD]
 
 
 Privilege Level: 0 (Unprivileged)
 
+Exceptions: None
+
 Description:
 
-A bit field is deposited into a copy of GPR[D]. The bit field is sourced from GPR[SA]. The bit field starts at the least-significant bit of GPR[SA].
+A bit field is deposited into a copy of GPR[SD] or SGPR[SD]. The bit field is sourced from GPR[SA] or SGPR[SA]. The bit field starts at the least-significant bit of GPR[SA] or SGPR[SA].
 
-The bit field is specified with two unsigned integer parameters: the starting position and length. The starting position specifies which bit in the copy of GPR[D] receives the first bit of the bit field (its least-significant bit). The remaining bits in the bit field are deposited to the left of the this bit. The length specifies the number of bits from the bit field are deposited into the copy of GPR[D].
+The bit field is specified with two unsigned integer parameters: the starting position and length. The starting position specifies which bit in the copy of GPR[SD] receives the first bit of the bit field (its least-significant bit). The remaining bits in the bit field are deposited to the left of the this bit. The length specifies the number of bits from the bit field are deposited into the copy of GPR[SD].
 
-The sum of the starting position and length cannot exceed 128. If it does, the length is clamped to the value that results in the sum equaling 128.
+The starting position is given by the 7 or 6 low-order bits in GPR[SB] or SGPR[SB], respectively; valid values are 0—127 and 0—63, respectively. If the instruction has the "Immediate" modifier, the starting position is instead given by the 7- or 6-bit immediate IA.
 
-The starting position and length are given by the 7 low-order bits in GPR[SB] and GPR[SC], respectively. If the instruction has an IMMEDIATE modifier, the starting position and length are given by the 6-bit immediates IA and IB, respectively. The value 64 is added to one or both of these immediates if the instruction has one of the following modifiers:
+The length is given by the 8 or 7 low-order bits in GPR[SC] or SGPR[SC], respectively; valid values are 0—128 and 0—64, respectively. If the instruction has the "Immediate" modifier, the length is instead given by the 7- or 6-bit immediate IB, which is always incremented by '1' before it is consumed so that its value is always in the range of 1—128 to 1—64, respectively.
 
-• IMMEDIATE IA 64: The value 64 is added to IA
-• IMMEDIATE IB 64: The value 64 is added to IB
-• IMMEDIATE 64: The value 64 is added to both IA and IB
+The sum of the starting position and length cannot exceed 128 or 64 (if the instruction has the "SGPR" modifier). If it does, the length is clamped to the value that results in the sum equaling 128 or 64 (if the instruction has the "SGPR" modifier).
 
-The copy of GPR[D] containing the deposited bit field is the result. The result is written to GPR[DA], and 1'B0 to CR[DA].
+The copy of GPR[SD] or SGPR[SD] containing the deposited bit field is the result. The result is written to GPR[DA] or SGPR[DA], and '0' to CR[DA].
 
 
 
@@ -1310,36 +1569,82 @@ The copy of GPR[D] containing the deposited bit field is the result. The result 
 ───────────────────────────────────────
 
 
-• BIT GATHER
-      : GPR[DA], GPR[SA], GPR[SB]
+• BGTR    Bit Gather
+
+  Fields: GPR[DA], GPR[SA], GPR[SB]
 
 
 Privilege Level: 0 (Unprivileged)
 
+Exceptions: None
+
 Description:
 
-GPR[SA] and GPR[SB] are interpreted as untyped 128-bit words. GPR[SB] is used to gather selected bits from GPR[SA] into a contiguous bit vector.
+The contents of GPR[SA] and GPR[SB] are interpreted as 128-bit bit sets. The contents of GPR[SB] are used to gather selected bits from GPR[SA] into a contiguous bit vector.
 
 This is accomplished as follows: For each set bit in GPR[SB], the bit in GPR[SA] at the same bit position is gathered. The gathered bit is shifted right. The shift distance is the number of cleared bits to the right of the set bit in GPR[SB].
 
-The result consists of n gathered bits in the n low-order bits, where n is the number of set bits in GPR[SB]; and m zero bits in the m high-order bits, where m is the difference of 128 and n. The result is written to GPR[DA], and 1'B0 to CR[DA].
+The result consists of n gathered bits in the n low-order bits, where n is the number of set bits in GPR[SB]; and m '0' bits in the m high-order bits, where m is the difference of 128 and n. The result is written to GPR[DA], and '0' to CR[DA].
 
 
 
 
-• BIT SCATTER
-      : GPR[DA], GPR[SA], GPR[SB]
+• BGTRS    SGPR Bit Gather
+
+  Fields: SGPR[DA], SGPR[SA], SGPR[SB]
 
 
 Privilege Level: 0 (Unprivileged)
 
+Exceptions: None
+
 Description:
 
-GPR[SA] and GPR[SB] are interpreted as untyped 128-bit words. GPR[SB] is used to scatter selected bits from GPR[SA] across a 128-bit word.
+The contents of SGPR[SA] and SGPR[SB] are interpreted as 64-bit bit sets. The contents of SGPR[SB] are used to gather selected bits from SGPR[SA] into a contiguous bit vector.
+
+This is accomplished as follows: For each set bit in SGPR[SB], the bit in SGPR[SA] at the same bit position is gathered. The gathered bit is shifted right. The shift distance is the number of cleared bits to the right of the set bit in SGPR[SB].
+
+The result consists of n gathered bits in the n low-order bits, where n is the number of set bits in SGPR[SB]; and m '0' bits in the m high-order bits, where m is the difference of 64 and n. The result is written to SGPR[DA], and '0' to CR[DA].
+
+
+
+
+• BSCTR    Bit Scatter
+
+  Fields: GPR[DA], GPR[SA], GPR[SB]
+
+
+Privilege Level: 0 (Unprivileged)
+
+Exceptions: None
+
+Description:
+
+The contents of GPR[SA] and GPR[SB] are interpreted as 128-bit bit sets. The contents of GPR[SB] are used to scatter selected bits from GPR[SA] across a 128-bit word.
 
 This is accomplished as follows: For each set bit in GPR[SB], the number of set bits to its right is obtained. This number is used as an index to a bit in GPR[SA]. The indexed bit in GPR[SA] is moved to the same bit position as the set bit in GPR[SB].
 
-The scattered bits are bitwise OR'ed with a 128-bit bit vector of zeros to produce the result. The result is written to GPR[DA], and 1'B0 to CR[DA].
+The scattered bits are bitwise OR'ed with a 128-bit bit vector of zeros to produce the result. The result is written to GPR[DA], and '0' to CR[DA].
+
+
+
+
+• BSCTRS    SGPR Bit Scatter
+
+  Fields: SGPR[DA], SGPR[SA], SGPR[SB]
+
+
+Privilege Level: 0 (Unprivileged)
+
+Exceptions: None
+
+Description:
+
+The contents of SGPR[SA] and SGPR[SB] are interpreted as 64-bit bit sets. The contents of SGPR[SB] are used to scatter selected bits from SGPR[SA] across a 64-bit semi-word.
+
+This is accomplished as follows: For each set bit in SGPR[SB], the number of set bits to its right is obtained. This number is used as an index to a bit in SGPR[SA]. The indexed bit in SGPR[SA] is moved to the same bit position as the set bit in SGPR[SB].
+
+The scattered bits are bitwise OR'ed with a 64-bit bit vector of zeros to produce the result. The result is written to SGPR[DA], and '0' to CR[DA].
 
 
 
@@ -1353,75 +1658,125 @@ The scattered bits are bitwise OR'ed with a 128-bit bit vector of zeros to produ
 ──────────────────────────
 
 
-• COUNT ONES
-      : GPR[DA], GPR[SA]
+• CNTZ     Count Zeros
+• CNTO     Count Ones
 
-• COUNT ZEROS
-      : GPR[DA], GPR[SA]
-
-
-Privilege Level: 0 (Unprivileged)
-
-Description:
-
-The number of bits in GPR[SA] that have the value 1'B0 or 1'B1 are counted. The count is zero-extended to 128 bits. The result is written to GPR[DA], and 1'B0 to CR[DA].
+  Fields: GPR[DA], GPR[SA]
 
 
+• CNTZS    SGPR Count Zeros
+• CNTOS    SGPR Count Ones
 
-
-• COUNT TRAILING ONES
-      : GPR[DA], GPR[SA]
-
-• COUNT TRAILING ZEROS
-      : GPR[DA], GPR[SA]
-
-• COUNT LEADING ONES
-      : GPR[DA], GPR[SA]
-
-• COUNT LEADING ZEROS
-      : GPR[DA], GPR[SA]
+  Fields: SGPR[DA], SGPR[SA]
 
 
 Privilege Level: 0 (Unprivileged)
 
+Exceptions: None
+
 Description:
 
-The number of trailing or leading bits in GPR[SA] that have the value 1'B0 or 1'B1 are counted. The count is zero-extended 128 bits. The result is written to GPR[DA], and 1'B0 to CR[DA].
+The number of bits in GPR[SA] or SGPR[SA] that have the value '0' or '1' are counted. The result is written to GPR[DA] or SGPR[DA], and '0' to CR[DA].
 
 
 
 
+• CNTTZ    Count Trailing Zeros
+• CNTTO    Count Trailing Ones
+• CNTLZ    Count Leading Zeros
+• CNTLO    Count Leading Ones
+
+  Fields: GPR[DA], GPR[SA]
 
 
+• CNTTZS    SGPR Count Trailing Zeros
+• CNTTOS    SGPR Count Trailing Ones
+• CNTLZS    SGPR Count Leading Zeros
+• CNTLOS    SGPR Count Leading Ones
 
-
-───────────────────────
-20  Select Instructions
-───────────────────────
-
-
-• SELECT GPR
-      : GPR[DA], GPR[SA], GPR[SB], GPR[SC]
+  Fields: SGPR[DA], SGPR[SA]
 
 
 Privilege Level: 0 (Unprivileged)
 
+Exceptions: None
+
 Description:
 
-The contents of GPR[SA] and CR[SA], or GPR[SB] and CR[SB], are written to GPR[DA] and CR[DA], based on whether the contents of GPR[SC] are equal or not equal to 128'B0, respectively. The contents of GPR[SC] are interpreted as an unsigned integer.
+The number of trailing or leading bits in GPR[SA] or SGPR[SA] that have the value '0' or '1' are counted. The result is written to GPR[DA] or SGPR[DA], and '0' to CR[DA].
 
 
 
 
-• SELECT RNR
-      : RNR[DA], RNR[SA], RNR[SB], GPR[SC]
+
+
+
+
+───────────────────────────────────
+20  Register Selection Instructions
+───────────────────────────────────
+
+
+• SELG    Select GPR
+
+  Fields: GPR[DA], GPR[SA], GPR[SB], SGPR[SC]
 
 
 Privilege Level: 0 (Unprivileged)
 
+Exceptions: None
+
 Description:
 
-The contents of RNR[SA] or RNR[SB], are written to GPR[DA], based on whether the contents of GPR[SC] are equal or not equal to 128'B0, respectively. The contents of GPR[SC] are interpreted as an unsigned integer.
+The contents of GPR[SA] and CR[SA], or GPR[SB] and CR[SB], are written to GPR[DA] and CR[DA], based on whether the least-significant bit of SGPR[SC] is '0' or '1', respectively.
+
+
+
+
+• SELR    Select RNR
+
+  Fields: RNR[DA], RNR[SA], RNR[SB], SGPR[SC]
+
+
+Privilege Level: 0 (Unprivileged)
+
+Exceptions: None
+
+Description:
+
+The contents of RNR[SA] or RNR[SB] are written to RNR[DA], based on whether the least-significant bit of SGPR[SC] is '0' or '1', respectively.
+
+
+
+
+• SELSG    Select SGPR
+
+  Fields: SGPR[DA], SGPR[SA], SGPR[SB], SGPR[SC]
+
+
+Privilege Level: 0 (Unprivileged)
+
+Exceptions: None
+
+Description:
+
+The contents of SGPR[SA] and CR[SA], or SGPR[SB] and CR[SB], are written to GPR[DA] and CR[DA], based on whether the least-significant bit of GPR[SC] is '0' or '1', respectively.
+
+
+
+
+• SELSR    Select SRNR
+
+  Fields: SRNR[DA], SRNR[SA], SRNR[SB], SGPR[SC]
+
+
+Privilege Level: 0 (Unprivileged)
+
+Exceptions: None
+
+Description:
+
+The contents of SRNR[SA] or SRNR[SB] are written to SRNR[DA], based on whether the least-significant bit of SGPR[SC] is '0' or '1', respectively.
 
 
 
@@ -1435,19 +1790,29 @@ The contents of RNR[SA] or RNR[SB], are written to GPR[DA], based on whether the
 ───────────────────────────────────────────────
 
 
-• LOAD ATOMIC
-      : GPR[DA], GPR[SB], IA
+• LDAWGW    Load Atomic Word Addressed GPR Word
+• LDAOGW    Load Atomic Octet Addressed GPR Word
+
+  Fields: GPR[DA], GPR[SB], IA (16)
 
 
 Privilege Level: 0 (Unprivileged)
 
+Exceptions: UNALIGNED PRIMARY MEMORY ADDRESS
+
 Description:
 
-LOAD ATOMIC is an atomic memory access primitive. It is paired with a succeeding STORE ATOMIC to implement an atomic memory access that is suitable for shared-memory multiprocessing synchronization. The variant of LOAD ATOMIC provided by the architecture is described in the literature as restricted or weak, and is not the general form that has a wider application.
+Load Atomic is an atomic memory access primitive. It is paired with a succeeding Store Atomic primitive to implement an atomic memory access that is suitable for shared-memory multiprocessing synchronization. The variant of Load Atomic provided by the architecture is described in the literature as restricted or weak, and is not the general form that has a wider application.
 
-LOAD ATOMIC computes a memory address. The memory address is reserved, possibly replacing a reservation from a previous LOAD ATOMIC. The contents of the memory location specified by the memory address is written to GPR[DA]. 1'B0 is written to CR[DA].
+Load Atomic computes a memory address. The memory address is reserved, possibly replacing a reservation from a previous Load Atomic. The contents of the memory location specified by the memory address is written to GPR[DA]. '0' is written to CR[DA].
 
-The memory address is computed as follows: The 16-bit immediate in the IA field is sign-extended to 128 bits and added to the contents of GPR[SA]. The 128 low-order bits of the 129-bit sum is the memory address.
+The memory address is computed as follows: GPR[SA] contains a 128-bit base memory address, and the immediate IA, a 16-bit offset. A 128-bit offset is created by copying IA into bits 0—15, and IA[15] into bits 16—127. The base address and 128-bit offset are added, and the 128 low-order bits of the 129-bit sum are taken the memory address.
+
+The memory address is interpreted as a word address or an octet address, based on whether the instruction has the "Word Addressed" or "Octet Addressed" modifier, respectively.
+
+If the instruction is an octet address, it must be aligned. If it is unaligned, the Load Atomic operation is not performed (the memory address is not reserved, the primary memory is not read, and the Load Atomic is not visible to the Aura Memory Consistency Model), and a precise exception (UNALIGNED PRIMARY MEMORY ADDRESS) is generated. This exception has a privilege level of 1 (Privileged).
+
+The Load Atomic―Store Atomic pair do not need to use the same memory addressing scheme; that is, it does not matter if the memory address of one instruction differs in type to the other. If the same word is being referenced, the two addresses are considered to be equivalent, even though their actual values differ.
 
 A reservation does not persist indefinitely; it is canceled if:
 
@@ -1455,33 +1820,43 @@ A reservation does not persist indefinitely; it is canceled if:
 • An external interrupt has occurred.
 • An internal interrupt has occurred.
 • A change in privilege level has occurred.
-• A STORE ATOMIC-type instruction has been executed, and its memory address is different to that of the reservation.
+• A Store Atomic-type instruction has been executed, and its memory address is different to that of the reservation.
 • A write to the same primary memory address as the reservation has occurred.
 
-Implementations may cancel a reservation arbitrarily and impose additional reservation-canceling conditions. Architecture extensions may interact with LOAD ATOMIC by imposing additional reservation-canceling conditions or constraints. However, implementations or architecture extensions that do so must ensure that there are cases where LOAD ATOMIC/STORE ATOMIC pairs can be executed successfully.
+Implementations may cancel a reservation arbitrarily and impose additional reservation-canceling conditions. Architecture extensions may interact with Load Atomic by imposing additional reservation-canceling conditions or constraints. However, implementations or architecture extensions that do so must ensure that there are cases where Load Atomic/Store Atomic pairs can be executed successfully.
 
 
 
 
-• STORE ATOMIC
-      : GPR[DA], GPR[SA], GPR[SB], IA
+• STAWGW    Store Atomic Word Addressed GPR Word
+• STAOGW    Store Atomic Octet Addressed GPR Word
+
+  Fields: GPR[DA], GPR[SA], GPR[SB], IA (16)
 
 
 Privilege Level: 0 (Unprivileged)
 
+Exceptions: UNALIGNED PRIMARY MEMORY ADDRESS
+
 Description:
 
-STORE ATOMIC is an atomic memory access primitive. It is paired with a preceding LOAD ATOMIC to implement an atomic memory access that is suitable for shared-memory multiprocessing synchronization. The variant of STORE ATOMIC provided by the architecture is described in the literature as restricted or weak, and is not the general form that has a wider application.
+Store Atomic is an atomic memory access primitive. It is paired with a preceding Load Atomic primitive to implement an atomic memory access that is suitable for shared-memory multiprocessing synchronization. The variant of Store Atomic provided by the architecture is described in the literature as restricted or weak, and is not the general form that has a wider application.
 
-A memory address is computed as follows: The 16-bit immediate in the IA field is sign-extended to 128 bits and added to the contents of GPR[SA]. The 128 low-order bits of the 129-bit sum is the memory address.
+A memory address is computed as follows: GPR[SA] contains a 128-bit base memory address, and the immediate IA field, a 16-bit offset. A 128-bit offset is created by copying IA into bits 0—15, and IA[15] into bits 16—127. The base address and 128-bit offset are added, and the 128 low-order bits of the 129-bit sum are taken as the memory address.
+
+The memory address is interpreted as a word address or an octet address, based on whether the instruction has the "Word Addressed" or "Octet Addressed" modifier, respectively.
+
+If the instruction is an octet address, it must be aligned. If it is unaligned, the Store Atomic operation is not performed (the primary memory is not written to, and the Store Atomic is not visible to the Aura Memory Consistency Model), and a precise exception (UNALIGNED PRIMARY MEMORY ADDRESS) is generated. This exception has a privilege level of 1 (Privileged).
+
+The Store Atomic―Load Atomic pair do not need to use the same memory addressing scheme; that is, it does not matter if the memory address of one instruction differs in type to the other. If the same word is being referenced, the two addresses are considered to be equivalent, even though their actual values differ.
 
 The contents of GPR[SB] are written to the memory location specified by the memory address, if the following conditions are true:
 
-• There is a reservation from a prior LOAD ATOMIC-type instruction.
-• The reservation from a prior LOAD ATOMIC-type instruction has the same memory address as that computed by the STORE ATOMIC.
+• There is a reservation from a prior Load Atomic-type instruction.
+• The reservation from a prior Load Atomic-type instruction has the same memory address as that computed by the Store Atomic.
 • The specified memory location is implemented.
 
-If the primary memory was written to, 128'B0 is written to GPR[DA], else 128'B1 is written to GPR[DA] instead. 1'B0 is written to CR[DA] regardless of whether the primary memory was written to or not.
+If the primary memory was written to, '0' is written to GPR[DA], else '1' is written to GPR[DA] instead. '0' is written to CR[DA] regardless of whether the primary memory was written to or not.
 
 
 
@@ -1495,17 +1870,20 @@ If the primary memory was written to, 128'B0 is written to GPR[DA], else 128'B1 
 ────────────────────────────────
 
 
-• MEMORY BARRIER
-      : XA, XB, XC
+• MEMBAR    Memory Barrier
+
+  Fields: XA (16), XB (7)
 
 
 Privilege Level: 0 (Unprivileged)
+
+Exceptions: INVALID INSTRUCTION
 
 Description:
 
 Memory operations preceding the barrier must be completed before any combination of memory operations, external interrupts, and internal interrupts can begin.
 
-Two fields, the 16-bit 'XA' field and the 6-bit 'XB' field, specify which pairs of operations must be ordered:
+Two fields, the 16-bit 'XA' field and the 7-bit 'XB' field, specify which pairs of operations must be ordered:
 
 • XA[0]: READ < READ
 • XA[1]: READ < WRITE
@@ -1520,9 +1898,9 @@ Two fields, the 16-bit 'XA' field and the 6-bit 'XB' field, specify which pairs 
 
 The event on the left precedes that on the right.
 
-Bits 10—15 of the 'XA' field, and bits 0—5 of the 'XB' field are undefined and reserved. Any set bit within these ranges causes a precise exception (INVALID OPERATION) to be generated.
+Bits 10—15 of the 'XA' field, and bits 0—6 of the 'XB' field are undefined and reserved. Any set bit within these ranges causes a precise exception (INVALID INSTRUCTION) to be generated. This exception has a privilege level of 1 (Privileged).
 
-Any combination of defined cleared and set bits are permitted in the 'XA' and 'XB' fields. If every bit in the 'XA' and 'XB' fields are zero, no orderings are enforced. Implicit orderings in the Aura Memory Consistency Model are respected regardless of the bit patterns in the 'XA' and 'XB' fields.
+Any combination of defined cleared and set bits are permitted in the 'XA' and 'XB' fields. If every bit in the 'XA' and 'XB' fields are '0', no orderings are enforced. Implicit orderings in the Aura Memory Consistency Model are respected regardless of the bit patterns in the 'XA' and 'XB' fields.
 
 For READ or WRITE < INTERNAL or EXTERNAL INTERRUPT, all memory operations of the specified type that precede the barrier must be completed before any instructions that raises the internal or external interrupt can begin execution. This mode is intended to order memory operations and interrupt signaling. Architecture extensions that provide interrupt-signaling instructions may render this mode redundant by incorporating memory barrier functionality into the interrupt-signaling instructions.
 
@@ -1540,118 +1918,173 @@ For READ or WRITE < NEXT INSTRUCTION, all memory operations of the specified typ
 ───────────────────────────────────
 
 
-• VECTOR EXTRACT ELEMENT GPR ZERO-EXTEND
-      : GPR[DA], GPR[SA], GPR[SB], T
+• VEXTEGZ     Vector Extract Element GPR Zero-Extend
+• VEXTEGS     Vector Extract Element GPR Sign-Extend
 
-• VECTOR EXTRACT ELEMENT GPR SIGN-EXTEND
-      : GPR[DA], GPR[SA], GPR[SB], T
+  Fields: GPR[DA], GPR[SA], SGPR[SB], T
 
-• VECTOR EXTRACT ELEMENT RNR
-      : RNR[DA], RNR[SA], GPR[SB], T
+
+• VEXTER      Vector Extract Element RNR
+
+  Fields: RNR[DA], RNR[SA], SGPR[SB], T
+
+
+• VEXTESGZ    Vector Extract Element SGPR Zero-Extend
+• VEXTESGS    Vector Extract Element SGPR Sign-Extend
+
+  Fields: SGPR[DA], GPR[SA], SGPR[SB], T
+
+
+• VEXTESR     Vector Extract Element SRNR
+
+  Fields: SRNR[DA], GPR[SA], SGPR[SB], T
 
 
 Privilege Level: 0 (Unprivileged)
 
+Exceptions: None
+
 Description:
 
-The destination (DST) is a scalar contained in GPR[DA] or RNR[DA]. The first source (S1) is a vector contained in GPR[SA] or RNR[SA]. The second source (S2) is a scalar contained in GPR[SB].
+The destination (DST) is a scalar contained in GPR[DA], RNR[DA], SGPR[DA], or SRNR[DA]. The first source (S1) is a vector contained in GPR[SA] or RNR[SA]. The second source (S2) is a scalar contained in SGPR[SB].
 
 The 'T' field specifies the vector type of S1.
 
 An element in S1 is extracted. A number of low-order bits from S2 is used as an index to select which element is extracted. The number of bits used is the binary logarithm of the vector length.
 
-If the extracted element is from a GPR, it is zero- or sign-extended to 128 bits, based on whether the instruction has a ZERO-EXTEND or SIGN-EXTEND modifier, respectively. If the extracted element is from a RNR, it is zero-extended to 128 bits. The result is written to DST.
-
-If DST is contained in a GPR, 1'B0 is written to CR[DA].
+If the extracted element is from a GPR, it is zero- or sign-extended (based on whether the instruction has the "Zero-Extend" or "Sign-Extend" modifier, respectively) to 128 or 64 bits. If the extracted element is from a RNR, it is zero-extended to 128 or 64 bits. The result is written to DST. If DST is contained in a GPR, '0' is written to CR[DA].
 
 
 
 
-• VECTOR EXTRACT ELEMENT GPR V8 ZERO-EXTEND IMMEDIATE
-      : GPR[DA], GPR[SA], IA
+• VEXTEG4Z      Vector Extract Element GPR V4 Zero-Extend
+• VEXTEG4S      Vector Extract Element GPR V4 Sign-Extend
 
-• VECTOR EXTRACT ELEMENT GPR V8 SIGN-EXTEND IMMEDIATE
-      : GPR[DA], GPR[SA], IA
+  Fields: GPR[DA], GPR[SA], IA (2)
 
-• VECTOR EXTRACT ELEMENT GPR V16 ZERO-EXTEND IMMEDIATE
-      : GPR[DA], GPR[SA], IA
 
-• VECTOR EXTRACT ELEMENT GPR V16 SIGN-EXTEND IMMEDIATE
-      : GPR[DA], GPR[SA], IA
+• VEXTEG8Z      Vector Extract Element GPR V8 Zero-Extend
+• VEXTEG8S      Vector Extract Element GPR V8 Sign-Extend
 
-• VECTOR EXTRACT ELEMENT GPR V32 ZERO-EXTEND IMMEDIATE
-      : GPR[DA], GPR[SA], IA
+  Fields: GPR[DA], GPR[SA], IA (3)
 
-• VECTOR EXTRACT ELEMENT GPR V32 SIGN-EXTEND IMMEDIATE
-      : GPR[DA], GPR[SA], IA
 
-• VECTOR EXTRACT ELEMENT RNR V8 IMMEDIATE
-      : GPR[DA], GPR[SA], IA
+• VEXTEG16Z     Vector Extract Element GPR V16 Zero-Extend
+• VEXTEG16S     Vector Extract Element GPR V16 Sign-Extend
 
-• VECTOR EXTRACT ELEMENT RNR V16 IMMEDIATE
-      : GPR[DA], GPR[SA], IA
+  Fields: GPR[DA], GPR[SA], IA (4)
 
-• VECTOR EXTRACT ELEMENT RNR V32 IMMEDIATE
-      : GPR[DA], GPR[SA], IA
 
-• VECTOR EXTRACT ELEMENT RNR V64 LOW
-      : GPR[DA], GPR[SA]
+• VEXTER4       Vector Extract V4 Element RNR
 
-• VECTOR EXTRACT ELEMENT RNR V64 HIGH
-      : GPR[DA], GPR[SA]
+  Fields: RNR[DA], GPR[SA], IA (2)
+
+
+• VEXTER8       Vector Extract V8 Element RNR
+
+  Fields: RNR[DA], GPR[SA], IA (3)
+
+
+• VEXTER16      Vector Extract V16 Element RNR
+
+  Fields: RNR[DA], GPR[SA], IA (4)
+
+
+• VEXTESG4Z     Vector Extract Element SGPR V4 Zero-Extend
+• VEXTESG4S     Vector Extract Element SGPR V4 Sign-Extend
+
+  Fields: SGPR[DA], GPR[SA], IA (2)
+
+
+• VEXTESG8Z     Vector Extract Element SGPR V8 Zero-Extend
+• VEXTESG8S     Vector Extract Element SGPR V8 Sign-Extend
+
+  Fields: SGPR[DA], GPR[SA], IA (3)
+
+
+• VEXTESG16Z    Vector Extract Element SGPR V16 Zero-Extend
+• VEXTESG16S    Vector Extract Element SGPR V16 Sign-Extend
+
+  Fields: SGPR[DA], GPR[SA], IA (4)
+
+
+• VEXTESR4      Vector Extract Element SRNR V4
+
+  Fields: SRNR[DA], GPR[SA], IA (2)
+
+
+• VEXTESR8      Vector Extract Element SRNR V8
+
+  Fields: SRNR[DA], GPR[SA], IA (3)
+
+
+• VEXTESR16     Vector Extract Element SRNR V16
+
+  Fields: SRNR[DA], GPR[SA], IA (4)
 
 
 Privilege Level: 0 (Unprivileged)
 
+Exceptions: None
+
 Description:
 
-The destination (DST) is a scalar contained in GPR[DA] or RNR[DA]. The first source (S1) is a vector contained in GPR[SA] or RNR[SA].
+The destination (DST) is a scalar contained in GPR[DA], RNR[DA], SGPR[DA], or SRNR[DA]. The first source (S1) is a vector contained in GPR[SA] or RNR[SA].
 
-An element in S1 is extracted. The 4-, 3-, or 2-bit immediate in the IA field is used as an index to select which element is extracted, based on whether the instruction has a V8, V16, or V32 modifier, respectively. For instructions that operate on V64 vectors, the index is specified by the LOW and HIGH modifiers, which correspond to elements 0 and 1, respectively.
+An element in S1 is extracted. The immediate IA is used as an index to select which element is extracted. IA is a 2-, 3-, or 4-bit immediate, based on whether the instruction has the "V4", "V8", or "V16" modifier, respectively.
 
-If the extracted element is from a GPR, it is zero- or sign-extended to 128 bits, based on whether the instruction has a ZERO-EXTEND or SIGN-EXTEND modifier, respectively. If the extracted element is from a RNR, it is zero-extended to 128 bits. The result is written to DST.
-
-If DST is contained in a GPR, 1'B0 is written to CR[DA].
+The extracted element is zero- or sign-extended (based on whether the instruction has the "Zero-Extend" or "Sign-Extend" modifier, respectively) to 128 or 64 bits. If the extracted element is from a RNR, it is zero-extended to 128 or 64 bits. The result is written to DST. If DST is contained in a GPR, '0' is written to CR[DA].
 
 
 
 
-• VECTOR EXTRACT ELEMENT GPR ZERO-EXTEND OCTET INDEX
-      : GPR[DA], GPR[SA], GPR[SB], T
+• VEXTEGOZ     Vector Extract Element GPR Octet Index Zero-Extend
+• VEXTEGOS     Vector Extract Element GPR Octet Index Sign-Extend
 
-• VECTOR EXTRACT ELEMENT GPR SIGN-EXTEND OCTET INDEX
-      : GPR[DA], GPR[SA], GPR[SB], T
+  Fields: GPR[DA], GPR[SA], SGPR[SB], T
 
-• VECTOR EXTRACT ELEMENT RNR OCTET INDEX
-      : RNR[DA], RNR[SA], GPR[SB], T
+
+• VEXTERO      Vector Extract Element RNR Octet Index
+
+  Fields: RNR[DA], RNR[SA], SGPR[SB], T
+
+
+• VEXTESGOZ    Vector Extract Element SGPR Octet Index Zero-Extend
+• VEXTESGOS    Vector Extract Element SGPR Octet Index Sign-Extend
+
+  Fields: SGPR[DA], GPR[SA], SGPR[SB], T
+
+
+• VEXTESRO     Vector Extract Element SRNR Octet Index
+
+  Fields: SRNR[DA], GPR[SA], SGPR[SB], T
 
 
 Privilege Level: 0 (Unprivileged)
 
+Exceptions: UNALIGNED ELEMENT SELECT
+
 Description:
 
-The destination (DST) is a scalar contained in GPR[DA] or RNR[DA]. The first source (S1) is a vector contained in GPR[SA] or RNR[SA]. The second source (S2) is a scalar contained GPR[SB].
+The destination (DST) is a scalar contained in GPR[DA], RNR[DA], SGPR[DA] or SRNR[DA]. The first source (S1) is a vector contained in GPR[SA] or RNR[SA]. The second source (S2) is a scalar contained in SGPR[SB].
 
 The 'T' field specifies the vector type of S1.
 
-An element in S1 is extracted. A number of low-order bits from S2 is used as an index to select which element is extracted, based on the vector type of S1:
+An element from S1 is extracted. A number bits of from S2 is used as an index to select which element from S1 is extracted. The number of bits depends on the vector type of S1:
 
-• V8: Bits 3—0
-• V16: Bits 3—1
-• V32: Bits 3—2
-• V64: Bit 3
+• V2     S2[3]
+• V4     S2[3:2]
+• V8     S2[3:1]
+• V16    S2[3:0]
 
-A precise exception (UNALIGNED ELEMENT SELECT) is generated if certain bits are not zero when the vector is a V16, V32, or V64 vector:
+A precise exception (UNALIGNED ELEMENT SELECT), which has a privilege level of 1 (Privileged), is generated if certain bits in S2 do not contain zeros:
 
-• V16: Bit 0
-• V32: Bits 0—1
-• V64: Bits 0—2
+• V2     S2[2:0]
+• V4     S2[1:0]
+• V8     S2[0]
+• V16    Not Applicable
 
-This exception has a privilege level of 1 (Environment).
-
-If the extracted element is from a GPR, it is zero- or sign-extended to 128 bits, based on whether the instruction has a ZERO-EXTEND or SIGN-EXTEND modifier, respectively. If the extracted element is from a RNR, it is zero-extended to 128 bits. The result is written to DST.
-
-If DST is contained in a GPR, 1'B0 is written to CR[DA].
+If the extracted element is from a GPR, it is zero- or sign-extended (based on whether the instruction has the "Zero-Extend" or "Sign-Extend" modifier, respectively) to 128 or 64 bits. If the extracted element is from a RNR, it is zero-extended to 128 or 64 bits. The result is written to DST. If DST is contained in a GPR, '0' is written to CR[DA].
 
 
 
@@ -1665,99 +2098,115 @@ If DST is contained in a GPR, 1'B0 is written to CR[DA].
 ───────────────────────────────────
 
 
-• VECTOR DEPOSIT ELEMENT GPR
-      : GPR[DA], GPR[SA], GPR[SB], GPR[SC], T
+• VDEPESG    Vector Deposit Element SGPR
 
-• VECTOR DEPOSIT ELEMENT RNR
-      : RNR[DA], RNR[SA], RNR[SB], GPR[SC], T
+  Fields: GPR[DA], GPR[SA], SGPR[SB], SGPR[SC], T
+
+
+• VDEPESR    Vector Deposit Element SRNR
+
+  Fields: RNR[DA], RNR[SA], SRNR[SB], SGPR[SC], T
 
 
 Privilege Level: 0 (Unprivileged)
 
+Exceptions: None
+
 Description:
 
-The destination (DST) is a vector contained in GPR[DA] or RNR[DA]. The first source (S1) is a vector contained in GPR[SA] or RNR[SA]. The second source (S2) is a scalar contained in GPR[SB] or RNR[SB]. The third source (S3) is a scalar contained in GPR[SC].
+The destination (DST) is a vector contained in GPR[DA] or RNR[DA]. The first source (S1) is a vector contained in GPR[SA] or RNR[SA]. The second source (S2) is a scalar contained in SGPR[SB] or SRNR[SB]. The third source (S3) is a scalar contained in SGPR[SC].
 
 The 'T' field specifies the vector type of DST and S1. The number of low-order bits from S2 that are used by the instruction is equal to the element size of the vector type.
 
-A copy of S1 is made, and an element in this copy is replaced with S2. The element that is replaced is identified by a number of low-order bits from S3. The number of low-order bits used is the binary logarithm of the vector length. The modified copy of S1 is written to DST.
+A copy of S1 is made, and an element in this copy is replaced with S2. A number of low-order bits from S3 is used as an index to select which element is replaced. The number of bits used is the binary logarithm of the vector length.
 
-If DST is contained in a GPR, 1'B0 is written to CR[DA].
-
-
-
-
-• VECTOR DEPOSIT ELEMENT GPR V8 IMMEDIATE
-      : GPR[DA], GPR[SA], GPR[SB], IA
-
-• VECTOR DEPOSIT ELEMENT GPR V16 IMMEDIATE
-      : GPR[DA], GPR[SA], GPR[SB], IA
-
-• VECTOR DEPOSIT ELEMENT GPR V32 IMMEDIATE
-      : GPR[DA], GPR[SA], GPR[SB], IA
-
-• VECTOR DEPOSIT ELEMENT RNR V8 IMMEDIATE
-      : RNR[DA], RNR[SA], RNR[SB], IA
-
-• VECTOR DEPOSIT ELEMENT RNR V16 IMMEDIATE
-      : RNR[DA], RNR[SA], RNR[SB], IA
-
-• VECTOR DEPOSIT ELEMENT RNR V32 IMMEDIATE
-      : RNR[DA], RNR[SA], RNR[SB], IA
-
-• VECTOR DEPOSIT ELEMENT RNR V64 LOW
-      : RNR[DA], RNR[SA], RNR[SB]
-
-• VECTOR DEPOSIT ELEMENT RNR V64 HIGH
-      : RNR[DA], RNR[SA], RNR[SB]
-
-
-Privilege Level: 0 (Unprivileged)
-
-Description:
-
-The destination (DST) is a scalar contained in GPR[DA] or RNR[DA]. The first source (S1) is a vector contained in GPR[SA] or RNR[SA]. The second source (S2) is a vector contained in GPR[SA] or RNR[SB].
-
-A copy of S1 is made, and an element in this copy is replaced by the 8, 16, 32, or 64 low-order bits from S2. The 4-, 3-, or 2-bit immediate in the IA field is used as an index to select which element is replaced, based on whether the instruction has a V8, V16, or V32 modifier, respectively. For instructions that operate on V64 vectors, the index is specified by the LOW and HIGH modifiers, which correspond to elements 0 and 1, respectively.
-
-If DST is contained in a GPR, 1'B0 is written to CR[DA].
+The modified copy of S1 is written to DST. If DST is contained in a GPR, '0' is written to CR[DA].
 
 
 
 
-• VECTOR DEPOSIT ELEMENT GPR OCTET INDEX
-      : GPR[DA], GPR[SA], GPR[SB], GPR[SC], T
+• VDEPESG4     Vector Deposit Element SGPR V4
 
-• VECTOR DEPOSIT ELEMENT RNR OCTET INDEX
-      : RNR[DA], RNR[SA], RNR[SB], GPR[SC], T
+  Fields: GPR[DA], GPR[SA], SGPR[SB], IA (2)
+
+
+• VDEPESG8     Vector Deposit Element SGPR V8
+
+  Fields: GPR[DA], GPR[SA], SGPR[SB], IA (3)
+
+
+• VDEPESG16    Vector Deposit Element SGPR V16
+
+  Fields: GPR[DA], GPR[SA], SGPR[SB], IA (4)
+
+
+• VDEPESR4     Vector Deposit Element SRNR V4
+
+  Fields: RNR[DA], RNR[SA], SRNR[SB], IA (2)
+
+
+• VDEPESR8     Vector Deposit Element SRNR V8
+
+  Fields: RNR[DA], RNR[SA], SRNR[SB], IA (3)
+
+
+• VDEPESR16    Vector Deposit Element SRNR V16
+
+  Fields: RNR[DA], RNR[SA], SRNR[SB], IA (4)
 
 
 Privilege Level: 0 (Unprivileged)
 
+Exceptions: None
+
 Description:
 
-The destination (DST) is a vector contained in GPR[DA] or RNR[DA]. The first source (S1) is a vector contained in GPR[SA] or RNR[SA]. The second source (S2) is a scalar contained in GPR[SB] or RNR[SB]. The third source (S3) is a scalar contained in GPR[SC].
+The destination (DST) is a vector contained in GPR[DA] or RNR[DA]. The first source (S1) is a vector contained in GPR[SA] or RNR[SA]. The second source (S2) is a scalar contained in SGPR[SA] or SRNR[SB].
+
+A copy of S1 is made, and an element in this copy is replaced by the 8, 16, or 32 low-order bits from S2, based on whether the instruction has the "V16", "V8", or "V4" modifier, respectively.
+
+The immediate IA is used as an index to select which element is replaced. IA is a 2-, 3-, or 4-bit immediate, based on whether the instruction has the "V4", "V8", or "V16", modifier, respectively.
+
+The modified copy of S1 is written to DST. If DST is contained in a GPR, '0' is written to CR[DA].
+
+
+
+
+• VDEPESGO    Vector Deposit Element SGPR Octet Index
+
+  Fields: GPR[DA], GPR[SA], GPR[SB], SGPR[SC], T
+
+
+• VDEPESRO    Vector Deposit Element SRNR Octet Index
+
+  Fields: RNR[DA], RNR[SA], RNR[SB], SGPR[SC], T
+
+
+Privilege Level: 0 (Unprivileged)
+
+Exceptions: UNALIGNED ELEMENT SELECT
+
+Description:
+
+The destination (DST) is a vector contained in GPR[DA] or RNR[DA]. The first source (S1) is a vector contained in GPR[SA] or RNR[SA]. The second source (S2) is a scalar contained in SGPR[SB] or SRNR[SB]. The third source (S3) is a scalar contained in SGPR[SC].
 
 The 'T' field specifies the vector type of DST and S1. The number of low-order bits from S2 that are used by the instruction is equal to the element size of the vector type.
 
-A copy of S1 is made, and an element in this copy is replaced with S2. The element that is replaced is identified by a number of low-order bits from S3, based on the vector type of DST:
+A copy of S1 is made, and an element in this copy is replaced with S2. A number of bits from S3 is used as an index to select which element in S1 is replaced. The number of bits depends on the vector type of S1:
 
-• V8: Bits 3—0
-• V16: Bits 3—1
-• V32: Bits 3—2
-• V64: Bit 3
+• V2     S3[3]
+• V4     S3[3:2]
+• V8     S3[3:1]
+• V16    S3[3:0]
 
-A precise exception (UNALIGNED ELEMENT SELECT) is generated if certain bits are not zero when the vector is a V16, V32, or V64 vector:
+A precise exception (UNALIGNED ELEMENT SELECT), which has a privilege level of 1 (Privileged), is generated if certain bits in S3 do not contain zeros:
 
-• V16: Bit 0
-• V32: Bits 0—1
-• V64: Bits 0—2
+• V2     S3[2:0]
+• V4     S3[1:0]
+• V8     S3[0]
+• V16    Not applicable
 
-This exception has a privilege level of 1 (Environment).
-
-The modified copy of S1 is written to DST.
-
-If DST is contained in a GPR, 1'B0 is written to CR[DA].
+The modified copy of S1 is written to DST. If DST is contained in a GPR, '0' is written to CR[DA].
 
 
 
@@ -1771,24 +2220,29 @@ If DST is contained in a GPR, 1'B0 is written to CR[DA].
 ─────────────────────────────────
 
 
-• VECTOR BROADCAST GPR
-      : GPR[DA], GPR[SA], T
+• VBCSG    Vector Broadcast SGPR
 
-• VECTOR BROADCAST RNR
-      : RNR[DA], RNR[SA], T
+  Fields: GPR[DA], SGPR[SA], T
+
+
+• VBCSR    Vector Broadcast SRNR
+
+  Fields: RNR[DA], SRNR[SA], T
 
 
 Privilege Level: 0 (Unprivileged)
 
+Exceptions: None
+
 Description:
 
-The destination (DST) is a vector contained in GPR[DA] or RNR[DA]. The first source (S1) is a scalar contained in GPR[SA] or RNR[SA].
+The destination (DST) is a vector contained in GPR[DA] or RNR[DA]. The first source (S1) is a scalar contained in SGPR[SA] or SRNR[SA].
 
 The 'T' field specifies the vector type of DST. The number of low-order bits from S1 that are used by the instruction is equal to the element size of the vector type. VL is the vector length of DST.
 
-For all i, from 0 to VL - 1: S1 is written to DST[i].
+For all i, from 0 to VL - 1: S1 is written to DST[i].
 
-If DST is contained in a GPR, 1'B0 is written to CR[DA].
+If DST is contained in a GPR, '0' is written to CR[DA].
 
 
 
@@ -1802,14 +2256,19 @@ If DST is contained in a GPR, 1'B0 is written to CR[DA].
 ────────────────────────────────────
 
 
-• VECTOR PERMUTE GPR
-      : GPR[DA], GPR[SA], GPR[SB], T
+• VPMTG    Vector Permute GPR
 
-• VECTOR PERMUTE RNR
-      : RNR[DA], RNR[SA], GPR[SB], T
+  Fields: GPR[DA], GPR[SA], GPR[SB], T
+
+
+• VPMTR    Vector Permute RNR
+
+  Fields: RNR[DA], RNR[SA], GPR[SB], T
 
 
 Privilege Level: 0 (Unprivileged)
+
+Exceptions: None
 
 Description:
 
@@ -1817,9 +2276,9 @@ The destination (DST) is a vector contained in GPR[DA] or RNR[DA]. The first sou
 
 The 'T' field specifies the vector type of DST, S1, and S2. VL is the vector length of DST, S1, and S2.
 
-For all i, from 0 to VL - 1: An index (j) is created from a number of low-order bits in S2[i]. The number of bits used is the binary logarithm of the vector type granularity. S1[j] is written to DST[i].
+For all i, from 0 to VL - 1: An index ('j') is created from a number of low-order bits in S2[i]. The number of bits used is the binary logarithm of the vector length. S1[j] is written to DST[i].
 
-If DST is contained in a GPR, 1'B0 is written to CR[DA].
+If DST is contained in a GPR, '0' is written to CR[DA].
 
 
 
@@ -1833,14 +2292,19 @@ If DST is contained in a GPR, 1'B0 is written to CR[DA].
 ─────────────────────────────────
 
 
-• VECTOR SELECT GPR
-      : GPR[DA], GPR[SA], GPR[SB], GPR[SC], T
+• VSELG    Vector Select GPR
 
-• VECTOR SELECT RNR
-      : RNR[DA], RNR[SA], RNR[SB], GPR[SC], T
+  Fields: GPR[DA], GPR[SA], GPR[SB], GPR[SC], T
+
+
+• VSELR    Vector Select RNR
+
+  Fields: RNR[DA], RNR[SA], RNR[SB], GPR[SC], T
 
 
 Privilege Level: 0 (Unprivileged)
+
+Exceptions: None
 
 Description:
 
@@ -1848,9 +2312,9 @@ The destination (DST) is a vector contained in GPR[DA] or RNR[DA]. The first sou
 
 The 'T' field specifies the vector type of DST, S1, S2, and S3. VL is the vector length of DST, S1, S2, and S3.
 
-For all i, from 0 to VL - 1: S1[i] or S2[i] is written to DST[i], based on whether the least-significant bit of S3[i] is 1'B0 or 1'B1, respectively.
+For all i, from 0 to VL - 1: S1[i] or S2[i] is written to DST[i], based on whether the least-significant bit of S3[i] is '0' or '1', respectively.
 
-If DST is contained in a GPR, 1'B0 is written to CR[DA].
+If DST is contained in a GPR, '0' is written to CR[DA].
 
 
 
@@ -1864,14 +2328,19 @@ If DST is contained in a GPR, 1'B0 is written to CR[DA].
 ─────────────────────────────
 
 
-• VECTOR MERGE GPR
-      : GPR[DA], GPR[SA], GPR[SB], GPR[SC], T
+• VMRGG    Vector Merge GPR
 
-• VECTOR MERGE RNR
-      : RNR[DA], RNR[SA], RNR[SB], GPR[SC], T
+  Fields: GPR[DA], GPR[SA], GPR[SB], GPR[SC], T
+
+
+• VMRGR    Vector Merge RNR
+
+  Fields: RNR[DA], RNR[SA], RNR[SB], GPR[SC], T
 
 
 Privilege Level: 0 (Unprivileged)
+
+Exceptions: None
 
 Description:
 
@@ -1879,9 +2348,9 @@ The destination (DST) is a vector contained in GPR[DA] or RNR[DA]. The first sou
 
 The 'T' field specifies the vector type of DST, S1, and S2. VL is the vector length of DST, S1, S2, and S3.
 
-For all i, from 0 to VL - 1: S1[j] or S2[k] is written to DST[i], based on whether the least-significant bit in S3[i] is 1'B0 or 1'B1, respectively. Indices 'j' and 'k' are initially zero. Index 'j' or 'k' is incremented by one, based on whether the least-significant bit in S3[i] is 1'B0 or 1'B1, respectively.
+For all i, from 0 to VL - 1: S1[j] or S2[k] is written to DST[i], based on whether the least-significant bit in S3[i] is '0' or '1', respectively. The indices 'j' and 'k' are initially '0'. Index 'j' or 'k' is incremented by '1', based on whether the least-significant bit in S3[i] is '0' or '1', respectively.
 
-If DST is contained in a GPR, 1'B0 is written to CR[DA].
+If DST is contained in a GPR, '0' is written to CR[DA].
 
 
 
@@ -1895,182 +2364,134 @@ If DST is contained in a GPR, 1'B0 is written to CR[DA].
 ──────────────────────────────────
 
 
-• CONVERT VECTOR GPR V8 TO V16 ZERO-EXTEND LOW
-      : GPR[DA], GPR[SA]
+• CVG2T4L    Convert Vector GPR V2 to V4 Low
+• CVG2T4H    Convert Vector GPR V2 to V4 High
 
-• CONVERT VECTOR GPR V8 TO V16 ZERO-EXTEND HIGH
-      : GPR[DA], GPR[SA]
-
-• CONVERT VECTOR GPR V8 TO V16 SIGN-EXTEND LOW
-      : GPR[DA], GPR[SA]
-
-• CONVERT VECTOR GPR V8 TO V16 SIGN-EXTEND HIGH
-      : GPR[DA], GPR[SA]
+  Fields: GPR[DA], GPR[SA]
 
 
 Privilege Level: 0 (Unprivileged)
+
+Exceptions: None
+
+Description:
+
+The destination (DST) is a V4 vector contained in GPR[DA]. The first source (S1) is a V2 vector contained in GPR[SA].
+
+For all i, from 0 to 1: The 32 low-order bits in S1[i] are written to DST[i] or DST[2 + i], based on whether the instruction has the "Low" or "High" modifier, respectively.
+
+'0' is written to CR[DA].
+
+
+
+
+• CVG4T2ZL    Convert Vector GPR V4 to V2 Zero-Extend Low
+• CVG4T2ZH    Convert Vector GPR V4 to V2 Zero-Extend High
+• CVG4T2SL    Convert Vector GPR V4 to V2 Sign-Extend Low
+• CVG4T2SH    Convert Vector GPR V4 to V2 Sign-Extend High
+
+  Fields: GPR[DA], GPR[SA]
+
+
+Privilege Level: 0 (Unprivileged)
+
+Exceptions: None
+
+Description:
+
+The destination (DST) is a V2 vector contained in GPR[DA]. The first source (S1) is a V4 vector contained in GPR[SA].
+
+For all i, from 0 to 1 or from 2 to 3 (based on whether the instruction has the "Low" or "High" modifier, respectively): S1[i] is zero- or sign-extended (based on whether the instruction has the "Zero-Extend" or "Sign-Extend" modifier, respectively) to 64 bits. The result is written to DST[i].
+
+'0' is written to CR[DA].
+
+
+
+
+• CVG4T8L    Convert Vector GPR V4 to V8 Low
+• CVG4T8H    Convert Vector GPR V4 to V8 High
+
+  Fields: GPR[DA], GPR[SA]
+
+
+Privilege Level: 0 (Unprivileged)
+
+Exceptions: None
+
+Description:
+
+The destination (DST) is a V8 vector contained in GPR[DA]. The first source (S1) is a V4 vector contained in GPR[SA].
+
+For all i, from 0 to 3: The 16 low-order bits in S1[i] are written to DST[i] or DST[4 + i], based on whether the instruction has the "Low" or "High" modifier, respectively.
+
+'0' is written to CR[DA].
+
+
+
+
+• CVG8T4ZL    Convert Vector GPR V8 to V4 Zero-Extend Low
+• CVG8T4ZH    Convert Vector GPR V8 to V4 Zero-Extend High
+• CVG8T4SL    Convert Vector GPR V8 to V4 Sign-Extend Low
+• CVG8T4SH    Convert Vector GPR V8 to V4 Sign-Extend High
+
+  Fields: GPR[DA], GPR[SA]
+
+
+Privilege Level: 0 (Unprivileged)
+
+Exceptions: None
+
+Description:
+
+The destination (DST) is a V4 vector contained in GPR[DA]. The first source (S1) is a V8 vector contained in GPR[SA].
+
+For all i, from 0 to 3 or from 4 to 7 (based on whether the instruction has the "Low" or "High" modifier, respectively): S1[i] is zero- or sign-extended (based on whether the instruction has the "Zero-Extend" or "Sign-Extend" modifier, respectively) to 32 bits. The result is written to DST[i].
+
+'0' is written to CR[DA].
+
+
+
+
+• CVG8T16L    Convert Vector GPR V8 to V16 Low
+• CVG8T16H    Convert Vector GPR V8 to V16 High
+
+  Fields: GPR[DA], GPR[SA]
+
+
+Privilege Level: 0 (Unprivileged)
+
+Exceptions: None
 
 Description:
 
 The destination (DST) is a V16 vector contained in GPR[DA]. The first source (S1) is a V8 vector contained in GPR[SA].
 
-For all i, from 0 to 7 or from 8 to 15 (based on whether the instruction has a LOW or HIGH modifier, respectively): S1[i] is zero- or sign-extended (based on whether the instruction has a ZERO-EXTEND or SIGN-EXTEND modifier, respectively) to 16 bits. The result is written to DST[i].
+For all i, from 0 to 7: The 8 low-order bits in S1[i] are written to DST[i] or DST[8 + i], based on whether the instruction has the "Low" or "High" modifier, respectively.
 
-1'B0 is written to CR[DA].
-
-
+'0' is written to CR[DA].
 
 
-• CONVERT VECTOR GPR V16 TO V8 LOW
-      : GPR[DA], GPR[SA]
 
-• CONVERT VECTOR GPR V16 TO V8 HIGH
-      : GPR[DA], GPR[SA]
+
+• CVG16T8ZL    Convert Vector GPR V16 to V8 Zero-Extend Low
+• CVG16T8ZH    Convert Vector GPR V16 to V8 Zero-Extend High
+• CVG16T8SL    Convert Vector GPR V16 to V8 Sign-Extend Low
+• CVG16T8SH    Convert Vector GPR V16 to V8 Sign-Extend High
+
+  Fields: GPR[DA], GPR[SA]
 
 
 Privilege Level: 0 (Unprivileged)
+
+Exceptions: None
 
 Description:
 
 The destination (DST) is a V8 vector contained in GPR[DA]. The first source (S1) is a V16 vector contained in GPR[SA].
 
-For all i, from 0 to 7: The 8 low-order bits in S1[i] are written to DST[i] or DST[8 + i], based on whether the instruction has a LOW or HIGH modifier, respectively.
+For all i, from 0 to 7 or from 8 to 15 (based on whether the instruction has the "Low" or "High" modifier, respectively): S1[i] is zero- or sign-extended (based on whether the instruction has the "Zero-Extend" or "Sign-Extend" modifier, respectively) to 16 bits. The result is written to DST[i].
 
-1'B0 is written to CR[DA].
-
-
-
-
-• CONVERT VECTOR GPR V16 TO V32 ZERO-EXTEND LOW
-      : GPR[DA], GPR[SA]
-
-• CONVERT VECTOR GPR V16 TO V32 ZERO-EXTEND HIGH
-      : GPR[DA], GPR[SA]
-
-• CONVERT VECTOR GPR V16 TO V32 SIGN-EXTEND LOW
-      : GPR[DA], GPR[SA]
-
-• CONVERT VECTOR GPR V16 TO V32 SIGN-EXTEND HIGH
-      : GPR[DA], GPR[SA]
-
-
-Privilege Level: 0 (Unprivileged)
-
-Description:
-
-The destination (DST) is a V32 vector contained in GPR[DA]. The first source (S1) is a V16 vector contained in GPR[SA].
-
-For all i, from 0 to 3 or from 4 to 7 (based on whether the instruction has a LOW or HIGH modifier, respectively): S1[i] is zero- or sign-extended (based on whether the instruction has a ZERO-EXTEND or SIGN-EXTEND modifier, respectively) to 32 bits. The result is written to DST[i].
-
-1'B0 is written to CR[DA].
-
-
-
-
-• CONVERT VECTOR GPR V32 TO V16 LOW
-      : GPR[DA], GPR[SA]
-
-• CONVERT VECTOR GPR V32 TO V16 HIGH
-      : GPR[DA], GPR[SA]
-
-
-Privilege Level: 0 (Unprivileged)
-
-Description:
-
-The destination (DST) is a V16 vector contained in GPR[DA]. The first source (S1) is a V32 vector contained in GPR[SA].
-
-For all i, from 0 to 3: The 16 low-order bits in S1[i] are written to DST[i] or DST[4 + i], based on whether the instruction has a LOW or HIGH modifier, respectively.
-
-1'B0 is written to CR[DA].
-
-
-
-
-• CONVERT VECTOR GPR V32 TO V64 ZERO-EXTEND LOW
-      : GPR[DA], GPR[SA]
-
-• CONVERT VECTOR GPR V32 TO V64 ZERO-EXTEND HIGH
-      : GPR[DA], GPR[SA]
-
-• CONVERT VECTOR GPR V32 TO V64 SIGN-EXTEND LOW
-      : GPR[DA], GPR[SA]
-
-• CONVERT VECTOR GPR V32 TO V64 SIGN-EXTEND HIGH
-      : GPR[DA], GPR[SA]
-
-
-Privilege Level: 0 (Unprivileged)
-
-Description:
-
-The destination (DST) is a V64 vector contained in GPR[DA]. The first source (S1) is a V32 vector contained in GPR[SA].
-
-For all i, from 0 to 1 or from 2 to 3 (based on whether the instruction has a LOW or HIGH modifier, respectively): S1[i] is zero- or sign-extended (based on whether the instruction has a ZERO-EXTEND or SIGN-EXTEND modifier, respectively) to 64 bits. The result is written to DST[i].
-
-1'B0 is written to CR[DA].
-
-
-
-
-• CONVERT VECTOR GPR V64 TO V32 LOW
-      : GPR[DA], GPR[SA]
-
-• CONVERT VECTOR GPR V64 TO V32 HIGH
-      : GPR[DA], GPR[SA]
-
-
-Privilege Level: 0 (Unprivileged)
-
-Description:
-
-The destination (DST) is a V32 vector contained in GPR[DA]. The first source (S1) is a V64 vector contained in GPR[SA].
-
-For all i, from 0 to 1: The 32 low-order bits in S1[i] are written to DST[i] or DST[2 + i], based on whether the instruction has a LOW or HIGH modifier, respectively.
-
-1'B0 is written to CR[DA].
-
-
-
-
-• CONVERT VECTOR GPR V64 TO 128 ZERO-EXTEND LOW
-      : GPR[DA], GPR[SA]
-
-• CONVERT VECTOR GPR V64 TO 128 ZERO-EXTEND HIGH
-      : GPR[DA], GPR[SA]
-
-• CONVERT VECTOR GPR V64 TO 128 SIGN-EXTEND LOW
-      : GPR[DA], GPR[SA]
-
-• CONVERT VECTOR GPR V64 TO 128 SIGN-EXTEND HIGH
-      : GPR[DA], GPR[SA]
-
-
-Privilege Level: 0 (Unprivileged)
-
-Description:
-
-The destination (DST) is a scalar contained in GPR[DA]. The first source (S1) is a V64 vector contained in GPR[SA].
-
-S1[0] or S1[1] (based on whether the instruction has a LOW or HIGH modifier, respectively) is zero- or sign-extended (based on whether the instruction has a ZERO-EXTEND or SIGN-EXTEND modifier, respectively) to 128 bits and the result is written to DST. 1'B0 is written to CR[DA].
-
-
-
-
-• CONVERT VECTOR GPR 128 TO V64 LOW
-      : GPR[DA], GPR[SA]
-
-• CONVERT VECTOR GPR 128 TO V64 HIGH
-      : GPR[DA], GPR[SA]
-
-
-Privilege Level: 0 (Unprivileged)
-
-Description:
-
-The destination (DST) is a V64 vector contained in GPR[DA]. The first source (S1) is a scalar contained in GPR[SA].
-
-The 64 low-order bits in [SA] are written to DST[0] or DST[1], based on whether the instruction has a LOW or HIGH modifier, respectively. 1'B0 is written to CR[DA].
+'0' is written to CR[DA].
 
 
 
@@ -2084,11 +2505,14 @@ The 64 low-order bits in [SA] are written to DST[0] or DST[1], based on whether 
 ─────────────────────────────────────────────────
 
 
-• VECTOR ABSOLUTE VALUE
-      : GPR[DA], GPR[SA], T
+• VABS    Vector Absolute Value
+
+  Fields: GPR[DA], GPR[SA], T
 
 
 Privilege Level: 0 (Unprivileged)
+
+Exceptions: None
 
 Description:
 
@@ -2096,18 +2520,21 @@ The destination (DST) is a vector in GPR[DA]. The first source (S1) is vector co
 
 The 'T' field specifies the vector type of DST and S1. VL is the vector length of DST and S1.
 
-For all i, from 0 to VL - 1: S1[i] is interpreted as a signed integer and its absolute value is written to DST[i].
+For all i, from 0 to VL − 1: S1[i] is interpreted as a signed integer and its absolute value is written to DST[i].
 
-1'B0 is written to CR[DA].
-
-
+'0' is written to CR[DA].
 
 
-• VECTOR NEGATE
-      : GPR[DA], GPR[SA], T
+
+
+• VNEG    Vector Negate
+
+  Fields: GPR[DA], GPR[SA], T
 
 
 Privilege Level: 0 (Unprivileged)
+
+Exceptions: None
 
 Description:
 
@@ -2115,9 +2542,9 @@ The destination (DST) is a vector in GPR[DA]. The first source (S1) is a vector 
 
 The 'T' field specifies the vector type of DST and S1. VL is the vector length of DST and S1.
 
-For all i, from 0 to VL - 1: S1[i] is interpreted as a signed integer and its negation is written to DST[i].
+For all i, from 0 to VL − 1: S1[i] is interpreted as a signed integer and its negation is written to DST[i].
 
-1'B0 is written to CR[DA].
+'0' is written to CR[DA].
 
 
 
@@ -2131,24 +2558,31 @@ For all i, from 0 to VL - 1: S1[i] is interpreted as a signed integer and its ne
 ────────────────────────────────────────────────────────
 
 
-• VECTOR ADD
-      : GPR[DA], GPR[SA], GPR[SB], T, O
+• VADD     Vector Add
+• VSUB     Vector Subtract
 
-• VECTOR SUBTRACT
-      : GPR[DA], GPR[SA], GPR[SB], T, O
+  Fields: GPR[DA], GPR[SA], GPR[SB], T
+
+
+• VSADD    Vector—Scalar Add
+• VSSUB    Vector—Scalar Subtract
+
+  Fields: GPR[DA], GPR[SA], SGPR[SB], T
 
 
 Privilege Level: 0 (Unprivileged)
 
+Exceptions: None
+
 Description:
 
-The destination (DST) is a vector contained in GPR[DA]. The first source (S1) is a vector contained in GPR[SA]. The second source (S2) is a scalar or vector contained in GPR[SB], based on whether the 'O' bit is 1'B0 or 1'B1, respectively.
+The destination (DST) is a vector contained in GPR[DA]. The first source (S1) is a vector contained in GPR[SA]. For instructions that have a "Vector" prefix, the second source (S2) is a vector contained in GPR[SB]; for those that have a "Vector—Scalar" prefix, S2 is a scalar contained in SGPR[SB].
 
-The 'T' field specifies the vector type of DST, S1, and S2 (optionally). If S2 is a scalar, the number of low-order bits from S2 that are used by the instruction is equal to the element size of the vector type. VL is the vector length of DST, S1, and S2 (optionally).
+The 'T' field specifies the vector type of DST, S1, and S2 (if it is a vector). If S2 is a scalar, the number of low-order bits from S2 that are used by the instruction is equal to the element size of the vector type. VL is the vector length of DST, S1, and S2 (if it is a vector).
 
-For all i, from 0 to VL - 1: S2 or S2[i] (based on whether S2 is a scalar or vector, respectively) is added to or subtracted from S1[i]. The result is written to DST[i].
+For all i, from 0 to VL − 1: S2 or S2[i] (based on whether S2 is a scalar or vector, respectively) is added to or subtracted from S1[i]. The result is written to DST[i].
 
-1'B0 is written to CR[DA].
+'0' is written to CR[DA].
 
 
 
@@ -2162,34 +2596,39 @@ For all i, from 0 to VL - 1: S2 or S2[i] (based on whether S2 is a scalar or vec
 ──────────────────────────────────────────────
 
 
-• VECTOR MULTIPLY UNSIGNED HIGH
-      : GPR[DA], GPR[SA], GPR[SB], T, O
+• VMULUH     Vector Multiply Unsigned High
+• VMULSUH    Vector Multiply Signed by Unsigned High
+• VMULSL     Vector Multiply Signed Low
+• VMULSH     Vector Multiply Signed High
 
-• VECTOR MULTIPLY SIGNED BY UNSIGNED HIGH
-      : GPR[DA], GPR[SA], GPR[SB], T, O
+  Fields: GPR[DA], GPR[SA], GPR[SB], T
 
-• VECTOR MULTIPLY SIGNED LOW
-      : GPR[DA], GPR[SA], GPR[SB], T, O
 
-• VECTOR MULTIPLY SIGNED HIGH
-      : GPR[DA], GPR[SA], GPR[SB], T, O
+• VSMULUH     Vector—Scalar Multiply Unsigned High
+• VSMULSUH    Vector—Scalar Multiply Signed by Unsigned High
+• VSMULSL     Vector—Scalar Multiply Signed Low
+• VSMULSH     Vector—Scalar Multiply Signed High
+
+    Fields: GPR[DA], GPR[SA], SGPR[SB], T
 
 
 Privilege Level: 0 (Unprivileged)
 
+Exceptions: None
+
 Description:
 
-The destination (DST) is a vector contained in GPR[DA]. The first source (S1) is a vector contained in GPR[SA]. The second source (S2) is a scalar or vector contained in GPR[SB], based on whether the 'O' bit is 1'B0 or 1'B1, respectively.
+The destination (DST) is a vector contained in GPR[DA]. The first source (S1) is a vector contained in GPR[SA]. For instructions that have a "Vector" prefix, the second source (S2) is a vector contained in GPR[SB]; for those that have a "Vector—Scalar" prefix, S2 is a scalar contained in SGPR[SB].
 
-The 'T' field specifies the vector type of DST, S1, and S2 (optionally). If S2 is a scalar, the number of low-order bits from S2 that are used by the instruction is equal to the element size of the vector type. VL is the vector length of DST, S1, and S2 (optionally).
+The 'T' field specifies the vector type of DST, S1, and S2 (if it is a vector). If S2 is a scalar, the number of low-order bits from S2 that are used by the instruction is equal to the element size of the vector type. VL is the vector length of DST, S1, and S2 (if it is a vector).
 
-For all i, from 0 to VL - 1: S1[i] is multiplied by S2 or S2[i], based on whether S2 is a scalar or vector, respectively. The product size is twice that of the element size. The low- or high-order half of the product is the result, based on whether the instruction has a LOW or HIGH modifier, respectively.
+For all i, from 0 to VL − 1: S1[i] is multiplied by S2 or S2[i], based on whether S2 is a scalar or vector, respectively. The product size is twice that of the element size. The low- or high-order half of the product is the result, based on whether the instruction has the "Low" or "High" modifier, respectively.
 
-S1[i] contains the multiplicand, S2 or S2[i] contains the multiplier. These are interpreted as unsigned or signed integers, based on whether the instruction has an UNSIGNED or SIGNED modifier, respectively. If the instruction has a SIGNED BY UNSIGNED modifier, the multiplicand is interpreted as a signed integer, and the multiplier as an unsigned integer.
+S1[i] contains the multiplicand, S2 or S2[i] contains the multiplier. These are interpreted as unsigned or signed integers, based on whether the instruction has the "Unsigned" or "Signed" modifier, respectively. If the instruction has the "Signed by Unsigned" modifier, the multiplicand is interpreted as a signed integer, and the multiplier as an unsigned integer.
 
 The result is written to DST[i].
 
-1'B0 is written to CR[DA].
+'0' is written to CR[DA].
 
 
 
@@ -2203,38 +2642,43 @@ The result is written to DST[i].
 ────────────────────────────────────────
 
 
-• VECTOR DIVIDE UNSIGNED QUOTIENT
-      : GPR[DA], GPR[SA], GPR[SB], T, O
+• VDIVUQ     Vector Divide Unsigned Quotient
+• VDIVUR     Vector Divide Unsigned Remainder
+• VDIVSQ     Vector Divide Signed Quotient
+• VDIVSR     Vector Divide Signed Remainder
 
-• VECTOR DIVIDE UNSIGNED REMAINDER
-      : GPR[DA], GPR[SA], GPR[SB], T, O
+  Fields: GPR[DA], GPR[SA], GPR[SB], T
 
-• VECTOR DIVIDE SIGNED QUOTIENT
-      : GPR[DA], GPR[SA], GPR[SB], T, O
 
-• VECTOR DIVIDE SIGNED REMAINDER
-      : GPR[DA], GPR[SA], GPR[SB], T, O
+• VSDIVUQ    Vector—Scalar Divide Unsigned Quotient
+• VSDIVUR    Vector—Scalar Divide Unsigned Remainder
+• VSDIVSQ    Vector—Scalar Divide Signed Quotient
+• VSDIVSR    Vector—Scalar Divide Signed Remainder
+
+  Fields: GPR[DA], GPR[SA], SGPR[SB], T
 
 
 Privilege Level: 0 (Unprivileged)
 
+Exceptions: None
+
 Description:
 
-The destination (DST) is a vector contained in GPR[DA]. The first source (S1) is a vector contained in GPR[SA]. The second source (S2) is a scalar or vector contained in GPR[SB], based on whether the 'O' bit is 1'B0 or 1'B1, respectively.
+The destination (DST) is a vector contained in GPR[DA]. The first source (S1) is a vector contained in GPR[SA]. For instructions that have a "Vector" prefix, the second source (S2) is a vector contained in GPR[SB]; for those that have a "Vector—Scalar" prefix, S2 is a scalar contained in SGPR[SB].
 
-The 'T' field specifies the vector type of DST, S1, and S2 (optionally). If S2 is a scalar, the number of low-order bits from S2 that are used by the instruction is equal to the element size of vector type. VL is the vector length of DST, S1, and S2 (optionally).
+The 'T' field specifies the vector type of DST, S1, and S2 (if it is a vector). If S2 is a scalar, the number of low-order bits from S2 that are used by the instruction is equal to the element size of vector type. VL is the vector length of DST, S1, and S2 (if it is a vector).
 
-For all i, from 0 to VL - 1: S1[i] is divided by S2 or S2[i], based on whether S2 is a scalar or vector, respectively. The result is the quotient or remainder, based on whether the instruction has a QUOTIENT or REMAINDER modifier, respectively.
+For all i, from 0 to VL − 1: S1[i] is divided by S2 or S2[i], based on whether S2 is a scalar or vector, respectively. The result is the quotient or remainder, based on whether the instruction has the "Quotient" or "Remainder" modifier, respectively.
 
-S1[i] contains the dividend, and S2 or S2[i] contains the divisor. These are interpreted as unsigned or signed integers, based on whether the instruction has an UNSIGNED or SIGNED modifier, respectively.
+S1[i] contains the dividend, and S2 or S2[i] contains the divisor. These are interpreted as unsigned or signed integers, based on whether the instruction has the "Unsigned" or "Signed" modifier, respectively.
 
-On quotient overflow, the most-significant bit of the quotient is 1'B1, the remaining lower-order bits of the quotient are 1'B0, and the remainder has the value zero. Division is not performed if the divisor is zero. Every bit in the quotient is 1'B1, and the remainder is the dividend. These conventions originated from RISC-V.[1]
+On quotient overflow, the quotient has the value 2**N - 1 (where N is the element size in bits), and the remainder has the value '0'.
+
+Division is not performed if the divisor is '0'. The quotient has the value 2**N - 1 (where N is the element size in bits) or −1, based on whether the instruction has the "Unsigned" or "Signed", respectively. The remainder has the same value as the dividend.
 
 The result is written to DST[i].
 
-1'B0 is written to CR[DA].
-
-[1]: Andrew Waterman, Krste Asanovic (Editors). The RISC-V Instruction Set Manual, Volume I: User-Level ISA. Document Version 20190608-Base-Ratified (8 June 2019).
+'0' is written to CR[DA].
 
 
 
@@ -2248,72 +2692,47 @@ The result is written to DST[i].
 ──────────────────────────────────────────
 
 
-• VECTOR COMPARE EQUAL TO
-      : GPR[DA], GPR[SA], GPR[SB], T, O
+• VCMPE       Vector Compare Equal To
+• VCMPNE      Vector Compare Not Equal To
+• VCMPUL      Vector Compare Unsigned Less Than
+• VCMPULE     Vector Compare Unsigned Less Than or Equal To
+• VCMPSL      Vector Compare Signed Less Than
+• VCMPSLE     Vector Compare Signed Less Than or Equal To
 
-• VECTOR COMPARE NOT EQUAL TO
-      : GPR[DA], GPR[SA], GPR[SB], T, O
-
-• VECTOR COMPARE UNSIGNED LESS THAN
-      : GPR[DA], GPR[SA], GPR[SB], T, O
-
-• VECTOR COMPARE UNSIGNED LESS THAN OR EQUAL TO
-      : GPR[DA], GPR[SA], GPR[SB], T, O
-
-• VECTOR COMPARE SIGNED LESS THAN
-      : GPR[DA], GPR[SA], GPR[SB], T, O
-
-• VECTOR COMPARE SIGNED LESS THAN OR EQUAL TO
-      : GPR[DA], GPR[SA], GPR[SB], T, O
+  Fields: GPR[DA], GPR[SA], GPR[SB], T
 
 
-Privilege Level: 0 (Unprivileged)
+• VSCMPE      Vector—Scalar Compare Equal To
+• VSCMPNE     Vector—Scalar Compare Not Equal To
+• VSCMPUL     Vector—Scalar Compare Unsigned Less Than
+• VSCMPULE    Vector—Scalar Compare Unsigned Less Than or Equal To
+• VSCMPUG     Vector—Scalar Compare Unsigned Greater Than
+• VSCMPUGE    Vector—Scalar Compare Unsigned Greater Than or Equal To
+• VSCMPSL     Vector—Scalar Compare Signed Less Than
+• VSCMPSLE    Vector—Scalar Compare Signed Less Than or Equal To
+• VSCMPSG     Vector—Scalar Compare Signed Greater Than
+• VSCMPSGE    Vector—Scalar Compare Signed Greater Than or Equal To
 
-Description:
-
-The destination (DST) is a vector contained in GPR[DA]. The first source (S1) is a vector contained in GPR[SA]. The second source (S2) is a scalar or vector contained in GPR[SB], based on whether the 'O' bit is 1'B0 or 1'B0, respectively.
-
-The 'T' field specifies the vector type of DST, S1, and S2 (optionally). If S2 is a scalar, the number of low-order bits from S2 that are used by the instruction is equal to the element size of vector type. VL is the vector length of DST, S1, and S2 (optionally).
-
-For all i, from 0 to VL - 1: S1[i] is compared to S2 or S2[i] in the named manner, based on whether S2 is a scalar or vector, respectively.
-
-S1[i] and S2 or S2[i] are interpreted as unsigned integers if the instruction does not have a SIGNED modifier, or if the instruction has an UNSIGNED modifier; or as signed integers if the instruction has a SIGNED modifier.
-
-The comparison produces a bit indicating whether the named relationship is true or false. It is zero-extended to equal the number of bits in the element size of the vector type. The result is written to DST[i].
-
-1'B0 is written to CR[DA].
-
-
-
-
-• VECTOR SCALAR COMPARE UNSIGNED GREATER THAN
-      : GPR[DA], GPR[SA], GPR[SB], T
-
-• VECTOR SCALAR COMPARE UNSIGNED GREATER THAN OR EQUAL TO
-      : GPR[DA], GPR[SA], GPR[SB], T
-
-• VECTOR SCALAR COMPARE SIGNED GREATER THAN
-      : GPR[DA], GPR[SA], GPR[SB], T
-
-• VECTOR SCALAR COMPARE SIGNED GREATER THAN OR EQUAL TO
-      : GPR[DA], GPR[SA], GPR[SB], T
+  Fields: GPR[DA], GPR[SA], SGPR[SB], T
 
 
 Privilege Level: 0 (Unprivileged)
 
+Exceptions: None
+
 Description:
 
-The destination (DST) is a vector contained in GPR[DA]. The first source (S1) is a vector contained in GPR[SA]. The second source (S2) is a scalar contained in GPR[SB].
+The destination (DST) is a vector contained in GPR[DA]. The first source (S1) is a vector contained in GPR[SA]. For instructions that have a "Vector" prefix, the second source (S2) is a vector contained in GPR[SB]; for those that have a "Vector—Scalar" prefix, S2 is a scalar contained in SGPR[SB].
 
-The 'T' field specifies the vector type of DST and S1. The number of low-order bits from S2 that are used by the instruction is equal to the element size of vector type. VL is the vector length of DST and S1.
+The 'T' field specifies the vector type of DST, S1, and S2 (if it is a vector). If S2 is a scalar, the number of low-order bits from S2 that are used by the instruction is equal to the element size of vector type. VL is the vector length of DST, S1, and S2 (if it is a vector).
 
-For all i, from 0 to VL - 1: S1[i] is compared to S2 in the named manner.
+For all i, from 0 to VL − 1: S1[i] is compared to S2 or S2[i] in the manner specified by the instruction, based on whether S2 is a scalar or vector, respectively.
 
-S1[i] and S2 are interpreted as unsigned integers if the instruction has an UNSIGNED modifier; or as signed integers if the instruction has a SIGNED modifier.
+S1[i] and S2 or S2[i] are interpreted as bit sets if the comparison tests for the "Equal To" or "Not Equal To" conditions; or as unsigned or signed integers, based on whether the instruction has the "Unsigned" or "Signed" modifier, respectively.
 
-The comparison produces a bit indicating whether the named relationship is true or false. It is zero-extended to equal the number of bits in the element size of the vector type. The result is written to DST[i].
+The comparison produces a 1-bit value indicating whether the specified relationship is true or false, which is zero-extended to N bits, where N is the element size of the vector type. The result is written to DST[i].
 
-1'B0 is written to CR[DA].
+'0' is written to CR[DA].
 
 
 
@@ -2327,48 +2746,33 @@ The comparison produces a bit indicating whether the named relationship is true 
 ─────────────────────────────────────
 
 
-• VECTOR SCALAR AND
-      : GPR[DA], GPR[SA], GPR[SB], T
+• VSAND      Vector—Scalar Bitwise AND
+• VSNORC     Vector—Scalar Bitwise NOT-OR Complement
+• VSANDC     Vector—Scalar Bitwise AND Complement
+• VSEOR      Vector—Scalar Bitwise Exclusive-OR
+• VSOR       Vector—Scalar Bitwise OR
+• VSNOR      Vector—Scalar Bitwise NOT-OR
+• VSENOR     Vector—Scalar Bitwise Exclusive-NOT-OR
+• VSNANDC    Vector—Scalar Bitwise NOT-AND Complement
+• VSORC      Vector—Scalar Bitwise OR Complement
+• VSNAND     Vector—Scalar Bitwise NOT-AND
 
-• VECTOR SCALAR NOT-OR COMPLEMENT
-      : GPR[DA], GPR[SA], GPR[SB], T
-
-• VECTOR SCALAR AND COMPLEMENT
-      : GPR[DA], GPR[SA], GPR[SB], T
-
-• VECTOR SCALAR EXCLUSIVE-OR
-      : GPR[DA], GPR[SA], GPR[SB], T
-
-• VECTOR SCALAR OR
-      : GPR[DA], GPR[SA], GPR[SB], T
-
-• VECTOR SCALAR NOT-OR
-      : GPR[DA], GPR[SA], GPR[SB], T
-
-• VECTOR SCALAR EXCLUSIVE-NOT-OR
-      : GPR[DA], GPR[SA], GPR[SB], T
-
-• VECTOR SCALAR NOT-AND COMPLEMENT
-      : GPR[DA], GPR[SA], GPR[SB], T
-
-• VECTOR SCALAR OR COMPLEMENT
-      : GPR[DA], GPR[SA], GPR[SB], T
-
-• VECTOR SCALAR NOT-AND
-      : GPR[DA], GPR[SA], GPR[SB], T
+  Fields: GPR[DA], GPR[SA], SGPR[SB], T
 
 
 Privilege Level: 0 (Unprivileged)
 
+Exceptions: None
+
 Description:
 
-The destination (DST) is a vector contained in GPR[DA]. The first source (S1) is a vector contained in GPR[SA]. The second source (S2) is a scalar contained in GPR[SB].
+The destination (DST) is a vector contained in GPR[DA]. The first source (S1) is a vector contained in GPR[SA]. The second source (S2) is a scalar contained in SGPR[SB].
 
 The 'T' field specifies the vector type of DST and S1. The number of low-order bits from S2 that are used by the instruction is equal to the element size of vector type. VL is the vector length of DST and S1.
 
-For all i, from 0 to VL - 1: The named binary bitwise logical operation is performed between S1[i] and S2. If the instruction has a COMPLEMENT modifier, a bitwise NOT is performed on S2 before it is consumed. The result is written to DST[i].
+For all i, from 0 to VL − 1: The named binary bitwise logic operation is performed between S1[i] and S2. If the instruction has the "Complement" modifier, a bitwise NOT is performed on S2 before it is consumed by the bitwise logic operation. The result is written to DST[i].
 
-1'B0 is written to CR[DA].
+'0' is written to CR[DA].
 
 
 
@@ -2382,98 +2786,43 @@ For all i, from 0 to VL - 1: The named binary bitwise logical operation is perfo
 ─────────────────────────────
 
 
-• VECTOR SHIFT LOGICAL RIGHT
-      : GPR[DA], GPR[SA], GPR[SB], T, O
+• VSLR     Vector Shift Logical Right
+• VSLL     Vector Shift Logical Left
+• VSCR     Vector Shift Circular Right
+• VSCL     Vector Shift Circular Left
+• VSAR     Vector Shift Arithmetic Right
 
-• VECTOR SHIFT LOGICAL LEFT
-      : GPR[DA], GPR[SA], GPR[SB], T, O
+  Fields: GPR[DA], GPR[SA], GPR[SB], T
 
-• VECTOR SHIFT CYCLIC RIGHT
-      : GPR[DA], GPR[SA], GPR[SB], T, O
 
-• VECTOR SHIFT CYCLIC LEFT
-      : GPR[DA], GPR[SA], GPR[SB], T, O
+• VSSLR    Vector—Scalar Shift Logical Right
+• VSSLL    Vector—Scalar Shift Logical Left
+• VSSCR    Vector—Scalar Shift Circular Right
+• VSSCL    Vector—Scalar Shift Circular Left
+• VSSAR    Vector—Scalar Shift Arithmetic Right
 
-• VECTOR SHIFT ARITHMETIC RIGHT
-      : GPR[DA], GPR[SA], GPR[SB], T, O
+  Fields: GPR[DA], GPR[SA], SGPR[SB], T
 
 
 Privilege Level: 0 (Unprivileged)
 
+Exceptions: None
+
 Description:
 
-The destination (DST) is a vector contained in GPR[DA]. The first source (S1) is a vector contained in GPR[SA]. The second source (S2) is a scalar or vector contained in GPR[SB], based on whether the 'O' bit is 1'B0 or 1'B1, respectively.
+The destination (DST) is a vector contained in GPR[DA]. The first source (S1) is a vector contained in GPR[SA]. For instructions that have a "Vector" prefix, the second source (S2) is a vector contained in GPR[SB]; for those that have a "Vector—Scalar" prefix, S2 is a scalar contained in SGPR[SB].
 
-The 'T' field specifies the vector type of DST, S1, and S2 (optionally). If S2 is a scalar, the number of low-order bits from S2 that are used by the instruction is equal to the element size of vector type. VL is the vector length of DST, S1, and S2 (optionally).
+The 'T' field specifies the vector type of DST, S1, and S2 (if it is a vector). If S2 is a scalar, the number of low-order bits from S2 that are used by the instruction is equal to the element size of vector type. VL is the vector length of DST, S1, and S2 (if it is a vector).
 
-For all i, from 0 to VL - 1: S1[i] is shifted in the manner and direction named by the instruction. The shift distance is contained in S2 or S2[i], based on whether S2 is a scalar or vector, respectively.
+For all i, from 0 to VL − 1: S1[i] is shifted in the manner and direction named by the instruction. The shift distance is contained in S2 or S2[i], based on whether S2 is a scalar or vector, respectively.
 
-For logical and arithmetic shifts, the shift distance is an unsigned integer equal to the element size of the vector type. If its value exceeds the element size of the vector type, the result is zero for logical shifts, and {ES{S1[i][ES - 1}} for arithmetic shifts, where ES is the element size in bits.
+For logical and arithmetic shifts, the shift distance is an unsigned integer equal to the element size of the vector type. If its value exceeds the element size of the vector type, the result is '0' for logical shifts, and {ES{S1[i][ES - 1}} for arithmetic shifts, where ES is the element size in bits.
 
-For circular shifts, the shift distance is a 7-bit unsigned integer that is obtained from the 7 low-order bits of S2 or S2[i], based on whether S2 is a scalar or vector respectively.
+For circular shifts, the shift distance is a 6-bit unsigned integer that is obtained from the 6 low-order bits of S2 or S2[i], based on whether S2 is a scalar or vector respectively.
 
 The result is written to DST[i].
 
-1'B0 is written to CR[DA].
-
-
-
-
-
-
-
-
-─────────────────────────────────
-37  Vector Bit Count Instructions
-─────────────────────────────────
-
-
-• VECTOR COUNT ZEROS
-      : GPR[DA], GPR[SA], T
-
-• VECTOR COUNT ONES
-      : GPR[DA], GPR[SA], T
-
-
-Privilege Level: 0 (Unprivileged)
-
-Description:
-
-The destination (DST) is a vector contained in GPR[DA]. The first source (S1) is a vector contained in GPR[SA].
-
-The 'T' field specifies the vector type of DST and S1. VL is the vector length of DST and S1.
-
-For all i, from 0 to VL - 1: The number of bits in S1[i] that have the value 1'B0 or 1'B1 are counted. The result is written to DST[i].
-
-1'B0 is written to CR[DA].
-
-
-
-
-• VECTOR COUNT TRAILING ZEROS
-      : GPR[DA], GPR[SA], T
-
-• VECTOR COUNT TRAILING ONES
-      : GPR[DA], GPR[SA], T
-
-• VECTOR COUNT LEADING ZEROS
-      : GPR[DA], GPR[SA], T
-
-• VECTOR COUNT LEADING ONES
-      : GPR[DA], GPR[SA], T
-
-
-Privilege Level: 0 (Unprivileged)
-
-Description:
-
-The destination (DST) is a vector contained in GPR[DA]. The first source (S1) is a vector contained in GPR[SA].
-
-The 'T' field specifies the vector type of DST and S1. VL is the vector length of DST and S1.
-
-For all i, from 0 to VL - 1: The number of trailing or leading bits in S1[0] that have the value 1'B0 or 1'B1 are counted. The result is written to DST[i].
-
-1'B0 is written to CR[DA].
+'0' is written to CR[DA].
 
 
 
@@ -2483,64 +2832,146 @@ For all i, from 0 to VL - 1: The number of trailing or leading bits in S1[0] tha
 
 
 ───────────────────────────────────────────────────────────
-38  Vector Bit Field Extraction and Deposition Instructions
+37  Vector Bit Field Extraction and Deposition Instructions
 ───────────────────────────────────────────────────────────
 
 
-• VECTOR EXTRACT BIT FIELD ZERO-EXTEND
-      : GPR[DA], GPR[SA], GPR[SB], GPR[SC], T, O
+• VEXTBFZ     Vector Extract Bit Field Zero-Extend
+• VEXTBFS     Vector Extract Bit Field Sign-Extend
 
-• VECTOR EXTRACT BIT FIELD SIGN-EXTEND
-      : GPR[DA], GPR[SA], GPR[SB], GPR[SC], T, O
+  Fields: GPR[DA], GPR[SA], GPR[SB], GPR[SC], T
+
+
+• VSEXTBFZ    Vector—Scalar Extract Bit Field Zero-Extend
+• VSEXTBFS    Vector—Scalar Extract Bit Field Sign-Extend
+
+  Fields: GPR[DA], GPR[SA], SGPR[SB], SGPR[SC], T
 
 
 Privilege Level: 0 (Unprivileged)
 
+Exceptions: None
+
 Description:
 
-The destination (DST) is a vector contained in GPR[DA]. The first source (S1) is a vector contained in GPR[SA]. The second source (S2) is a scalar or vector contained in GPR[SB], based on whether the 'O' bit is 1'B0 or 1'B1, respectively. Likewise, the third source (S3) is a scalar or vector contained in GPR[SC].
+The destination (DST) is a vector contained in GPR[DA]. The first source (S1) is a vector contained in GPR[SA]. For instructions that have a "Vector" prefix, the second source (S2) is a vector contained in GPR[SB]; for those that have a "Vector—Scalar" prefix, S2 is a scalar contained in SGPR[SB]. Likewise, the third source (S3) is a vector or scalar contained in GPR[SC] or SGPR[SC], respectively.
 
-The 'T' field specifies the vector type of DST, S1, S2 (optionally), and S3 (optionally). VL is the vector length of DST, S1, S2 (optionally), and S3 (optionally).
+The 'T' field specifies the vector type of DST, S1, S2 (if it is a vector), and S3 (if it is a vector). VL is the vector length of DST, S1, S2 (if it is a vector), and S3 (if it is a vector).
 
-For all i, from 0 to VL - 1: A bit field is extracted from S1[i]. The bit field is specified with two unsigned integer parameters: the starting position and length. The starting position specifies which bit in S1[i] is the bit field's least-significant bit. The length specifies how many bits there are in the bit field.
+For all i, from 0 to VL − 1: A bit field is extracted from S1[i]. The bit field is specified with two unsigned integer parameters: the starting position and length. The starting position specifies which bit in S1[i] is the bit field's least-significant bit. The length specifies how many bits there are in the bit field.
+
+The starting position and length are given by S2 and S3, or S2[i] and S3[i], based on whether S2 and S3 are scalars or vectors, respectively. Only some low-order bits from S2 and S3 are used: The number of low-order bits from S2 that are used for the starting position is the binary logarithm of the element size (in bits). The number of low-order bits from S3 that are used for the length is the sum of the binary logarithm of the element size (in bits) and '1'.
 
 The sum of the starting position and length cannot exceed the number of bits in the element. If it does, the length is clamped to the value that results in the sum equaling the number of bits in the element.
 
-The starting position and length are given by S2 and S3, or S2[i] and S3[i], based on whether S2 and S3 are scalars or vectors, respectively.
-
-The number of low-order bits in the operands containing the start position and length that are used is the binary logarithm of the element size.
-
-The extracted bit field is shifted right so that its least-significant bit is aligned with the least-significant bit of DST[i]. The bit field is zero- or sign-extended to the element size, based on whether the instruction lacks or has a SIGN-EXTEND modifier.
+The extracted bit field is shifted right so that its least-significant bit is aligned with the least-significant bit of DST[i]. The bit field is zero- or sign-extended to the element size, based on whether the instruction lacks or has the "Sign-Extend" modifier.
 
 The result is written to DST[i].
 
-1'B0 is written to CR[DA].
+'0' is written to CR[DA].
 
 
 
 
-• VECTOR DEPOSIT BIT FIELD
-      : GPR[DA], GPR[SA], GPR[SB], GPR[SC], GPR[SD], T, O
+• VDEPBF     Vector Deposit Bit Field
+
+  Fields: GPR[DA], GPR[SA], GPR[SB], GPR[SC], GPR[SD], T
+
+
+• VSDEPBF    Vector—Scalar Deposit Bit Field
+
+  Fields: GPR[DA], SGPR[SA], SGPR[SB], SGPR[SC], GPR[SD], T
 
 
 Privilege Level: 0 (Unprivileged)
 
+Exceptions: None
+
 Description:
 
-The destination (DST) is a vector contained in GPR[DA]. The first source (S1) is a scalar or vector contained in GPR[SA], based on whether the 'O' bit is 1'B0 or 1'B1, respectively. Likewise, the second source (S2) is a scalar or vector contained in GPR[SB]; and the third source (S3) is a scalar or vector contained in GPR[SC]. The fourth source (S4) is a vector contained in GPR[SD].
+The destination (DST) is a vector contained in GPR[DA]. For instructions that have a "Vector" prefix, the first source (S1) is a vector contained in GPR[SA]; for those that have a "Vector—Scalar" prefix, S1 is a scalar contained in SGPR[SA]. Likewise, the second source (S2) is a vector or scalar contained in GPR[SB] or SGPR[SB], respectively; and the third source (S3) is a vector or scalar contained in GPR[SC] or SGPR[SC]. The fourth source (S4) is a vector contained in GPR[SD].
 
-The 'T' field specifies the vector type of DST, S1 (optionally), S2 (optionally), S3 (optionally), and S4. VL is the vector length of DST, S1 (optionally), S2 (optionally), S3 (optionally), and S4.
+The 'T' field specifies the vector type of DST, S1 (if it is a vector), S2 (if it is a vector), S3 (if it is a vector), and S4. VL is the vector length of DST, S1 (if it is a vector), S2 (if it is a vector), S3 (if it is a vector), and S4.
 
-For all i, from 0 to VL - 1: A bit field is deposited into a copy of S4[i]. The bit field is sourced from S1 or S1[i], based on whether S2 and S3 are scalars or vectors, respectively. The bit field starts at the least-significant bit of the operand that contains it.
+For all i, from 0 to VL − 1: A bit field is deposited into a copy of S4[i]. The bit field is sourced from S1 or S1[i], based on whether S2 and S3 are scalars or vectors, respectively. The bit field starts at the least-significant bit of the operand that contains it.
 
 The bit field is specified with two unsigned integer parameters: the starting position and length. The starting position specifies which bit in the copy of S4[i] receives the first bit of the bit field (its least significant bit). The remaining bits in the bit field are deposited to the left of the this bit. The length specifies the number of bits from the bit field are deposited into the copy of S4[i].
 
+The starting position and length are given by S2 and S3, or S2[i] and S3[i], based on whether S2 and S3 are scalars or vectors, respectively. Only some low-order bits from S2 and S3 are used: The number of low-order bits from S2 that are used for the starting position is the binary logarithm of the element size (in bits). The  number of low-order bits from S3 that are used for the length is sum of the binary logarithm of the element size (in bits) and '1'.
+
 The sum of the starting position and length cannot exceed the number of bits in the element. If it does, the length is clamped to the value that results in the sum equaling the number of bits in the element.
-
-The starting position and length are given by S2 and S3, or S2[i] and S3[i], based on whether S2 and S3 are scalars or vectors, respectively.
-
-The number of low-order bits in the operands containing the start position and length that are used is the binary logarithm of the element size.
 
 The result is written to DST[i].
 
-1'B0 is written to CR[DA].
+'0' is written to CR[DA].
+
+
+
+
+
+
+
+
+─────────────────────────────────
+38  Vector Bit Count Instructions
+─────────────────────────────────
+
+
+• VCNTZ    Vector Count Zeros
+• VCNTO    Vector Count Ones
+
+  Fields: GPR[DA], GPR[SA], T
+
+
+Privilege Level: 0 (Unprivileged)
+
+Exceptions: None
+
+Description:
+
+The destination (DST) is a vector contained in GPR[DA]. The first source (S1) is a vector contained in GPR[SA].
+
+The 'T' field specifies the vector type of DST and S1. VL is the vector length of DST and S1.
+
+For all i, from 0 to VL − 1: The number of bits in S1[i] that have the value '0' or '1' is counted. The result is written to DST[i].
+
+'0' is written to CR[DA].
+
+
+
+
+• VCNTTZ    Vector Count Trailing Zeros
+• VCNTTO    Vector Count Trailing Ones
+• VCNTLZ    Vector Count Leading Zeros
+• VCNTLO    Vector Count Leading Ones
+
+  Fields: GPR[DA], GPR[SA], T
+
+
+Privilege Level: 0 (Unprivileged)
+
+Exceptions: None
+
+Description:
+
+The destination (DST) is a vector contained in GPR[DA]. The first source (S1) is a vector contained in GPR[SA].
+
+The 'T' field specifies the vector type of DST and S1. VL is the vector length of DST and S1.
+
+For all i, from 0 to VL − 1: The number of trailing or leading bits in S1[0] that have the value '0' or '1' is counted. The result is written to DST[i].
+
+'0' is written to CR[DA].
+
+
+
+
+
+
+
+
+──────────────
+39  References
+──────────────
+
+
+[1]: Andrew Waterman, Krste Asanovic (Editors). The RISC-V Instruction Set Manual, Volume I: User-Level ISA. Document Version 20190608-Base-Ratified (8 June 2019).
