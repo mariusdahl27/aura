@@ -8,7 +8,7 @@ Part I: Architectural Concepts
 
 
 
-Document Version: DRAFT 2020-12-12
+Document Version: DRAFT 2020-12-15
 
 
 

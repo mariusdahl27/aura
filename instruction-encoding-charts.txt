@@ -1,6 +1,6 @@
 AVRA Version 1.0 Instruction Encoding Charts
 
-Document Version: 2020-12-12
+Document Version: 2020-12-15
 
 
 
@@ -409,9 +409,9 @@ Conventions:
 │   DA:GPR  │1│     2:1     │               IA              │   SA:GPR  │1│ 1:1 │ DIVUQI
 │   DA:GPR  │0│     2:2     │               IA              │   SA:GPR  │0│ 1:1 │ DIVURI
 │   DA:GPR  │0│     2:2     │               IA              │   SA:GPR  │1│ 1:1 │ DIVSQZ
-│   DA:GPR  │1│     2:2     │               IA              │   SA:GPR  │0│ 1:1 │ DIVSQS
+│   DA:GPR  │1│     2:2     │               IA              │   SA:GPR  │0│ 1:1 │ DIVSQO
 │   DA:GPR  │1│     2:2     │               IA              │   SA:GPR  │1│ 1:1 │ DIVSRZ
-│   DA:GPR  │0│     2:3     │               IA              │   SA:GPR  │0│ 1:1 │ DIVSRS
+│   DA:GPR  │0│     2:3     │               IA              │   SA:GPR  │0│ 1:1 │ DIVSRO
 │   DA:GPR  │0│     2:3     │               IA              │   SA:GPR  │1│ 1:1 │ CMPEZ
 │   DA:GPR  │1│     2:3     │               IA              │   SA:GPR  │0│ 1:1 │ CMPEO
 │   DA:GPR  │1│     2:3     │               IA              │   SA:GPR  │1│ 1:1 │ CMPNEZ

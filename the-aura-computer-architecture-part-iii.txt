@@ -8,7 +8,7 @@ Part III: Instruction Encoding Tables
 
 
 
-Document Version: DRAFT 2020-12-12
+Document Version: DRAFT 2020-12-15
 
 
 
@@ -146,9 +146,11 @@ The register set a register field references is stated in the instruction field 
 │ Field │ Size │ Position │
 ├───────┼──────┼──────────┤
 │ OC1   │ 3    │ 0—2      │
-│ OC4   │ 14   │ 3—16     │
+│ OC4   │ 7    │ 3—9      │
+│ OC3   │ 5    │ 10—14    │
+│ OC6   │ 2    │ 15—16    │
 │ OC2   │ 6    │ 17—22    │
-│ OC3   │ 7    │ 23—29    │
+│ OC5   │ 7    │ 23—29    │
 └───────┴──────┴──────────┘
 
 
@@ -1570,9 +1572,9 @@ The register set a register field references is stated in the instruction field 
 │ 1   │ 1   │ 1   │ 1   │ DIVUQI      │
 │ 0   │ 2   │ 0   │ 1   │ DIVURI      │
 │ 0   │ 2   │ 1   │ 1   │ DIVSQZ      │
-│ 1   │ 2   │ 0   │ 1   │ DIVSQS      │
+│ 1   │ 2   │ 0   │ 1   │ DIVSQO      │
 │ 1   │ 2   │ 1   │ 1   │ DIVSRZ      │
-│ 0   │ 3   │ 0   │ 1   │ DIVSRS      │
+│ 0   │ 3   │ 0   │ 1   │ DIVSRO      │
 │ 0   │ 3   │ 1   │ 1   │ CMPEZ       │
 │ 1   │ 3   │ 0   │ 1   │ CMPEO       │
 │ 1   │ 3   │ 1   │ 1   │ CMPNEZ      │
@@ -1619,8 +1621,7 @@ The register set a register field references is stated in the instruction field 
 │ Field     │ Size │ Position │
 ├───────────┼──────┼──────────┤
 │ OC1       │ 3    │ 0—2      │
-│ SA (SGPR) │ 6    │ 3—8      │
-│ OC3       │ 1    │ 9        │
+│ SA (SGPR) │ 6    │ 3—9      │
 │ IA        │ 16   │ 10—25    │
 │ OC2       │ 7    │ 26—32    │
 │ DA (SGPR) │ 6    │ 33—39    │
@@ -2349,7 +2350,7 @@ The register set a register field references is stated in the instruction field 
 │ SB (SGPR) │ 7    │ 10—16    │
 │ SC (SGPR) │ 7    │ 17—23    │
 │ SD (SGPR) │ 7    │ 24—30    │
-│ T         │ 2    │ 31—32    │
+│ OC3       │ 2    │ 31—32    │
 │ OC2       │ 10   │ 33—42    │
 │ DA (SGPR) │ 7    │ 43—49    │
 └───────────┴──────┴──────────┘
