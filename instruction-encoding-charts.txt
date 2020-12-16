@@ -1,12 +1,12 @@
 AVRA Version 1.0 Instruction Encoding Charts
 
-Document Version: 2020-12-15
+Document Version: 2020-12-16
 
 
 
 
 This document is intended to supplement the tabular instruction encoding in Part
-III of The AVRA Computer Architecture Version 1.0 (DRAFT 2020-12-12). The latest
+III of The AVRA Computer Architecture Version 1.0 (DRAFT 2020-12-16). The latest
 versions of both documents can be found at:
 
 https://github.com/mariusdahl27/aura
@@ -395,9 +395,9 @@ Conventions:
 │   SB:SRNR   │     2:91    │               IA              │   SA:GPR  │0│ 1:0 │ STOSRB
 │   SB:SRNR   │     2:91    │               IA              │   SA:GPR  │1│ 1:0 │ STOSRO
 │      XA     │    2:120    │               IA              │   SA:GPR  │0│ 1:0 │ PFW
-│      XA     │    2:120    │               IA              │   SA:GPR  │1│ 1:0 │ PFWI
-│   SB:SGPR   │    2:124    │               IA              │   SA:GPR  │0│ 1:0 │ PFO
-│   SB:SGPR   │    2:124    │               IA              │   SA:GPR  │1│ 1:0 │ PFOI
+│      XA     │    2:120    │               IA              │   SA:GPR  │1│ 1:0 │ PFO
+│   SB:SGPR   │    2:124    │               IA              │   SA:GPR  │0│ 1:0 │ PFIW
+│   SB:SGPR   │    2:124    │               IA              │   SA:GPR  │1│ 1:0 │ PFIO
 ├───────────┬─┼─────────────┼───────────────────────────────┼───────────┼─┼─────┤
 │   DA:GPR  │0│     2:0     │               IA              │   SA:GPR  │0│ 1:1 │ ADDZ
 │   DA:GPR  │0│     2:0     │               IA              │   SA:GPR  │1│ 1:1 │ ADDO

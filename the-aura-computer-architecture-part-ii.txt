@@ -8,7 +8,7 @@ Part II: Instruction Descriptions
 
 
 
-Document Version: DRAFT 2020-12-15
+Document Version: DRAFT 2020-12-16
 
 
 
@@ -366,8 +366,8 @@ The 8, 16, 32, or 64 low-order bits from SGPR[SB] or SRNR[SB] (based on whether 
   Fields: GPR[SA], IA (16), XA (7)
 
 
-• PFWI    Prefetch Word Addressed Indirect Hint
-• PFOI    Prefetch Octet Addressed Indirect Hint
+• PFIW    Prefetch Word Addressed Indirect Hint
+• PFIO    Prefetch Octet Addressed Indirect Hint
 
   Fields: GPR[SA], IA (16), SGPR[SB]
 

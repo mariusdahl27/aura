@@ -8,7 +8,7 @@ Part III: Instruction Encoding Tables
 
 
 
-Document Version: DRAFT 2020-12-15
+Document Version: DRAFT 2020-12-16
 
 
 
@@ -137,9 +137,9 @@ The register set a register field references is stated in the instruction field 
 
 
 
-──────────────────────────────
-2.2  0:OC1-3:OC4-17:OC2-23:OC3
-──────────────────────────────
+────────────────────────────────────────────
+2.2  0:OC1-3:OC4-10:OC3-15:OC6-17:OC2-23:OC5
+────────────────────────────────────────────
 
 
 ┌───────┬──────┬──────────┐
@@ -155,7 +155,7 @@ The register set a register field references is stated in the instruction field 
 
 
 ┌─────┬─────┬─────┬─────┬─────┬─────┬─────────────┐
-│ OC5 │ OC3 │ OC6 │ OC3 │ OC4 │ OC1 │ Instruction │
+│ OC5 │ OC2 │ OC6 │ OC3 │ OC4 │ OC1 │ Instruction │
 ├─────┼─────┼─────┼─────┼─────┼─────┼─────────────┤
 │ 0   │ 1   │ 0   │ 0   │ 0   │ 0   │ IEB         │
 │ 0   │ 1   │ 2   │ 0   │ 0   │ 0   │ CALL        │
@@ -304,24 +304,24 @@ The register set a register field references is stated in the instruction field 
 │ GPR │ 1   │ 1   │ 1   │ 3   │ GPR │ 1   │ 0   │ CNTLO       │
 │ GPR │ 0   │ 1   │ 0   │ 5   │ RNR │ 0   │ 0   │ CPYRG       │
 │ RNR │ 0   │ 1   │ 0   │ 5   │ RNR │ 1   │ 0   │ CPYRR       │
-│ GPR │ 0   │ 1   │ 0   │ 8   │ GPR │ 0   │ 0   │ CVG64T32L   │
-│ GPR │ 0   │ 1   │ 0   │ 8   │ GPR │ 1   │ 0   │ CVG64T32H   │
-│ GPR │ 1   │ 1   │ 0   │ 8   │ GPR │ 0   │ 0   │ CVG32T64ZL  │
-│ GPR │ 1   │ 1   │ 0   │ 8   │ GPR │ 1   │ 0   │ CVG32T64ZH  │
-│ GPR │ 0   │ 1   │ 1   │ 8   │ GPR │ 0   │ 0   │ CVG32T64SL  │
-│ GPR │ 0   │ 1   │ 1   │ 8   │ GPR │ 1   │ 0   │ CVG32T64SH  │
-│ GPR │ 1   │ 1   │ 1   │ 8   │ GPR │ 0   │ 0   │ CVG32T16L   │
-│ GPR │ 1   │ 1   │ 1   │ 8   │ GPR │ 1   │ 0   │ CVG32T16H   │
-│ GPR │ 0   │ 1   │ 2   │ 8   │ GPR │ 0   │ 0   │ CVG16T32ZL  │
-│ GPR │ 0   │ 1   │ 2   │ 8   │ GPR │ 1   │ 0   │ CVG16T32ZH  │
-│ GPR │ 1   │ 1   │ 2   │ 8   │ GPR │ 0   │ 0   │ CVG16T32SL  │
-│ GPR │ 1   │ 1   │ 2   │ 8   │ GPR │ 1   │ 0   │ CVG16T32SH  │
-│ GPR │ 0   │ 1   │ 3   │ 8   │ GPR │ 0   │ 0   │ CVG16T8L    │
-│ GPR │ 0   │ 1   │ 3   │ 8   │ GPR │ 1   │ 0   │ CVG16T8H    │
-│ GPR │ 1   │ 1   │ 3   │ 8   │ GPR │ 0   │ 0   │ CVG8T16ZL   │
-│ GPR │ 1   │ 1   │ 3   │ 8   │ GPR │ 1   │ 0   │ CVG8T16ZH   │
-│ GPR │ 0   │ 1   │ 0   │ 9   │ GPR │ 0   │ 0   │ CVG8T16SL   │
-│ GPR │ 0   │ 1   │ 0   │ 9   │ GPR │ 1   │ 0   │ CVG8T16SH   │
+│ GPR │ 0   │ 1   │ 0   │ 8   │ GPR │ 0   │ 0   │ CVG2T4L     │
+│ GPR │ 0   │ 1   │ 0   │ 8   │ GPR │ 1   │ 0   │ CVG2T4H     │
+│ GPR │ 1   │ 1   │ 0   │ 8   │ GPR │ 0   │ 0   │ CVG4T2ZL    │
+│ GPR │ 1   │ 1   │ 0   │ 8   │ GPR │ 1   │ 0   │ CVG4T2ZH    │
+│ GPR │ 0   │ 1   │ 1   │ 8   │ GPR │ 0   │ 0   │ CVG4T2SL    │
+│ GPR │ 0   │ 1   │ 1   │ 8   │ GPR │ 1   │ 0   │ CVG4T2SH    │
+│ GPR │ 1   │ 1   │ 1   │ 8   │ GPR │ 0   │ 0   │ CVG4T8L     │
+│ GPR │ 1   │ 1   │ 1   │ 8   │ GPR │ 1   │ 0   │ CVG4T8H     │
+│ GPR │ 0   │ 1   │ 2   │ 8   │ GPR │ 0   │ 0   │ CVG8T4ZL    │
+│ GPR │ 0   │ 1   │ 2   │ 8   │ GPR │ 1   │ 0   │ CVG8T4ZH    │
+│ GPR │ 1   │ 1   │ 2   │ 8   │ GPR │ 0   │ 0   │ CVG8T4SL    │
+│ GPR │ 1   │ 1   │ 2   │ 8   │ GPR │ 1   │ 0   │ CVG8T4SH    │
+│ GPR │ 0   │ 1   │ 3   │ 8   │ GPR │ 0   │ 0   │ CVG8T16L    │
+│ GPR │ 0   │ 1   │ 3   │ 8   │ GPR │ 1   │ 0   │ CVG8T16H    │
+│ GPR │ 1   │ 1   │ 3   │ 8   │ GPR │ 0   │ 0   │ CVG16T8ZL   │
+│ GPR │ 1   │ 1   │ 3   │ 8   │ GPR │ 1   │ 0   │ CVG16T8ZH   │
+│ GPR │ 0   │ 1   │ 0   │ 9   │ GPR │ 0   │ 0   │ CVG16T8SL   │
+│ GPR │ 0   │ 1   │ 0   │ 9   │ GPR │ 1   │ 0   │ CVG16T8SH   │
 └─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────────────┘
 
 
@@ -478,7 +478,7 @@ The register set a register field references is stated in the instruction field 
 │ OC3   │ 4    │ 10—14    │
 │ OC4   │ 2    │ 15—16    │
 │ OC2   │ 7    │ 17—22    │
-│ DA    │ 6    │ 23—29    │
+│ DA    │ 7    │ 23—29    │
 └───────┴──────┴──────────┘
 
 
@@ -1529,9 +1529,9 @@ The register set a register field references is stated in the instruction field 
 │ SB:SRNR │ 91  │ 0   │ 0   │ STOSRB      │
 │ SB:SRNR │ 91  │ 1   │ 0   │ STOSRO      │
 │ XA      │ 120 │ 0   │ 0   │ PFW         │
-│ XA      │ 120 │ 1   │ 0   │ PFWI        │
-│ SB:SGPR │ 124 │ 0   │ 0   │ PFO         │
-│ SB:SGPR │ 124 │ 1   │ 0   │ PFOI        │
+│ XA      │ 120 │ 1   │ 0   │ PFO         │
+│ SB:SGPR │ 124 │ 0   │ 0   │ PFIW        │
+│ SB:SGPR │ 124 │ 1   │ 0   │ PFIO        │
 └─────────┴─────┴─────┴─────┴─────────────┘
 
 
@@ -1612,19 +1612,19 @@ The register set a register field references is stated in the instruction field 
 
 
 
-─────────────────────────────────────────
-3.11  0:OC1-3:SA-9:OC3-10:IA-26:OC2-33:DA
-─────────────────────────────────────────
+───────────────────────────────────
+3.11  0:OC1-3:SA-10:IA-26:OC2-33:DA
+───────────────────────────────────
 
 
 ┌───────────┬──────┬──────────┐
 │ Field     │ Size │ Position │
 ├───────────┼──────┼──────────┤
 │ OC1       │ 3    │ 0—2      │
-│ SA (SGPR) │ 6    │ 3—9      │
+│ SA (SGPR) │ 7    │ 3—9      │
 │ IA        │ 16   │ 10—25    │
 │ OC2       │ 7    │ 26—32    │
-│ DA (SGPR) │ 6    │ 33—39    │
+│ DA (SGPR) │ 7    │ 33—39    │
 └───────────┴──────┴──────────┘
 
 
@@ -2338,7 +2338,7 @@ The register set a register field references is stated in the instruction field 
 
 
 ─────────────────────────────────────────────────────
-4.7  0:OC1-3:SA-10:SB-17:SC-24:SD-30:OC3-33:OC2-43:DA
+4.7  0:OC1-3:SA-10:SB-17:SC-24:SD-31:OC3-33:OC2-43:DA
 ─────────────────────────────────────────────────────
 
 
