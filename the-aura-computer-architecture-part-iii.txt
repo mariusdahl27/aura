@@ -2046,8 +2046,8 @@ The register set a register field references is stated in the instruction field 
 ┌─────┬─────┬─────┬─────┬─────┬─────────────┐
 │ OC2 │ OC3 │ OC5 │ OC4 │ OC1 │ Instruction │
 ├─────┼─────┼─────┼─────┼─────┼─────────────┤
-│ 108 │ 0   │ 0   │ 0   │ 1   │ EXTBFZI     │
-│ 108 │ 0   │ 0   │ 1   │ 1   │ EXTBFSI     │
+│ 108 │ 0   │ 0   │ 0   │ 1   │ EXTBFZIS    │
+│ 108 │ 0   │ 0   │ 1   │ 1   │ EXTBFSIS    │
 └─────┴─────┴─────┴─────┴─────┴─────────────┘
 
 

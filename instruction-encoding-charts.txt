@@ -569,8 +569,8 @@ Conventions:
 │   DA:RNR  │0│    2:104    │ T │   SC:SGPR   │   SB:SRNR   │   SA:RNR  │0│ 1:1 │ VDEPESR
 │   DA:RNR  │0│    2:104    │ T │   SC:SGPR   │   SB:SRNR   │   SA:RNR  │1│ 1:1 │ VDEPESRO
 ├───────────┴─┼─────────────┼───┼─┬───────────┼─┬───────────┼───────────┴─┼─────┤
-│   DA:SGPR   │    2:108    │3:0│0│     IB    │0│     IA    │   SA:SGPR   │ 1:1 │ EXTBFZI
-│   DA:SGPR   │    2:108    │3:0│0│     IB    │1│     IA    │   SA:SGPR   │ 1:1 │ EXTBFSI
+│   DA:SGPR   │    2:108    │3:0│0│     IB    │0│     IA    │   SA:SGPR   │ 1:1 │ EXTBFZIS
+│   DA:SGPR   │    2:108    │3:0│0│     IB    │1│     IA    │   SA:SGPR   │ 1:1 │ EXTBFSIS
 ├─────────────┼─────────────┼───┼─┴───────────┼─┴───────────┼─────────────┼─────┤
 │   DA:SGPR   │    2:110    │3:0│   SC:SGPR   │   SB:SGPR   │   SA:SGPR   │ 1:1 │ SELSG
 │   DA:SGPR   │    2:111    │3:0│    SC:CR    │   SB:SGPR   │   SA:SGPR   │ 1:1 │ ADDCS
