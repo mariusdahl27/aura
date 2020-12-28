@@ -8,7 +8,7 @@ Part III: Instruction Encoding Tables
 
 
 
-Document Version: DRAFT 2020-12-16
+Document Version: DRAFT 2020-12-28
 
 
 
@@ -179,7 +179,7 @@ The register set a register field references is stated in the instruction field 
 ├──────────┼──────┼──────────┤
 │ OC1      │ 3    │ 0—2      │
 │ OC4      │ 7    │ 3—9      │
-│ OC3      │ 4    │ 10—14    │
+│ OC3      │ 5    │ 10—14    │
 │ OC5      │ 2    │ 15—16    │
 │ OC2      │ 6    │ 17—22    │
 │ OC6      │ 1    │ 23       │
@@ -220,9 +220,9 @@ The register set a register field references is stated in the instruction field 
 ┌──────┬─────┬─────┬─────┬─────┬─────┬─────────────┐
 │ DA   │ OC2 │ OC5 │ OC3 │ OC4 │ OC1 │ Instruction │
 ├──────┼─────┼─────┼─────┼─────┼─────┼─────────────┤
-│ SGPR │ 1   │ 0   │ 0   │ 1   │ 0   │ ARCHVER     │
-│ CR   │ 1   │ 2   │ 0   │ 1   │ 0   │ CPYCZ       │
-│ CR   │ 1   │ 3   │ 0   │ 1   │ 0   │ CPYCO       │
+│ SGPR │ 1   │ 0   │ 0   │ 2   │ 0   │ ARCHVER     │
+│ CR   │ 1   │ 2   │ 0   │ 2   │ 0   │ CPYCZ       │
+│ CR   │ 1   │ 3   │ 0   │ 2   │ 0   │ CPYCO       │
 └──────┴─────┴─────┴─────┴─────┴─────┴─────────────┘
 
 
@@ -475,9 +475,9 @@ The register set a register field references is stated in the instruction field 
 ├───────┼──────┼──────────┤
 │ OC1   │ 3    │ 0—2      │
 │ SA    │ 7    │ 3—9      │
-│ OC3   │ 4    │ 10—14    │
+│ OC3   │ 5    │ 10—14    │
 │ OC4   │ 2    │ 15—16    │
-│ OC2   │ 7    │ 17—22    │
+│ OC2   │ 6    │ 17—22    │
 │ DA    │ 7    │ 23—29    │
 └───────┴──────┴──────────┘
 
@@ -509,7 +509,7 @@ The register set a register field references is stated in the instruction field 
 
 
 ──────────────────────────────────────────────────────────────
-2.12  0:OC1-3:OC5-4:SA-10:IA-12:OC3-14:OC4-17:OC2-23:OC6-24:DA
+2.12  0:OC1-3:OC5-4:SA-10:IA-12:OC4-14:OC3-17:OC2-23:OC6-24:DA
 ──────────────────────────────────────────────────────────────
 
 
@@ -520,8 +520,8 @@ The register set a register field references is stated in the instruction field 
 │ OC5   │ 1    │ 3        │
 │ SA    │ 6    │ 4—9      │
 │ IA    │ 2    │ 10—11    │
-│ OC3   │ 2    │ 12—13    │
-│ OC4   │ 3    │ 14—16    │
+│ OC4   │ 2    │ 12—13    │
+│ OC3   │ 3    │ 14—16    │
 │ OC2   │ 6    │ 17—22    │
 │ OC6   │ 1    │ 23       │
 │ DA    │ 6    │ 24—29    │
@@ -529,7 +529,7 @@ The register set a register field references is stated in the instruction field 
 
 
 ┌─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────┬─────────────┐
-│ DA  │ OC6 │ OC2 │ OC4 │ OC3 │ SA  │ OC5 │ OC1 │ Instruction │
+│ DA  │ OC6 │ OC2 │ OC3 │ OC4 │ SA  │ OC5 │ OC1 │ Instruction │
 ├─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────────────┤
 │ GPR │ 0   │ 3   │ 2   │ 0   │ GPR │ 0   │ 0   │ VEXTEG4Z    │
 │ GPR │ 0   │ 3   │ 2   │ 0   │ GPR │ 1   │ 0   │ VEXTEG4S    │
@@ -544,7 +544,7 @@ The register set a register field references is stated in the instruction field 
 
 
 ───────────────────────────────────────────────────────
-2.13  0:OC1-3:OC5-4:SA-10:IA-12:OC3-14:OC4-17:OC2-23:DA
+2.13  0:OC1-3:OC5-4:SA-10:IA-12:OC4-14:OC3-17:OC2-23:DA
 ───────────────────────────────────────────────────────
 
 
@@ -555,15 +555,15 @@ The register set a register field references is stated in the instruction field 
 │ OC5   │ 1    │ 3        │
 │ SA    │ 6    │ 4—9      │
 │ IA    │ 2    │ 10—11    │
-│ OC3   │ 2    │ 12—13    │
-│ OC4   │ 3    │ 14—16    │
+│ OC4   │ 2    │ 12—13    │
+│ OC3   │ 3    │ 14—16    │
 │ OC2   │ 6    │ 17—22    │
 │ DA    │ 7    │ 23—29    │
 └───────┴──────┴──────────┘
 
 
 ┌──────┬─────┬─────┬─────┬─────┬─────┬─────┬─────────────┐
-│ DA   │ OC2 │ OC4 │ OC3 │ SA  │ OC5 │ OC1 │ Instruction │
+│ DA   │ OC2 │ OC3 │ OC4 │ SA  │ OC5 │ OC1 │ Instruction │
 ├──────┼─────┼─────┼─────┼─────┼─────┼─────┼─────────────┤
 │ SGPR │ 3   │ 2   │ 2   │ GPR │ 0   │ 0   │ VEXTESG4Z   │
 │ SGPR │ 3   │ 2   │ 2   │ GPR │ 1   │ 0   │ VEXTESG4S   │
@@ -788,8 +788,8 @@ The register set a register field references is stated in the instruction field 
 │ OC1      │ 3    │ 0—2      │
 │ OC3      │ 1    │ 3        │
 │ SA (GPR) │ 6    │ 4—9      │
-│ IA       │ 6    │ 10—16    │
-│ OC2      │ 8    │ 17—22    │
+│ IA       │ 7    │ 10—16    │
+│ OC2      │ 6    │ 17—22    │
 │ OC4      │ 1    │ 23       │
 │ DA (GPR) │ 6    │ 24—29    │
 └──────────┴──────┴──────────┘
@@ -1006,7 +1006,7 @@ The register set a register field references is stated in the instruction field 
 │ OC1       │ 3    │ 0—2      │
 │ OC4       │ 1    │ 3        │
 │ SA        │ 6    │ 4—9      │
-│ SB (SGPR) │ 6    │ 10—16    │
+│ SB (SGPR) │ 7    │ 10—16    │
 │ T         │ 2    │ 17—18    │
 │ OC3       │ 2    │ 19—20    │
 │ OC2       │ 2    │ 21—22    │
@@ -1046,7 +1046,7 @@ The register set a register field references is stated in the instruction field 
 │ SA    │ 6    │ 4—9      │
 │ SB    │ 7    │ 10—16    │
 │ IA    │ 2    │ 17—18    │
-│ OC3   │ 5    │ 19—20    │
+│ OC3   │ 2    │ 19—20    │
 │ OC2   │ 2    │ 21—22    │
 │ OC5   │ 1    │ 23       │
 │ DA    │ 6    │ 24—29    │
@@ -1080,8 +1080,8 @@ The register set a register field references is stated in the instruction field 
 │ SA        │ 6    │ 4—9      │
 │ SB (SGPR) │ 7    │ 10—16    │
 │ T         │ 2    │ 17—18    │
-│ OC3       │ 7    │ 19—20    │
-│ OC2       │ 7    │ 21—22    │
+│ OC3       │ 2    │ 19—20    │
+│ OC2       │ 2    │ 21—22    │
 │ DA        │ 7    │ 23—29    │
 └───────────┴──────┴──────────┘
 

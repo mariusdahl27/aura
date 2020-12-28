@@ -1,12 +1,12 @@
 AVRA Version 1.0 Instruction Encoding Charts
 
-Document Version: 2020-12-16
+Document Version: 2020-12-28
 
 
 
 
 This document is intended to supplement the tabular instruction encoding in Part
-III of The AVRA Computer Architecture Version 1.0 (DRAFT 2020-12-16). The latest
+III of The AVRA Computer Architecture Version 1.0 (DRAFT 2020-12-28). The latest
 versions of both documents can be found at:
 
 https://github.com/mariusdahl27/aura
@@ -50,9 +50,9 @@ Conventions:
 ├───────────┬─┼───────────┼───┼─────────┼─────────────┼─────┤
 │   DA:GPR  │0│    2:1    │5:0│   3:0   │     4:1     │ 1:0 │ PKCG
 ├───────────┴─┼───────────┼───┼─────────┼─────────────┼─────┤
-│   DA:SGPR   │    2:1    │5:0│   3:0   │     4:1     │ 1:0 │ ARCHVER
-│    DA:CR    │    2:1    │5:2│   3:0   │     4:1     │ 1:0 │ CPYCZ
-│    DA:CR    │    2:1    │5:3│   3:0   │     4:1     │ 1:0 │ CPYCO
+│   DA:SGPR   │    2:1    │5:0│   3:0   │     4:2     │ 1:0 │ ARCHVER
+│    DA:CR    │    2:1    │5:2│   3:0   │     4:2     │ 1:0 │ CPYCZ
+│    DA:CR    │    2:1    │5:3│   3:0   │     4:2     │ 1:0 │ CPYCO
 ├─────────────┼───────────┼───┼─────────┼───────────┬─┼─────┤
 │     4:0     │    2:1    │5:0│   3:1   │   SA:GPR  │0│ 1:0 │ UNPKGC
 │     4:0     │    2:1    │5:1│   3:1   │   SA:GPR  │0│ 1:0 │ JI
@@ -126,13 +126,13 @@ Conventions:
 │   DA:SGPR   │    2:2    │4:0│   3:14  │   SA:SRNR   │ 1:0 │ CPYSRSG
 │   DA:SRNR   │    2:2    │4:1│   3:14  │   SA:SRNR   │ 1:0 │ CPYSRSR
 ├───────────┬─┼───────────┼───┴─┬───┬───┼───────────┬─┼─────┤
-│   DA:GPR  │0│    2:3    │ 4:2 │3:0│ IA│   SA:GPR  │0│ 1:0 │ VEXTEG4Z
-│   DA:GPR  │0│    2:3    │ 4:2 │3:0│ IA│   SA:GPR  │1│ 1:0 │ VEXTEG4S
-│   DA:RNR  │1│    2:3    │ 4:2 │3:0│ IA│   SA:RNR  │0│ 1:0 │ VEXTER4
+│   DA:GPR  │0│    2:3    │ 3:2 │4:0│ IA│   SA:GPR  │0│ 1:0 │ VEXTEG4Z
+│   DA:GPR  │0│    2:3    │ 3:2 │4:0│ IA│   SA:GPR  │1│ 1:0 │ VEXTEG4S
+│   DA:RNR  │1│    2:3    │ 3:2 │4:0│ IA│   SA:RNR  │0│ 1:0 │ VEXTER4
 ├───────────┴─┼───────────┼─────┼───┼───┼───────────┼─┼─────┤
-│   DA:SGPR   │    2:3    │ 4:2 │3:2│ IA│   SA:GPR  │0│ 1:0 │ VEXTESG4Z
-│   DA:SGPR   │    2:3    │ 4:2 │3:2│ IA│   SA:GPR  │1│ 1:0 │ VEXTESG4S
-│   DA:SRNR   │    2:3    │ 4:2 │3:3│ IA│   SA:RNR  │0│ 1:0 │ VEXTESR4
+│   DA:SGPR   │    2:3    │ 3:2 │4:2│ IA│   SA:GPR  │0│ 1:0 │ VEXTESG4Z
+│   DA:SGPR   │    2:3    │ 3:2 │4:2│ IA│   SA:GPR  │1│ 1:0 │ VEXTESG4S
+│   DA:SRNR   │    2:3    │ 3:2 │4:3│ IA│   SA:RNR  │0│ 1:0 │ VEXTESR4
 ├───────────┬─┼───────────┼─────┼─┬─┴───┼───────────┼─┼─────┤
 │   DA:GPR  │0│    2:3    │ 3:3 │0│  IA │   SA:GPR  │0│ 1:0 │ VEXTEG8Z
 │   DA:GPR  │0│    2:3    │ 3:3 │0│  IA │   SA:GPR  │1│ 1:0 │ VEXTEG8S
