@@ -8,7 +8,7 @@ Part II: Instruction Descriptions
 
 
 
-Document Version: DRAFT 2020-12-28
+Document Version: DRAFT 2021-02-01
 
 
 
@@ -22,7 +22,7 @@ Marius Dahl
 
 
 
-Copyright 2020 Marius Dahl.
+Copyright 2020-2021 Marius Dahl.
 
 This document is released under the Creative Commons Attribution-ShareAlike 4.0 International License (CC BY-SA 4.0).
 
@@ -1508,9 +1508,9 @@ Description:
 
 A bit field is extracted from GPR[SA] or SGPR[SA]. The bit field in GPR[SA] is specified with two unsigned integer parameters: the starting position and length. The starting position specifies which bit in GPR[SA] is the bit field's least-significant bit. The length specifies how many bits there are in the bit field.
 
-The starting position is given by the 7 or 6 low-order bits in GPR[SB] or SGPR[SB], respectively; valid values are 0—127 and 0—63, respectively. If the instruction has the "Immediate" modifier, the starting position is instead given by the 7- or 6-bit immediate IA.
+The starting position is given by the 7 or 6 low-order bits in SGPR[SB], based on whether the instruction performs a bit field extraction on a GPR or SGPR, respectively; valid values are 0—127 and 0—63, respectively. If the instruction has the "Immediate" modifier, the starting position is instead given by the 7- or 6-bit immediate IA.
 
-The length is given by the 8 or 7 low-order bits in GPR[SC] and SGPR[SC], respectively; valid values are 0—128 and 0—64, respectively. If the instruction has the "Immediate" modifier, the length is instead given by the 7- or 6-bit immediate IB, which is always incremented by '1' before it is consumed so that its value is always in the range of 1—128 or 1—64, respectively.
+The length is given by the 8 or 7 low-order bits in SGPR[SC], based on whether the instruction performs a bit field extraction on a GPR or SGPR, respectively; valid values are 0—128 and 0—64, respectively. If the instruction has the "Immediate" modifier, the length is instead given by the 7- or 6-bit immediate IB, which is always incremented by '1' before it is consumed so that its value is always in the range of 1—128 or 1—64, respectively.
 
 The sum of the starting position and length cannot exceed 128 or 64 (if the instruction has the "SGPR" modifier). If it does, the length is clamped to the value that results in the sum equaling 128 or 64 (if the instruction has the "SGPR" modifier).
 
@@ -1549,9 +1549,9 @@ A bit field is deposited into a copy of GPR[SD] or SGPR[SD]. The bit field is so
 
 The bit field is specified with two unsigned integer parameters: the starting position and length. The starting position specifies which bit in the copy of GPR[SD] receives the first bit of the bit field (its least-significant bit). The remaining bits in the bit field are deposited to the left of the this bit. The length specifies the number of bits from the bit field are deposited into the copy of GPR[SD].
 
-The starting position is given by the 7 or 6 low-order bits in GPR[SB] or SGPR[SB], respectively; valid values are 0—127 and 0—63, respectively. If the instruction has the "Immediate" modifier, the starting position is instead given by the 7- or 6-bit immediate IA.
+The starting position is given by the 7 or 6 low-order bits in SGPR[SB], based on whether the instruction performs a bit field deposition to a GPR or SGPR, respectively; valid values are 0—127 and 0—63, respectively. If the instruction has the "Immediate" modifier, the starting position is instead given by the 7- or 6-bit immediate IA.
 
-The length is given by the 8 or 7 low-order bits in GPR[SC] or SGPR[SC], respectively; valid values are 0—128 and 0—64, respectively. If the instruction has the "Immediate" modifier, the length is instead given by the 7- or 6-bit immediate IB, which is always incremented by '1' before it is consumed so that its value is always in the range of 1—128 to 1—64, respectively.
+The length is given by the 8 or 7 low-order bits in SGPR[SC], based on whether the instruction performs a bit field deposition to a GPR or SGPR, respectively; valid values are 0—128 and 0—64, respectively. If the instruction has the "Immediate" modifier, the length is instead given by the 7- or 6-bit immediate IB, which is always incremented by '1' before it is consumed so that its value is always in the range of 1—128 to 1—64, respectively.
 
 The sum of the starting position and length cannot exceed 128 or 64 (if the instruction has the "SGPR" modifier). If it does, the length is clamped to the value that results in the sum equaling 128 or 64 (if the instruction has the "SGPR" modifier).
 

@@ -1,12 +1,12 @@
 AVRA Version 1.0 Instruction Encoding Charts
 
-Document Version: 2020-12-28
+Document Version: 2021-02-01
 
 
 
 
 This document is intended to supplement the tabular instruction encoding in Part
-III of The AVRA Computer Architecture Version 1.0 (DRAFT 2020-12-28). The latest
+III of The AVRA Computer Architecture Version 1.0 (DRAFT 2021-02-01). The latest
 versions of both documents can be found at:
 
 https://github.com/mariusdahl27/aura
@@ -649,7 +649,7 @@ Conventions:
 
 
 
-Copyright 2020 Marius Dahl.
+Copyright 2020-2021 Marius Dahl.
 
 This document is released under the Creative Commons Attribution-ShareAlike 4.0
 International License (CC BY-SA 4.0).

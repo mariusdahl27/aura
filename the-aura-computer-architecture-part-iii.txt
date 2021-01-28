@@ -8,7 +8,7 @@ Part III: Instruction Encoding Tables
 
 
 
-Document Version: DRAFT 2020-12-28
+Document Version: DRAFT 2021-02-01
 
 
 
@@ -22,7 +22,7 @@ Marius Dahl
 
 
 
-Copyright 2020 Marius Dahl.
+Copyright 2020-2021 Marius Dahl.
 
 This document is released under the Creative Commons Attribution-ShareAlike 4.0 International License (CC BY-SA 4.0).
 
